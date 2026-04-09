@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Massage Directory – Firestore Setup</title>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; }
+    h1 { font-size: 1.4rem; }
+    #log { background: #f4f4f4; border-radius: 6px; padding: 16px; font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; }
+    .ok  { color: #16a34a; }
+    .err { color: #dc2626; }
+    button { margin-top: 16px; padding: 10px 20px; font-size: 1rem; cursor: pointer; border-radius: 6px; border: none; background: #2563eb; color: #fff; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <h1>Massage Directory – Firestore Seed</h1>
+  <p>Click the button to create the 5 collections with one sample document each.</p>
+  <button id="seedBtn">Seed Firestore</button>
+  <pre id="log">Ready.</pre>
+
+  <!-- Firebase SDK (modular, compat shim for simplicity) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      setDoc,
+      addDoc,
+      Timestamp,
+      serverTimestamp,
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyDRU0AYJDe33QnjlwLlbpV0_DptgG9k-qo",
+      authDomain:        "massage-directory-57e19.firebaseapp.com",
+      projectId:         "massage-directory-57e19",
+      storageBucket:     "massage-directory-57e19.firebasestorage.app",
+      messagingSenderId: "594672589028",
+      appId:             "1:594672589028:web:1e5255001882665e0534f1",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    const logEl = document.getElementById("log");
+    const btn   = document.getElementById("seedBtn");
+
+    function log(msg, isError = false) {
+      const line = document.createElement("span");
+      line.className = isError ? "err" : "ok";
+      line.textContent = msg + "\n";
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      logEl.textContent = "";
+
+      try {
+        // ── 1. suppliers ────────────────────────────────────────────────
+        const supplierRef = await addDoc(collection(db, "suppliers"), {
+          supplierType:  "individual",
+          classification: "Swedish",
+          firstName:     "Jane",
+          lastName:      "Doe",
+          displayName:   "Jane Doe Massage",
+          cellNumber:    "+27821234567",
+          email:         "jane@example.com",
+          suburb:        "Sandton",
+          province:      "Gauteng",
+          cityTown:      "Johannesburg",
+          gpsLat:        -26.1076,
+          gpsLng:         28.0567,
+          status:        "active",
+          registeredAt:  serverTimestamp(),
+        });
+        log(`✓ suppliers  → doc id: ${supplierRef.id}`);
+
+        const supplierId = supplierRef.id;
+
+        // ── 2. subscriptions ─────────────────────────────────────────────
+        const subRef = await addDoc(collection(db, "subscriptions"), {
+          supplierId,
+          supplierType: "individual",
+          monthlyRate:  299,
+          status:       "active",
+          startDate:    Timestamp.fromDate(new Date()),
+        });
+        log(`✓ subscriptions → doc id: ${subRef.id}`);
+
+        // ── 3. payments ──────────────────────────────────────────────────
+        const payRef = await addDoc(collection(db, "payments"), {
+          supplierId,
+          amount: 299,
+          status: "paid",
+          paidAt: serverTimestamp(),
+        });
+        log(`✓ payments   → doc id: ${payRef.id}`);
+
+        // ── 4. enquiries ─────────────────────────────────────────────────
+        const enqRef = await addDoc(collection(db, "enquiries"), {
+          supplierId,
+          customerName: "John Smith",
+          customerCell: "+27831234567",
+          message:      "Hi, I'd like to book a 60-minute session please.",
+          sentAt:       serverTimestamp(),
+        });
+        log(`✓ enquiries  → doc id: ${enqRef.id}`);
+
+        // ── 5. settings (fixed doc id: "config") ─────────────────────────
+        await setDoc(doc(db, "settings", "config"), {
+          priceIndividual:     299,
+          priceSpa:            999,
+          verificationHoldHours: 24,
+          autoApprove:         false,
+        });
+        log(`✓ settings   → doc id: config`);
+
+        log("\nAll 5 collections seeded successfully.");
+      } catch (err) {
+        log(`✗ Error: ${err.message}`, true);
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
