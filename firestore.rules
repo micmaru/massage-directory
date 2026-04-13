@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Suppliers: public read, no public write
+    match /suppliers/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Enquiries: public read and write (customer contact form submissions)
+    match /enquiries/{document=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Payments: no public access
+    match /payments/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Subscriptions: no public access
+    match /subscriptions/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Settings: no public access
+    match /settings/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Deny everything else by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
