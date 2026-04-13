@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MassageMap</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Inner page header ── */
+    .header {
+      position: relative; /* needed for absolute-centered title */
+    }
+
+    .header__back {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--accent-light);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      text-decoration: none;
+      min-width: 72px;
+      padding: var(--space-2);
+      margin: calc(-1 * var(--space-2));
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      transition: color var(--ease);
+    }
+
+    .header__back:hover { color: var(--text); }
+
+    .header__page-title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+      pointer-events: none;
+      margin: 0;
+    }
+
+    /* ── Section header ── */
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding-top: var(--space-2);
+      margin-bottom: var(--space-4);
+    }
+
+    /* ── Area group (grouped list card) ── */
+    .area-group {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* ── Area row ── */
+    .area-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 15px var(--space-4);
+      border-top: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+      font-family: var(--font-sans);
+      font-size: var(--text-base);
+      transition: background var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .area-item:first-child {
+      border-top: none;
+    }
+
+    .area-item:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .area-item:active {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .area-item__name {
+      font-weight: 500;
+    }
+
+    .area-item__right {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      flex-shrink: 0;
+    }
+
+    .area-item__count {
+      font-size: var(--text-sm);
+      color: var(--text-muted);
+      min-width: 24px;
+      text-align: right;
+    }
+
+    .area-item__chevron {
+      color: var(--text-muted);
+      font-size: 18px;
+      opacity: 0.35;
+      line-height: 1;
+    }
+
+    /* ── Error / empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: var(--space-8) var(--space-4);
+      color: var(--text-muted);
+    }
+
+    .empty-state__icon {
+      font-size: 2.5rem;
+      margin-bottom: var(--space-3);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       Fixed Header
+  ══════════════════════════════════════ -->
+  <header class="header">
+    <a href="index.html" class="header__back">‹ Back</a>
+    <h1 class="header__page-title" id="pageTitle">Province</h1>
+    <div style="min-width:72px"></div><!-- balance right side -->
+  </header>
+
+
+  <!-- ══════════════════════════════════════
+       Main Content
+  ══════════════════════════════════════ -->
+  <main class="page">
+
+    <div class="section-header">
+      <span class="section-title" style="margin:0">Areas</span>
+      <span class="text-muted text-sm" id="summary"></span>
+    </div>
+
+    <div id="content"></div>
+
+  </main>
+
+
+  <!-- ══════════════════════════════════════
+       Bottom Navigation
+  ══════════════════════════════════════ -->
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <ul class="bottom-nav__list">
+      <li class="bottom-nav__item">
+        <a href="index.html" class="bottom-nav__link">
+          <span aria-hidden="true">🏠</span>
+          <span>Home</span>
+        </a>
+      </li>
+      <li class="bottom-nav__item">
+        <button class="bottom-nav__link">
+          <span aria-hidden="true">🗺️</span>
+          <span>Map</span>
+        </button>
+      </li>
+      <li class="bottom-nav__item">
+        <button class="bottom-nav__link">
+          <span aria-hidden="true">✍️</span>
+          <span>Register</span>
+        </button>
+      </li>
+      <li class="bottom-nav__item">
+        <button class="bottom-nav__link">
+          <span aria-hidden="true">⚙️</span>
+          <span>Admin</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+
+  <script>
+    /* ── Data ─────────────────────────────────────────────── */
+    const PROVINCES = [
+      {
+        name: 'Gauteng',
+        suburbs: [
+          { name: 'Sandton',       count: 12 },
+          { name: 'Rosebank',      count: 8  },
+          { name: 'Fourways',      count: 15 },
+          { name: 'Midrand',       count: 9  },
+          { name: 'Bryanston',     count: 11 },
+          { name: 'Melville',      count: 6  },
+          { name: 'Randburg',      count: 14 },
+          { name: 'Centurion',     count: 18 },
+          { name: 'Boksburg',      count: 7  },
+          { name: 'Germiston',     count: 5  },
+          { name: 'Pretoria East', count: 22 },
+          { name: 'Hatfield',      count: 10 },
+          { name: 'Brooklyn',      count: 9  },
+          { name: 'Soweto',        count: 4  },
+          { name: 'Edenvale',      count: 6  },
+        ],
+      },
+      {
+        name: 'Western Cape',
+        suburbs: [
+          { name: 'Cape Town CBD', count: 19 },
+          { name: 'Sea Point',     count: 14 },
+          { name: 'Camps Bay',     count: 11 },
+          { name: 'Claremont',     count: 9  },
+          { name: 'Stellenbosch',  count: 8  },
+          { name: 'Paarl',         count: 5  },
+          { name: 'George',        count: 6  },
+        ],
+      },
+      {
+        name: 'KwaZulu-Natal',
+        suburbs: [
+          { name: 'Umhlanga',      count: 16 },
+          { name: 'Durban CBD',    count: 13 },
+          { name: 'Berea',         count: 8  },
+          { name: 'Westville',     count: 7  },
+          { name: 'Pinetown',      count: 5  },
+          { name: 'Ballito',       count: 9  },
+        ],
+      },
+      {
+        name: 'Eastern Cape',
+        suburbs: [
+          { name: 'Port Elizabeth', count: 11 },
+          { name: 'East London',    count: 8  },
+          { name: 'Summerstrand',   count: 6  },
+          { name: 'Greenacres',     count: 4  },
+        ],
+      },
+      {
+        name: 'Free State',
+        suburbs: [
+          { name: 'Bloemfontein',    count: 9 },
+          { name: 'Welkom',          count: 3 },
+          { name: 'Langenhovenpark', count: 4 },
+        ],
+      },
+      {
+        name: 'North West',
+        suburbs: [
+          { name: 'Rustenburg',    count: 7 },
+          { name: 'Potchefstroom', count: 5 },
+          { name: 'Klerksdorp',    count: 4 },
+        ],
+      },
+      {
+        name: 'Mpumalanga',
+        suburbs: [
+          { name: 'Nelspruit',   count: 6 },
+          { name: 'Witbank',     count: 4 },
+          { name: 'White River', count: 3 },
+        ],
+      },
+      {
+        name: 'Limpopo',
+        suburbs: [
+          { name: 'Polokwane',  count: 5 },
+          { name: 'Tzaneen',    count: 3 },
+          { name: 'Phalaborwa', count: 2 },
+        ],
+      },
+      {
+        name: 'Northern Cape',
+        suburbs: [
+          { name: 'Kimberley', count: 5 },
+          { name: 'Upington',  count: 3 },
+        ],
+      },
+    ];
+
+    /* ── Read URL param ───────────────────────────────────── */
+    const params       = new URLSearchParams(window.location.search);
+    const provinceName = params.get('province') || '';
+    const province     = PROVINCES.find(p => p.name === provinceName);
+
+    /* ── Update page title ────────────────────────────────── */
+    document.title = provinceName
+      ? `${provinceName} — MassageMap`
+      : 'MassageMap';
+    document.getElementById('pageTitle').textContent = provinceName || 'Province';
+
+    /* ── Render ───────────────────────────────────────────── */
+    const content = document.getElementById('content');
+    const summary = document.getElementById('summary');
+
+    if (!province) {
+      content.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state__icon">🗺️</div>
+          <p>Province not found</p>
+          <p class="text-sm text-muted" style="margin-top:var(--space-2)">
+            <a href="index.html">← Back to home</a>
+          </p>
+        </div>`;
+    } else {
+      const total = province.suburbs.reduce((s, sub) => s + sub.count, 0);
+      summary.textContent = `${province.suburbs.length} areas · ${total} therapists`;
+
+      content.innerHTML = `
+        <div class="area-group">
+          ${province.suburbs.map(s => `
+            <a
+              href="listings.html?suburb=${encodeURIComponent(s.name)}&province=${encodeURIComponent(provinceName)}"
+              class="area-item"
+            >
+              <span class="area-item__name">${s.name}</span>
+              <span class="area-item__right">
+                <span class="area-item__count">${s.count}</span>
+                <span class="area-item__chevron">›</span>
+              </span>
+            </a>`).join('')}
+        </div>`;
+    }
+  </script>
+
+</body>
+</html>

@@ -51,27 +51,6 @@
       transform: scale(0.97);
     }
 
-    .province-card--active {
-      background: rgba(108, 99, 255, 0.08);
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent) inset;
-    }
-
-    /* active chevron indicator */
-    .province-card--active::after {
-      content: '';
-      position: absolute;
-      bottom: -13px; /* sits over the gap between card and expander */
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-top: 8px solid var(--accent);
-      z-index: 1;
-    }
-
     .province-card__name {
       font-size: var(--text-sm);
       font-weight: 700;
@@ -85,48 +64,7 @@
       line-height: 1;
     }
 
-    /* ── Province expander ── */
-    .province-expander {
-      grid-column: 1 / -1;
-      display: none;
-      background: var(--bg-card);
-      border: 1px solid var(--accent);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-
-    .province-expander--open {
-      display: block;
-      animation: expandIn 0.18s ease forwards;
-    }
-
-    @keyframes expandIn {
-      from { opacity: 0; transform: translateY(-4px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .expander-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: var(--space-3) var(--space-4);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .expander-heading__title {
-      font-size: var(--text-xs);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.7px;
-      color: var(--accent-light);
-    }
-
-    .expander-heading__total {
-      font-size: var(--text-xs);
-      color: var(--text-muted);
-    }
-
-    /* ── Suburb rows (shared by expander + search results) ── */
+    /* ── Suburb rows (search results) ── */
     .suburb-item {
       display: flex;
       align-items: center;
@@ -426,83 +364,29 @@
       totalSummary.textContent = `${grandTotal.toLocaleString()} therapists`;
 
       PROVINCES.forEach((province, idx) => {
-        // Province card
         const card = document.createElement('button');
         card.className = 'province-card';
         card.dataset.idx = idx;
-        card.setAttribute('aria-expanded', 'false');
         card.innerHTML = `
           <span class="province-card__name">${province.name}</span>
           <span class="province-card__count">${province.total} therapists</span>`;
         grid.appendChild(card);
-
-        // Expander: insert after each pair (odd idx) or last item
-        if (idx % 2 === 1 || idx === PROVINCES.length - 1) {
-          const exp = document.createElement('div');
-          exp.className = 'province-expander';
-          exp.dataset.row = Math.floor(idx / 2);
-          grid.appendChild(exp);
-        }
       });
     }
 
-    /* ── Build suburb list HTML ───────────────────────────── */
-    function suburbListHTML(province, query) {
-      const suburbs = query
-        ? province.suburbs.filter(s => s.name.toLowerCase().includes(query))
-        : province.suburbs;
-
-      return suburbs.map(s => `
-        <button class="suburb-item" data-suburb="${s.name}" data-province="${province.name}">
-          <span class="suburb-item__name">${highlight(s.name, query)}</span>
-          <span class="suburb-item__right">
-            <span class="suburb-item__count">${s.count}</span>
-            <span class="suburb-item__chevron">›</span>
-          </span>
-        </button>`).join('');
-    }
-
-    /* highlight matching text in search */
+    /* ── highlight matching text in search ───────────────── */
     function highlight(text, query) {
       if (!query) return text;
       const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
       return text.replace(re, '<mark style="background:rgba(108,99,255,0.3);color:var(--text);border-radius:2px">$1</mark>');
     }
 
-    /* ── Province card click ──────────────────────────────── */
+    /* ── Province card click → navigate to suburb screen ─── */
     grid.addEventListener('click', e => {
       const card = e.target.closest('.province-card');
       if (!card) return;
-
-      const idx     = parseInt(card.dataset.idx);
-      const rowIdx  = Math.floor(idx / 2);
-      const expander = grid.querySelector(`.province-expander[data-row="${rowIdx}"]`);
-      const province = PROVINCES[idx];
-      const isOpen   = card.classList.contains('province-card--active');
-
-      // Close all
-      grid.querySelectorAll('.province-card--active')
-        .forEach(c => { c.classList.remove('province-card--active'); c.setAttribute('aria-expanded', 'false'); });
-      grid.querySelectorAll('.province-expander--open')
-        .forEach(exp => exp.classList.remove('province-expander--open'));
-
-      if (isOpen) return; // toggle off
-
-      // Open this one
-      card.classList.add('province-card--active');
-      card.setAttribute('aria-expanded', 'true');
-
-      expander.innerHTML = `
-        <div class="expander-heading">
-          <span class="expander-heading__title">${province.name}</span>
-          <span class="expander-heading__total">${province.total} therapists · ${province.suburbs.length} areas</span>
-        </div>
-        ${suburbListHTML(province, '')}`;
-
-      expander.classList.add('province-expander--open');
-
-      // Scroll expander into view smoothly
-      setTimeout(() => expander.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+      const province = PROVINCES[parseInt(card.dataset.idx)];
+      window.location.href = `suburb.html?province=${encodeURIComponent(province.name)}`;
     });
 
     /* ── Search ───────────────────────────────────────────── */
@@ -554,11 +438,14 @@
         </button>`).join('');
     });
 
-    /* ── Suburb click (placeholder) ───────────────────────── */
+    /* ── Search suburb click → navigate to listings ────────── */
     document.addEventListener('click', e => {
       const btn = e.target.closest('.suburb-item');
       if (!btn) return;
-      // TODO: navigate to suburb therapist listing
+      const suburb   = btn.dataset.suburb;
+      const province = btn.dataset.province;
+      window.location.href =
+        `listings.html?suburb=${encodeURIComponent(suburb)}&province=${encodeURIComponent(province)}`;
     });
 
     /* ── Header search button ─────────────────────────────── */
