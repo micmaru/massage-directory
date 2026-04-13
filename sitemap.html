@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sitemap — MassageMap Dev Reference</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Dev page — no fixed header, no bottom nav ── */
+    body {
+      padding-top: 0;
+      padding-bottom: var(--space-8);
+    }
+
+    .dev-header {
+      padding: var(--space-6) var(--space-4) var(--space-5);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: var(--space-6);
+    }
+
+    .dev-header__eyebrow {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--accent-light);
+      margin-bottom: var(--space-2);
+    }
+
+    .dev-header__title {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 var(--space-2);
+    }
+
+    .dev-header__sub {
+      font-size: var(--text-sm);
+      color: var(--text-muted);
+    }
+
+    /* ── Flow container ── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 var(--space-4);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Screen box ── */
+    .screen-box {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--space-4);
+      transition: border-color var(--ease), background var(--ease);
+      text-decoration: none;
+      display: block;
+    }
+
+    .screen-box:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.14);
+    }
+
+    .screen-box--home    { border-left: 3px solid var(--accent); }
+    .screen-box--suburb  { border-left: 3px solid #38bdf8; }
+    .screen-box--listing { border-left: 3px solid var(--green); }
+    .screen-box--profile { border-left: 3px solid #f472b6; }
+
+    .screen-box__top {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+    }
+
+    .screen-box__icon {
+      font-size: 1.6rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .screen-box__name {
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .screen-box__file {
+      font-size: var(--text-xs);
+      font-family: 'Menlo', 'Consolas', monospace;
+      color: var(--accent-light);
+      margin-top: 2px;
+    }
+
+    .screen-box__desc {
+      font-size: var(--text-sm);
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: var(--space-3);
+    }
+
+    /* ── Params rows inside box ── */
+    .screen-box__params {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      padding-top: var(--space-3);
+      border-top: 1px solid var(--border);
+    }
+
+    .param-row {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-2);
+      font-size: var(--text-xs);
+    }
+
+    .param-row__key {
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .param-row__value {
+      font-family: 'Menlo', 'Consolas', monospace;
+      color: var(--text);
+    }
+
+    /* ── Connector (arrow + param label) ── */
+    .connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--space-1) 0;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .connector__line {
+      width: 2px;
+      height: 10px;
+      background: linear-gradient(to bottom, var(--border), var(--accent));
+      flex-shrink: 0;
+    }
+
+    .connector__label {
+      font-size: 10px;
+      font-family: 'Menlo', 'Consolas', monospace;
+      color: var(--accent-light);
+      background: rgba(108, 99, 255, 0.1);
+      border: 1px solid rgba(108, 99, 255, 0.25);
+      border-radius: 5px;
+      padding: 4px 10px;
+      text-align: center;
+      max-width: 90%;
+      line-height: 1.5;
+    }
+
+    .connector__line-2 {
+      width: 2px;
+      height: 10px;
+      background: linear-gradient(to bottom, var(--accent), var(--border));
+      flex-shrink: 0;
+    }
+
+    .connector__arrow {
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 9px solid var(--accent);
+    }
+
+    /* ── Back-nav note ── */
+    .back-note {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      margin-top: var(--space-2);
+    }
+
+    .back-note::before {
+      content: '←';
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    /* ── Footer summary card ── */
+    .summary-card {
+      width: 100%;
+      max-width: 480px;
+      margin: var(--space-6) auto 0;
+      padding: 0 var(--space-4);
+    }
+
+    .summary-inner {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--space-4);
+    }
+
+    .summary-inner__title {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: var(--space-3);
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: var(--text-sm);
+      padding: var(--space-2) 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .summary-row:first-of-type {
+      border-top: none;
+    }
+
+    .summary-row__label { color: var(--text-muted); }
+    .summary-row__value { color: var(--text); font-weight: 500; }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       Dev Page Header
+  ══════════════════════════════════════ -->
+  <div class="dev-header">
+    <p class="dev-header__eyebrow">Developer Reference</p>
+    <h1 class="dev-header__title">💆 MassageMap — Sitemap</h1>
+    <p class="dev-header__sub">Screen flow, filenames, and URL params. Not customer-facing.</p>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       Flow diagram
+  ══════════════════════════════════════ -->
+  <div class="flow">
+
+    <!-- ── Screen 1: Home ── -->
+    <a href="index.html" class="screen-box screen-box--home">
+      <div class="screen-box__top">
+        <span class="screen-box__icon">🏠</span>
+        <div>
+          <div class="screen-box__name">Home</div>
+          <div class="screen-box__file">index.html</div>
+        </div>
+      </div>
+      <p class="screen-box__desc">
+        Province grid — 9 province cards in 2-column layout.
+        Search bar filters suburbs across all provinces.
+      </p>
+      <div class="screen-box__params">
+        <div class="param-row">
+          <span class="param-row__key">URL params in:</span>
+          <span class="param-row__value">none</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- connector 1 → 2 -->
+    <div class="connector" aria-hidden="true">
+      <div class="connector__line"></div>
+      <div class="connector__label">?province=Gauteng</div>
+      <div class="connector__line-2"></div>
+      <div class="connector__arrow"></div>
+    </div>
+
+    <!-- ── Screen 2: Suburb list ── -->
+    <a href="suburb.html?province=Gauteng" class="screen-box screen-box--suburb">
+      <div class="screen-box__top">
+        <span class="screen-box__icon">📍</span>
+        <div>
+          <div class="screen-box__name">Suburb List</div>
+          <div class="screen-box__file">suburb.html</div>
+        </div>
+      </div>
+      <p class="screen-box__desc">
+        All suburbs for the selected province, each showing
+        a therapist count. Tapping a suburb goes to listings.
+      </p>
+      <div class="screen-box__params">
+        <div class="param-row">
+          <span class="param-row__key">URL params in:</span>
+          <span class="param-row__value">province</span>
+        </div>
+        <div class="param-row">
+          <span class="param-row__key">Back to:</span>
+          <span class="param-row__value">index.html</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- connector 2 → 3 -->
+    <div class="connector" aria-hidden="true">
+      <div class="connector__line"></div>
+      <div class="connector__label">?suburb=Sandton&amp;province=Gauteng</div>
+      <div class="connector__line-2"></div>
+      <div class="connector__arrow"></div>
+    </div>
+
+    <!-- ── Screen 3: Therapist listings ── -->
+    <a href="listings.html?suburb=Sandton&province=Gauteng" class="screen-box screen-box--listing">
+      <div class="screen-box__top">
+        <span class="screen-box__icon">👥</span>
+        <div>
+          <div class="screen-box__name">Therapist Listings</div>
+          <div class="screen-box__file">listings.html</div>
+        </div>
+      </div>
+      <p class="screen-box__desc">
+        Compact table view of therapists in a suburb. Shows
+        name, classification, and primary service per row.
+        Adult-classified therapists are never shown.
+      </p>
+      <div class="screen-box__params">
+        <div class="param-row">
+          <span class="param-row__key">URL params in:</span>
+          <span class="param-row__value">suburb, province</span>
+        </div>
+        <div class="param-row">
+          <span class="param-row__key">Back to:</span>
+          <span class="param-row__value">suburb.html?province=…</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- connector 3 → 4 -->
+    <div class="connector" aria-hidden="true">
+      <div class="connector__line"></div>
+      <div class="connector__label">?id=1&amp;suburb=Sandton&amp;province=Gauteng</div>
+      <div class="connector__line-2"></div>
+      <div class="connector__arrow"></div>
+    </div>
+
+    <!-- ── Screen 4: Therapist profile ── -->
+    <a href="profile.html?id=1&suburb=Sandton&province=Gauteng" class="screen-box screen-box--profile">
+      <div class="screen-box__top">
+        <span class="screen-box__icon">👤</span>
+        <div>
+          <div class="screen-box__name">Therapist Profile</div>
+          <div class="screen-box__file">profile.html</div>
+        </div>
+      </div>
+      <p class="screen-box__desc">
+        Full profile: name, classification, suburb, price,
+        services, massage types, availability, mobile massage.
+        Send Enquiry CTA button.
+      </p>
+      <div class="screen-box__params">
+        <div class="param-row">
+          <span class="param-row__key">URL params in:</span>
+          <span class="param-row__value">id, suburb, province</span>
+        </div>
+        <div class="param-row">
+          <span class="param-row__key">Back to:</span>
+          <span class="param-row__value">listings.html?suburb=…&amp;province=…</span>
+        </div>
+      </div>
+    </a>
+
+  </div><!-- /.flow -->
+
+
+  <!-- ══════════════════════════════════════
+       Summary card
+  ══════════════════════════════════════ -->
+  <div class="summary-card">
+    <div class="summary-inner">
+      <p class="summary-inner__title">Project Summary</p>
+      <div class="summary-row">
+        <span class="summary-row__label">Shared stylesheet</span>
+        <span class="summary-row__value" style="font-family:monospace;font-size:var(--text-xs)">style.css</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-row__label">Screens</span>
+        <span class="summary-row__value">4 customer-facing</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-row__label">Bottom nav tabs</span>
+        <span class="summary-row__value">Home · Map · Register · Admin</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-row__label">Database</span>
+        <span class="summary-row__value">Firebase Firestore</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-row__label">Collections</span>
+        <span class="summary-row__value" style="font-family:monospace;font-size:var(--text-xs)">
+          suppliers · enquiries · payments · subscriptions · settings
+        </span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-row__label">Adult content</span>
+        <span class="summary-row__value">Filtered from all public screens</span>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
