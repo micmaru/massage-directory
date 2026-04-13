@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MassageMap</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Inner page header ── */
+    .header {
+      position: relative;
+    }
+
+    .header__back {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--accent-light);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      text-decoration: none;
+      min-width: 72px;
+      padding: var(--space-2);
+      margin: calc(-1 * var(--space-2));
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      transition: color var(--ease);
+    }
+
+    .header__back:hover { color: var(--text); }
+
+    .header__page-title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+      pointer-events: none;
+      margin: 0;
+    }
+
+    /* ── Profile hero card ── */
+    .profile-hero {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--space-5) var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .profile-hero__name {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 var(--space-2);
+      line-height: 1.2;
+    }
+
+    .profile-hero__location {
+      font-size: var(--text-sm);
+      color: var(--text-muted);
+      margin-bottom: var(--space-3);
+    }
+
+    .profile-hero__meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+    }
+
+    .profile-hero__price {
+      margin-top: var(--space-3);
+      padding-top: var(--space-3);
+      border-top: 1px solid var(--border);
+      font-size: var(--text-sm);
+      color: var(--text-muted);
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-2);
+    }
+
+    .profile-hero__price strong {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    /* ── Active badge (green, pulsing dot) ── */
+    .badge--active {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--green);
+      border-color: rgba(16, 185, 129, 0.28);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .badge--active::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* ── Profile sections ── */
+    .profile-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--space-4);
+      margin-bottom: var(--space-3);
+    }
+
+    .profile-section__label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: var(--space-3);
+    }
+
+    /* ── Badge clusters ── */
+    .badge-cluster {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    /* service badge — neutral */
+    .badge--service {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.1);
+      font-size: var(--text-xs);
+      font-weight: 500;
+    }
+
+    /* ── Availability rows ── */
+    .hours-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .hours-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: var(--text-sm);
+    }
+
+    .hours-row__days {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .hours-row__time {
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Mobile massage row ── */
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: var(--text-sm);
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* ── Send Enquiry CTA ── */
+    .cta-wrap {
+      margin-top: var(--space-5);
+      margin-bottom: var(--space-3);
+    }
+
+    /* ── Empty / error state ── */
+    .empty-state {
+      text-align: center;
+      padding: var(--space-8) var(--space-4);
+      color: var(--text-muted);
+    }
+
+    .empty-state__icon {
+      font-size: 2.5rem;
+      margin-bottom: var(--space-3);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       Fixed Header
+  ══════════════════════════════════════ -->
+  <header class="header">
+    <a id="backBtn" href="listings.html" class="header__back">‹ Back</a>
+    <h1 class="header__page-title" id="pageTitle">Profile</h1>
+    <div style="min-width:72px"></div>
+  </header>
+
+
+  <!-- ══════════════════════════════════════
+       Main Content
+  ══════════════════════════════════════ -->
+  <main class="page">
+    <div id="content"></div>
+  </main>
+
+
+  <!-- ══════════════════════════════════════
+       Bottom Navigation
+  ══════════════════════════════════════ -->
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <ul class="bottom-nav__list">
+      <li class="bottom-nav__item">
+        <a href="index.html" class="bottom-nav__link">
+          <span aria-hidden="true">🏠</span>
+          <span>Home</span>
+        </a>
+      </li>
+      <li class="bottom-nav__item">
+        <button class="bottom-nav__link">
+          <span aria-hidden="true">🗺️</span>
+          <span>Map</span>
+        </button>
+      </li>
+      <li class="bottom-nav__item">
+        <button class="bottom-nav__link">
+          <span aria-hidden="true">✍️</span>
+          <span>Register</span>
+        </button>
+      </li>
+      <li class="bottom-nav__item">
+        <button class="bottom-nav__link">
+          <span aria-hidden="true">⚙️</span>
+          <span>Admin</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+
+  <script>
+    /* ── URL params ───────────────────────────────────────── */
+    const params   = new URLSearchParams(window.location.search);
+    const id       = params.get('id')       || '';
+    const suburb   = params.get('suburb')   || '';
+    const province = params.get('province') || '';
+
+    /* ── Back button ──────────────────────────────────────── */
+    document.getElementById('backBtn').href = suburb
+      ? `listings.html?suburb=${encodeURIComponent(suburb)}&province=${encodeURIComponent(province)}`
+      : 'listings.html';
+
+    /* ── Dummy therapist data ─────────────────────────────── */
+    // In production: Firestore doc read from suppliers/{id}
+    const THERAPISTS = {
+      '1': {
+        name:          'Zanele Dlamini',
+        suburb:        'Sandton',
+        province:      'Gauteng',
+        classification: 'massage',
+        verified:      true,
+        active:        true,
+        pricePerHour:  350,
+        services:      ['Full Body', 'Back & Neck', 'Feet & Legs', 'Head & Scalp'],
+        massageTypes:  ['Swedish', 'Deep Tissue', 'Hot Stone', 'Relaxation'],
+        availability:  [
+          { days: 'Mon – Fri',  hours: '09:00 – 18:00' },
+          { days: 'Saturday',   hours: '10:00 – 15:00' },
+          { days: 'Sunday',     hours: 'By appointment' },
+        ],
+        mobileMassage: true,
+      },
+    };
+
+    const CLASS_BADGE = {
+      massage:  'badge--massage',
+      holistic: 'badge--holistic',
+    };
+
+    const CLASS_LABEL = {
+      massage:  'Massage',
+      holistic: 'Holistic',
+    };
+
+    /* ── Render ───────────────────────────────────────────── */
+    const content = document.getElementById('content');
+    const therapist = THERAPISTS[id];
+
+    if (!therapist) {
+      document.title = 'Profile — MassageMap';
+      document.getElementById('pageTitle').textContent = 'Profile';
+      content.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state__icon">👤</div>
+          <p>Therapist not found</p>
+          <p class="text-sm text-muted" style="margin-top:var(--space-2)">
+            <a href="index.html">← Back to home</a>
+          </p>
+        </div>`;
+    } else {
+      /* page meta */
+      const firstName = therapist.name.split(' ')[0];
+      document.title = `${therapist.name} — MassageMap`;
+      document.getElementById('pageTitle').textContent = firstName;
+
+      content.innerHTML = `
+
+        <!-- ── Hero ── -->
+        <div class="profile-hero">
+          <h2 class="profile-hero__name">${therapist.name}</h2>
+          <p class="profile-hero__location">📍 ${therapist.suburb}, ${therapist.province}</p>
+          <div class="profile-hero__meta">
+            <span class="badge ${CLASS_BADGE[therapist.classification]}">
+              ${CLASS_LABEL[therapist.classification]}
+            </span>
+            ${therapist.verified ? '<span class="badge badge--verified">Verified</span>' : ''}
+            ${therapist.active   ? '<span class="badge badge--active">Active</span>'   : ''}
+          </div>
+          <div class="profile-hero__price">
+            <strong>R${therapist.pricePerHour}</strong>
+            <span>per hour</span>
+          </div>
+        </div>
+
+        <!-- ── Services Offered ── -->
+        <div class="profile-section">
+          <p class="profile-section__label">Services Offered</p>
+          <div class="badge-cluster">
+            ${therapist.services.map(s =>
+              `<span class="badge badge--service">${s}</span>`
+            ).join('')}
+          </div>
+        </div>
+
+        <!-- ── Massage Types ── -->
+        <div class="profile-section">
+          <p class="profile-section__label">Massage Types</p>
+          <div class="badge-cluster">
+            ${therapist.massageTypes.map(t =>
+              `<span class="badge badge--massage" style="font-size:var(--text-xs)">${t}</span>`
+            ).join('')}
+          </div>
+        </div>
+
+        <!-- ── Availability ── -->
+        <div class="profile-section">
+          <p class="profile-section__label">Available Hours</p>
+          <div class="hours-list">
+            ${therapist.availability.map(a => `
+              <div class="hours-row">
+                <span class="hours-row__days">${a.days}</span>
+                <span class="hours-row__time">${a.hours}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <!-- ── Mobile Massage ── -->
+        <div class="profile-section">
+          <p class="profile-section__label">Mobile Massage</p>
+          <div class="info-row">
+            <span>Travels to client</span>
+            ${therapist.mobileMassage
+              ? '<span class="badge badge--verified">Yes</span>'
+              : '<span class="badge badge--service" style="color:var(--text-muted)">No</span>'}
+          </div>
+        </div>
+
+        <!-- ── CTA ── -->
+        <div class="cta-wrap">
+          <button class="btn btn--primary btn--full btn--lg" id="enquiryBtn">
+            Send Enquiry
+          </button>
+        </div>`;
+
+      /* enquiry placeholder */
+      document.getElementById('enquiryBtn').addEventListener('click', () => {
+        // TODO: open enquiry form / WhatsApp
+      });
+    }
+  </script>
+
+</body>
+</html>
