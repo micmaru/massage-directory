@@ -218,11 +218,15 @@
   </nav>
 
 
-  <script>
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, query, where, getDocs }
+      from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
     /* ── URL params ───────────────────────────────────────── */
-    const params     = new URLSearchParams(window.location.search);
-    const suburb     = params.get('suburb')   || '';
-    const province   = params.get('province') || '';
+    const params   = new URLSearchParams(window.location.search);
+    const suburb   = params.get('suburb')   || '';
+    const province = params.get('province') || '';
 
     /* ── Back button ──────────────────────────────────────── */
     document.getElementById('backBtn').href = province
@@ -233,77 +237,95 @@
     document.title = suburb ? `${suburb} — MassageMap` : 'MassageMap';
     document.getElementById('pageTitle').textContent = suburb || 'Therapists';
 
-    /* ── Dummy therapist data ─────────────────────────────── */
-    // In production this would be a Firestore query filtered by suburb.
-    const THERAPISTS = [
-      { id: 1,  name: 'Zanele Dlamini',       type: 'massage',  service: 'Swedish'      },
-      { id: 2,  name: 'Priya Naidoo',          type: 'holistic', service: 'Reiki'        },
-      { id: 3,  name: 'Annika van der Berg',   type: 'massage',  service: 'Sports'       },
-      { id: 4,  name: 'Thabo Mokoena',         type: 'massage',  service: 'Deep Tissue'  },
-      { id: 5,  name: 'Sarah Mitchell',        type: 'holistic', service: 'Aromatherapy' },
-      { id: 7,  name: 'David Nkosi',           type: 'massage',  service: 'Remedial'     },
-      { id: 8,  name: 'Fatima Patel',          type: 'holistic', service: 'Reflexology'  },
-      { id: 9,  name: 'Jacques du Toit',       type: 'massage',  service: 'Trigger Point'},
-      { id: 10, name: 'Nomsa Dube',            type: 'holistic', service: 'Lymphatic'    },
-    ];
-
-    const TYPE_BADGE = {
-      massage:  'badge--massage',
-      holistic: 'badge--holistic',
-      adult:    'badge--adult',
-    };
-
-    const TYPE_LABEL = {
-      massage:  'Massage',
-      holistic: 'Holistic',
-      adult:    'Adult',
-    };
-
-    /* ── Render ───────────────────────────────────────────── */
+    /* ── DOM refs ─────────────────────────────────────────── */
     const content = document.getElementById('content');
     const summary = document.getElementById('summary');
 
-    if (!suburb) {
-      content.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state__icon">🔍</div>
-          <p>No suburb specified</p>
-          <p class="text-sm text-muted" style="margin-top:var(--space-2)">
-            <a href="index.html">← Back to home</a>
-          </p>
-        </div>`;
-    } else {
-      summary.textContent = `${THERAPISTS.length} therapists`;
+    /* ── Load & render ────────────────────────────────────── */
+    async function init() {
+      if (!suburb) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state__icon">🔍</div>
+            <p>No suburb specified</p>
+            <p class="text-sm text-muted" style="margin-top:var(--space-2)">
+              <a href="index.html">← Back to home</a>
+            </p>
+          </div>`;
+        return;
+      }
 
-      content.innerHTML = `
-        <div class="listing-table">
+      content.innerHTML =
+        '<p style="color:var(--text-muted);font-size:var(--text-sm);padding:var(--space-4)">Loading…</p>';
 
-          <!-- Column headers -->
-          <div class="listing-col-header listing-col-grid">
-            <span>Therapist</span>
-            <span>Type</span>
-            <span>Service</span>
-            <span></span>
-          </div>
+      try {
+        const snap = await getDocs(
+          query(
+            collection(db, 'suppliers'),
+            where('suburb', '==', suburb),
+            where('status', '==', 'active')
+          )
+        );
 
-          <!-- Rows -->
-          ${THERAPISTS.map(t => `
-            <a
-              href="profile.html?id=${t.id}&suburb=${encodeURIComponent(suburb)}&province=${encodeURIComponent(province)}"
-              class="listing-row"
-            >
-              <span class="listing-row__name">${t.name}</span>
-              <span class="listing-row__type">
-                <span class="badge ${TYPE_BADGE[t.type]}">${TYPE_LABEL[t.type]}</span>
-              </span>
-              <span class="listing-row__service">
-                <span class="badge badge--service">${t.service}</span>
-              </span>
-              <span class="listing-row__chevron">›</span>
-            </a>`).join('')}
+        // Filter out adult classification
+        const therapists = [];
+        snap.forEach(docSnap => {
+          const d = docSnap.data();
+          if (d.classification === 'adult') return;
+          therapists.push({ id: docSnap.id, ...d });
+        });
 
-        </div>`;
+        if (therapists.length === 0) {
+          summary.textContent = '0 therapists';
+          content.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state__icon">💆</div>
+              <p>No therapists found in ${suburb}</p>
+              <p class="text-sm text-muted" style="margin-top:var(--space-2)">
+                <a href="index.html">← Back to home</a>
+              </p>
+            </div>`;
+          return;
+        }
+
+        summary.textContent = `${therapists.length} therapist${therapists.length !== 1 ? 's' : ''}`;
+
+        content.innerHTML = `
+          <div class="listing-table">
+
+            <div class="listing-col-header listing-col-grid">
+              <span>Therapist</span>
+              <span>Mobile</span>
+              <span>Service</span>
+              <span></span>
+            </div>
+
+            ${therapists.map(t => `
+              <a
+                href="profile.html?id=${t.id}&suburb=${encodeURIComponent(suburb)}&province=${encodeURIComponent(province)}"
+                class="listing-row"
+              >
+                <span class="listing-row__name">${t.displayName || ''}</span>
+                <span class="listing-row__type">
+                  ${t.mobileAvailable
+                    ? '<span class="badge badge--verified">Mobile</span>'
+                    : ''}
+                </span>
+                <span class="listing-row__service">
+                  <span class="badge badge--service">${(t.services && t.services[0]) || '—'}</span>
+                </span>
+                <span class="listing-row__chevron">›</span>
+              </a>`).join('')}
+
+          </div>`;
+      } catch (err) {
+        console.error('Firestore error:', err);
+        content.innerHTML =
+          '<p style="color:var(--text-muted);padding:var(--space-4)">Failed to load. Please refresh.</p>';
+      }
     }
+
+    init();
   </script>
 
 </body>

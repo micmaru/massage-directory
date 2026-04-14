@@ -250,7 +250,11 @@
   </nav>
 
 
-  <script>
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { doc, getDoc }
+      from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
     /* ── URL params ───────────────────────────────────────── */
     const params   = new URLSearchParams(window.location.search);
     const id       = params.get('id')       || '';
@@ -262,133 +266,165 @@
       ? `listings.html?suburb=${encodeURIComponent(suburb)}&province=${encodeURIComponent(province)}`
       : 'listings.html';
 
-    /* ── Dummy therapist data ─────────────────────────────── */
-    // In production: Firestore doc read from suppliers/{id}
-    const THERAPISTS = {
-      '1': {
-        name:          'Zanele Dlamini',
-        suburb:        'Sandton',
-        province:      'Gauteng',
-        classification: 'massage',
-        verified:      true,
-        active:        true,
-        pricePerHour:  350,
-        services:      ['Full Body', 'Back & Neck', 'Feet & Legs', 'Head & Scalp'],
-        massageTypes:  ['Swedish', 'Deep Tissue', 'Hot Stone', 'Relaxation'],
-        availability:  [
-          { days: 'Mon – Fri',  hours: '09:00 – 18:00' },
-          { days: 'Saturday',   hours: '10:00 – 15:00' },
-          { days: 'Sunday',     hours: 'By appointment' },
-        ],
-        mobileMassage: true,
-      },
-    };
-
-    const CLASS_BADGE = {
-      massage:  'badge--massage',
-      holistic: 'badge--holistic',
-    };
-
-    const CLASS_LABEL = {
-      massage:  'Massage',
-      holistic: 'Holistic',
-    };
-
-    /* ── Render ───────────────────────────────────────────── */
+    /* ── DOM refs ─────────────────────────────────────────── */
     const content = document.getElementById('content');
-    const therapist = THERAPISTS[id];
 
-    if (!therapist) {
-      document.title = 'Profile — MassageMap';
-      document.getElementById('pageTitle').textContent = 'Profile';
-      content.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state__icon">👤</div>
-          <p>Therapist not found</p>
-          <p class="text-sm text-muted" style="margin-top:var(--space-2)">
-            <a href="index.html">← Back to home</a>
-          </p>
-        </div>`;
-    } else {
-      /* page meta */
-      const firstName = therapist.name.split(' ')[0];
-      document.title = `${therapist.name} — MassageMap`;
-      document.getElementById('pageTitle').textContent = firstName;
+    /* ── Load & render ────────────────────────────────────── */
+    async function init() {
+      if (!id) {
+        document.title = 'Profile — MassageMap';
+        document.getElementById('pageTitle').textContent = 'Profile';
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state__icon">👤</div>
+            <p>No therapist specified</p>
+            <p class="text-sm text-muted" style="margin-top:var(--space-2)">
+              <a href="index.html">← Back to home</a>
+            </p>
+          </div>`;
+        return;
+      }
 
-      content.innerHTML = `
+      content.innerHTML =
+        '<p style="color:var(--text-muted);font-size:var(--text-sm);padding:var(--space-4)">Loading…</p>';
 
-        <!-- ── Hero ── -->
-        <div class="profile-hero">
-          <h2 class="profile-hero__name">${therapist.name}</h2>
-          <p class="profile-hero__location">📍 ${therapist.suburb}, ${therapist.province}</p>
-          <div class="profile-hero__meta">
-            <span class="badge ${CLASS_BADGE[therapist.classification]}">
-              ${CLASS_LABEL[therapist.classification]}
-            </span>
-            ${therapist.verified ? '<span class="badge badge--verified">Verified</span>' : ''}
-            ${therapist.active   ? '<span class="badge badge--active">Active</span>'   : ''}
+      try {
+        const snap = await getDoc(doc(db, 'suppliers', id));
+
+        if (!snap.exists()) {
+          document.title = 'Profile — MassageMap';
+          document.getElementById('pageTitle').textContent = 'Profile';
+          content.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state__icon">👤</div>
+              <p>Therapist not found</p>
+              <p class="text-sm text-muted" style="margin-top:var(--space-2)">
+                <a href="index.html">← Back to home</a>
+              </p>
+            </div>`;
+          return;
+        }
+
+        const t           = snap.data();
+        const displayName = t.displayName || t.firstName || 'Therapist';
+        const firstName   = t.firstName || displayName.split(' ')[0];
+
+        document.title = `${displayName} — MassageMap`;
+        document.getElementById('pageTitle').textContent = firstName;
+
+        const GENDER_LABEL = {
+          ladies:     'Ladies only',
+          gentlemen:  'Gentlemen only',
+          both:       'All genders',
+        };
+
+        const yesNo = val =>
+          val
+            ? '<span class="badge badge--verified">Yes</span>'
+            : '<span style="color:var(--text-muted);font-size:var(--text-sm)">No</span>';
+
+        content.innerHTML = `
+
+          <!-- ── Hero ── -->
+          <div class="profile-hero">
+            <h2 class="profile-hero__name">${displayName}</h2>
+            <p class="profile-hero__location">📍 ${t.suburb || suburb}${province ? ', ' + province : ''}</p>
+            <div class="profile-hero__meta">
+              <span class="badge badge--active">Active</span>
+              ${t.supplierType === 'spa' ? '<span class="badge badge--holistic">Spa</span>' : ''}
+            </div>
           </div>
-          <div class="profile-hero__price">
-            <strong>R${therapist.pricePerHour}</strong>
-            <span>per hour</span>
-          </div>
-        </div>
 
-        <!-- ── Services Offered ── -->
-        <div class="profile-section">
-          <p class="profile-section__label">Services Offered</p>
-          <div class="badge-cluster">
-            ${therapist.services.map(s =>
-              `<span class="badge badge--service">${s}</span>`
-            ).join('')}
-          </div>
-        </div>
+          ${t.photoUrl && t.photoVisible === 'public' ? `
+          <!-- ── Photo ── -->
+          <div class="profile-section" style="padding:0;overflow:hidden">
+            <img src="${t.photoUrl}" alt="${displayName}"
+              style="width:100%;display:block;object-fit:cover;max-height:220px">
+          </div>` : ''}
 
-        <!-- ── Massage Types ── -->
-        <div class="profile-section">
-          <p class="profile-section__label">Massage Types</p>
-          <div class="badge-cluster">
-            ${therapist.massageTypes.map(t =>
-              `<span class="badge badge--massage" style="font-size:var(--text-xs)">${t}</span>`
-            ).join('')}
-          </div>
-        </div>
+          ${t.about ? `
+          <!-- ── About ── -->
+          <div class="profile-section">
+            <p class="profile-section__label">About</p>
+            <p style="font-size:var(--text-sm);color:var(--text);line-height:1.6;margin:0">${t.about}</p>
+          </div>` : ''}
 
-        <!-- ── Availability ── -->
-        <div class="profile-section">
-          <p class="profile-section__label">Available Hours</p>
-          <div class="hours-list">
-            ${therapist.availability.map(a => `
+          ${t.services && t.services.length ? `
+          <!-- ── Services Offered ── -->
+          <div class="profile-section">
+            <p class="profile-section__label">Services Offered</p>
+            <div class="badge-cluster">
+              ${t.services.map(s => `<span class="badge badge--service">${s}</span>`).join('')}
+            </div>
+          </div>` : ''}
+
+          ${t.massageTypes && t.massageTypes.length ? `
+          <!-- ── Massage Types ── -->
+          <div class="profile-section">
+            <p class="profile-section__label">Massage Types</p>
+            <div class="badge-cluster">
+              ${t.massageTypes.map(mt =>
+                `<span class="badge badge--massage" style="font-size:var(--text-xs)">${mt}</span>`
+              ).join('')}
+            </div>
+          </div>` : ''}
+
+          <!-- ── Availability ── -->
+          <div class="profile-section">
+            <p class="profile-section__label">Available Hours</p>
+            <div class="hours-list">
               <div class="hours-row">
-                <span class="hours-row__days">${a.days}</span>
-                <span class="hours-row__time">${a.hours}</span>
-              </div>`).join('')}
+                <span class="hours-row__days">Mon – Sun</span>
+                <span class="hours-row__time">${t.availableFrom || '–'} – ${t.availableTo || '–'}</span>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- ── Mobile Massage ── -->
-        <div class="profile-section">
-          <p class="profile-section__label">Mobile Massage</p>
-          <div class="info-row">
-            <span>Travels to client</span>
-            ${therapist.mobileMassage
-              ? '<span class="badge badge--verified">Yes</span>'
-              : '<span class="badge badge--service" style="color:var(--text-muted)">No</span>'}
+          <!-- ── Details ── -->
+          <div class="profile-section">
+            <p class="profile-section__label">Details</p>
+            <div class="hours-list">
+              <div class="hours-row">
+                <span class="hours-row__days">Mobile massage</span>
+                <span>${yesNo(t.mobileAvailable)}</span>
+              </div>
+              <div class="hours-row">
+                <span class="hours-row__days">Shower facilities</span>
+                <span>${yesNo(t.showerFacilities)}</span>
+              </div>
+              <div class="hours-row">
+                <span class="hours-row__days">Parking available</span>
+                <span>${yesNo(t.parkingAvailable)}</span>
+              </div>
+              ${t.genderServed ? `
+              <div class="hours-row">
+                <span class="hours-row__days">Serves</span>
+                <span style="color:var(--text-muted);font-size:var(--text-sm)">
+                  ${GENDER_LABEL[t.genderServed] || t.genderServed}
+                </span>
+              </div>` : ''}
+            </div>
           </div>
-        </div>
 
-        <!-- ── CTA ── -->
-        <div class="cta-wrap">
-          <button class="btn btn--primary btn--full btn--lg" id="enquiryBtn">
-            Send Enquiry
-          </button>
-        </div>`;
+          <!-- ── CTA ── -->
+          <div class="cta-wrap">
+            <button class="btn btn--primary btn--full btn--lg" id="enquiryBtn">
+              Send Enquiry
+            </button>
+          </div>`;
 
-      /* enquiry placeholder */
-      document.getElementById('enquiryBtn').addEventListener('click', () => {
-        // TODO: open enquiry form / WhatsApp
-      });
+        document.getElementById('enquiryBtn').addEventListener('click', () => {
+          // TODO: open enquiry form / WhatsApp
+        });
+
+      } catch (err) {
+        console.error('Firestore error:', err);
+        content.innerHTML =
+          '<p style="color:var(--text-muted);padding:var(--space-4)">Failed to load profile. Please refresh.</p>';
+      }
     }
+
+    init();
   </script>
 
 </body>

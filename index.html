@@ -245,106 +245,24 @@
   </nav>
 
 
-  <script>
-    /* ── Data ─────────────────────────────────────────────── */
-    const PROVINCES = [
-      {
-        name: 'Gauteng',
-        suburbs: [
-          { name: 'Sandton',       count: 12 },
-          { name: 'Rosebank',      count: 8  },
-          { name: 'Fourways',      count: 15 },
-          { name: 'Midrand',       count: 9  },
-          { name: 'Bryanston',     count: 11 },
-          { name: 'Melville',      count: 6  },
-          { name: 'Randburg',      count: 14 },
-          { name: 'Centurion',     count: 18 },
-          { name: 'Boksburg',      count: 7  },
-          { name: 'Germiston',     count: 5  },
-          { name: 'Pretoria East', count: 22 },
-          { name: 'Hatfield',      count: 10 },
-          { name: 'Brooklyn',      count: 9  },
-          { name: 'Soweto',        count: 4  },
-          { name: 'Edenvale',      count: 6  },
-        ],
-      },
-      {
-        name: 'Western Cape',
-        suburbs: [
-          { name: 'Cape Town CBD', count: 19 },
-          { name: 'Sea Point',     count: 14 },
-          { name: 'Camps Bay',     count: 11 },
-          { name: 'Claremont',     count: 9  },
-          { name: 'Stellenbosch',  count: 8  },
-          { name: 'Paarl',         count: 5  },
-          { name: 'George',        count: 6  },
-        ],
-      },
-      {
-        name: 'KwaZulu-Natal',
-        suburbs: [
-          { name: 'Umhlanga',      count: 16 },
-          { name: 'Durban CBD',    count: 13 },
-          { name: 'Berea',         count: 8  },
-          { name: 'Westville',     count: 7  },
-          { name: 'Pinetown',      count: 5  },
-          { name: 'Ballito',       count: 9  },
-        ],
-      },
-      {
-        name: 'Eastern Cape',
-        suburbs: [
-          { name: 'Port Elizabeth', count: 11 },
-          { name: 'East London',    count: 8  },
-          { name: 'Summerstrand',   count: 6  },
-          { name: 'Greenacres',     count: 4  },
-        ],
-      },
-      {
-        name: 'Free State',
-        suburbs: [
-          { name: 'Bloemfontein',    count: 9 },
-          { name: 'Welkom',          count: 3 },
-          { name: 'Langenhovenpark', count: 4 },
-        ],
-      },
-      {
-        name: 'North West',
-        suburbs: [
-          { name: 'Rustenburg',    count: 7 },
-          { name: 'Potchefstroom', count: 5 },
-          { name: 'Klerksdorp',    count: 4 },
-        ],
-      },
-      {
-        name: 'Mpumalanga',
-        suburbs: [
-          { name: 'Nelspruit',   count: 6 },
-          { name: 'Witbank',     count: 4 },
-          { name: 'White River', count: 3 },
-        ],
-      },
-      {
-        name: 'Limpopo',
-        suburbs: [
-          { name: 'Polokwane',  count: 5 },
-          { name: 'Tzaneen',    count: 3 },
-          { name: 'Phalaborwa', count: 2 },
-        ],
-      },
-      {
-        name: 'Northern Cape',
-        suburbs: [
-          { name: 'Kimberley', count: 5 },
-          { name: 'Upington',  count: 3 },
-        ],
-      },
-    ];
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, query, where, getDocs }
+      from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
-    // Compute totals once
-    PROVINCES.forEach(p => {
-      p.total = p.suburbs.reduce((s, sub) => s + sub.count, 0);
-    });
+    /* ── Province display order (ID → display name) ───────── */
+    const PROVINCE_ORDER = [
+      { id: 'gauteng',       name: 'Gauteng'       },
+      { id: 'western-cape',  name: 'Western Cape'  },
+      { id: 'kwazulu-natal', name: 'KwaZulu-Natal' },
+      { id: 'eastern-cape',  name: 'Eastern Cape'  },
+      { id: 'free-state',    name: 'Free State'    },
+      { id: 'north-west',    name: 'North West'    },
+      { id: 'mpumalanga',    name: 'Mpumalanga'    },
+      { id: 'limpopo',       name: 'Limpopo'       },
+      { id: 'northern-cape', name: 'Northern Cape' },
+    ];
+    const PROVINCE_NAME = Object.fromEntries(PROVINCE_ORDER.map(p => [p.id, p.name]));
 
     /* ── DOM refs ─────────────────────────────────────────── */
     const grid         = document.getElementById('provinceGrid');
@@ -356,64 +274,96 @@
     const totalSummary = document.getElementById('totalSummary');
     const searchCount  = document.getElementById('searchCount');
 
+    /* ── State ────────────────────────────────────────────── */
+    let provinceCounts = {};  // provinceId → count (all active incl. adult)
+    let suburbIndex    = [];  // [{ suburb, provinceId, provinceName, count }] excl. adult
+
+    /* ── Fetch all active suppliers ───────────────────────── */
+    async function loadData() {
+      grid.innerHTML =
+        '<p style="color:var(--text-muted);font-size:var(--text-sm);padding:var(--space-4)">Loading…</p>';
+
+      const snap = await getDocs(
+        query(collection(db, 'suppliers'), where('status', '==', 'active'))
+      );
+
+      provinceCounts = {};
+      const suburbMap = {}; // "suburb||provinceId" → { suburb, provinceId, count }
+
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
+        const pId = d.province || '';
+
+        // Province count — all active including adult
+        provinceCounts[pId] = (provinceCounts[pId] || 0) + 1;
+
+        // Suburb index — exclude adult
+        if (d.classification !== 'adult' && d.suburb) {
+          const key = `${d.suburb}||${pId}`;
+          if (!suburbMap[key]) suburbMap[key] = { suburb: d.suburb, provinceId: pId, count: 0 };
+          suburbMap[key].count++;
+        }
+      });
+
+      suburbIndex = Object.values(suburbMap).map(s => ({
+        ...s,
+        provinceName: PROVINCE_NAME[s.provinceId] || s.provinceId,
+      }));
+
+      buildGrid();
+    }
+
     /* ── Build province grid ──────────────────────────────── */
     function buildGrid() {
       grid.innerHTML = '';
 
-      const grandTotal = PROVINCES.reduce((s, p) => s + p.total, 0);
-      totalSummary.textContent = `${grandTotal.toLocaleString()} therapists`;
+      const grandTotal = Object.values(provinceCounts).reduce((s, n) => s + n, 0);
+      totalSummary.textContent = `${grandTotal.toLocaleString()} therapist${grandTotal !== 1 ? 's' : ''}`;
 
-      PROVINCES.forEach((province, idx) => {
-        const card = document.createElement('button');
-        card.className = 'province-card';
+      PROVINCE_ORDER.forEach((province, idx) => {
+        const count = provinceCounts[province.id] || 0;
+        const card  = document.createElement('button');
+        card.className  = 'province-card';
         card.dataset.idx = idx;
         card.innerHTML = `
           <span class="province-card__name">${province.name}</span>
-          <span class="province-card__count">${province.total} therapists</span>`;
+          <span class="province-card__count">${count} therapist${count !== 1 ? 's' : ''}</span>`;
         grid.appendChild(card);
       });
     }
 
-    /* ── highlight matching text in search ───────────────── */
-    function highlight(text, query) {
-      if (!query) return text;
-      const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    /* ── Highlight matching text ──────────────────────────── */
+    function highlight(text, q) {
+      if (!q) return text;
+      const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
       return text.replace(re, '<mark style="background:rgba(108,99,255,0.3);color:var(--text);border-radius:2px">$1</mark>');
     }
 
-    /* ── Province card click → navigate to suburb screen ─── */
+    /* ── Province card click → suburb screen ─────────────── */
     grid.addEventListener('click', e => {
       const card = e.target.closest('.province-card');
       if (!card) return;
-      const province = PROVINCES[parseInt(card.dataset.idx)];
+      const province = PROVINCE_ORDER[parseInt(card.dataset.idx)];
       window.location.href = `suburb.html?province=${encodeURIComponent(province.name)}`;
     });
 
     /* ── Search ───────────────────────────────────────────── */
     searchInput.addEventListener('input', () => {
-      const query = searchInput.value.trim().toLowerCase();
+      const q = searchInput.value.trim().toLowerCase();
 
-      if (!query) {
-        // Back to grid view
+      if (!q) {
         gridSection.classList.remove('hidden');
         searchSec.classList.add('hidden');
         noResults.classList.add('hidden');
         return;
       }
 
-      // Show search section, hide grid
       gridSection.classList.add('hidden');
       searchSec.classList.remove('hidden');
 
-      // Collect matching suburbs across all provinces
-      const matches = [];
-      PROVINCES.forEach(p => {
-        p.suburbs.forEach(s => {
-          if (s.name.toLowerCase().includes(query) || p.name.toLowerCase().includes(query)) {
-            matches.push({ suburb: s, province: p.name });
-          }
-        });
-      });
+      const matches = suburbIndex.filter(s =>
+        s.suburb.toLowerCase().includes(q) || s.provinceName.toLowerCase().includes(q)
+      );
 
       if (matches.length === 0) {
         searchRes.innerHTML = '';
@@ -426,26 +376,24 @@
       searchCount.textContent = `${matches.length} area${matches.length !== 1 ? 's' : ''}`;
 
       searchRes.innerHTML = matches.map(m => `
-        <button class="suburb-item" data-suburb="${m.suburb.name}" data-province="${m.province}">
+        <button class="suburb-item" data-suburb="${m.suburb}" data-province="${m.provinceName}">
           <span>
-            <span class="suburb-item__name">${highlight(m.suburb.name, query)}</span>
-            <div class="suburb-item__province">${m.province}</div>
+            <span class="suburb-item__name">${highlight(m.suburb, q)}</span>
+            <div class="suburb-item__province">${m.provinceName}</div>
           </span>
           <span class="suburb-item__right">
-            <span class="suburb-item__count">${m.suburb.count}</span>
+            <span class="suburb-item__count">${m.count}</span>
             <span class="suburb-item__chevron">›</span>
           </span>
         </button>`).join('');
     });
 
-    /* ── Search suburb click → navigate to listings ────────── */
+    /* ── Search result click → listings ──────────────────── */
     document.addEventListener('click', e => {
       const btn = e.target.closest('.suburb-item');
       if (!btn) return;
-      const suburb   = btn.dataset.suburb;
-      const province = btn.dataset.province;
       window.location.href =
-        `listings.html?suburb=${encodeURIComponent(suburb)}&province=${encodeURIComponent(province)}`;
+        `listings.html?suburb=${encodeURIComponent(btn.dataset.suburb)}&province=${encodeURIComponent(btn.dataset.province)}`;
     });
 
     /* ── Header search button ─────────────────────────────── */
@@ -455,7 +403,11 @@
     });
 
     /* ── Init ─────────────────────────────────────────────── */
-    buildGrid();
+    loadData().catch(err => {
+      console.error('Firestore error:', err);
+      grid.innerHTML =
+        '<p style="color:var(--text-muted);padding:var(--space-4)">Failed to load data. Please refresh.</p>';
+    });
   </script>
 
 </body>

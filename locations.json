@@ -1,0 +1,472 @@
+{
+  "provinces": [
+    {
+      "id": "gauteng",
+      "name": "Gauteng",
+      "areas": [
+        {
+          "id": "sandton-north-johannesburg",
+          "name": "Sandton & North Johannesburg",
+          "suburbs": [
+            "Sandton", "Fourways", "Bryanston", "Bramley", "Melrose Arch",
+            "Sunninghill", "Benmore Gardens", "Morningside", "Rivonia",
+            "Paulshof", "Woodmead", "Lonehill", "Dainfern", "Kyalami",
+            "Craighall Park", "Rosebank", "Houghton", "Norwood",
+            "Orange Grove", "Illovo", "Parkhurst", "Parktown"
+          ]
+        },
+        {
+          "id": "east-rand",
+          "name": "East Rand",
+          "suburbs": [
+            "Edenvale", "Benoni", "Germiston", "Kempton Park", "Kensington",
+            "Boksburg", "Bedfordview", "Bonaero Park", "Alberton",
+            "Bracken Gardens", "Eastleigh", "Brakpan", "Springs",
+            "Nigel", "Devon", "Tembisa"
+          ]
+        },
+        {
+          "id": "west-rand-randburg",
+          "name": "West Rand & Randburg",
+          "suburbs": [
+            "Northriding", "Blairgowrie", "Ferndale", "Randburg",
+            "Randpark Ridge", "Craighall", "Parkhurst", "Horizon",
+            "Fontainebleau", "Fairland", "Florida", "Honeydew",
+            "Krugersdorp", "Muldersdrift", "Roodepoort", "Weltevredenpark",
+            "Northcliff", "Linden", "Greenside"
+          ]
+        },
+        {
+          "id": "pretoria-east",
+          "name": "Pretoria East",
+          "suburbs": [
+            "Waterkloof Ridge", "Garsfontein", "Hazelwood", "Wingate Park",
+            "Constantia Park", "Brooklyn", "Lynnwood", "Lynnwood Manor",
+            "Menlyn", "Moreleta Park", "Faerie Glen", "Erasmuskloof",
+            "Newlands", "Die Wilgers", "Willowbridge", "Ashlea Gardens",
+            "Groenkloof", "Hatfield"
+          ]
+        },
+        {
+          "id": "pretoria-central",
+          "name": "Pretoria Central",
+          "suburbs": [
+            "Arcadia", "Sunnyside", "Hatfield", "Brooklyn",
+            "Capital Park", "Doornpoort", "Elandspoort", "Gezina",
+            "Pretoria Central", "Muckleneuk"
+          ]
+        },
+        {
+          "id": "pretoria-north",
+          "name": "Pretoria North",
+          "suburbs": [
+            "Pretoria North", "Florauna", "Montana", "Akasia",
+            "Karenpark", "Doornpoort", "Wonderboom", "The Orchards",
+            "Rosslyn", "Hercules"
+          ]
+        },
+        {
+          "id": "centurion",
+          "name": "Centurion",
+          "suburbs": [
+            "Centurion", "Wierda Park", "Highveld", "Hennopspark",
+            "Lyttleton Manor", "Clubview", "Pierre van Ryneveld",
+            "Irene", "Eldoraigne", "Wierdapark", "Doringkloof",
+            "Theresapark", "Rooihuiskraal"
+          ]
+        },
+        {
+          "id": "midrand",
+          "name": "Midrand",
+          "suburbs": [
+            "Midrand", "Noordwyk", "Vorna Valley", "Glen Austin",
+            "Halfway House", "Olifantsfontein", "Waterfall",
+            "Kyalami", "Dainfern", "Crowthorne", "Sagewood"
+          ]
+        },
+        {
+          "id": "johannesburg-south",
+          "name": "Johannesburg South",
+          "suburbs": [
+            "Meyerton", "Vereeniging", "Homestead", "Kibler Park",
+            "Mulbarton", "Robertsham", "Turffontein", "Linmeyer",
+            "Ridgeway", "Johannesburg South", "Heidelberg",
+            "Alberton", "Vanderbijlpark"
+          ]
+        },
+        {
+          "id": "soweto-west",
+          "name": "Soweto & West Johannesburg",
+          "suburbs": [
+            "Soweto", "Protea Glen", "Dobsonville", "Roodepoort",
+            "Witpoortjie", "Florida", "Krugersdorp"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "western-cape",
+      "name": "Western Cape",
+      "areas": [
+        {
+          "id": "cape-town-city-bowl",
+          "name": "Cape Town City Bowl",
+          "suburbs": [
+            "City Central", "Gardens", "Foreshore", "Woodstock",
+            "Oranjezicht", "Maitland", "De Waterkant", "Bo-Kaap",
+            "Salt River", "Observatory", "V&A Waterfront"
+          ]
+        },
+        {
+          "id": "cape-town-green-point",
+          "name": "Green Point & Atlantic Seaboard",
+          "suburbs": [
+            "Green Point", "Sea Point", "Three Anchor Bay",
+            "Camps Bay", "Clifton", "Bantry Bay", "Fresnaye",
+            "Mouille Point"
+          ]
+        },
+        {
+          "id": "cape-town-southern-suburbs-claremont",
+          "name": "Southern Suburbs",
+          "suburbs": [
+            "Claremont", "Kenilworth", "Rondebosch", "Mowbray",
+            "Crawford", "Lansdowne", "Newlands", "Pinelands",
+            "Bishopscourt", "Wynberg", "Observatory"
+          ]
+        },
+        {
+          "id": "cape-town-constantia",
+          "name": "Constantia & Deep South",
+          "suburbs": [
+            "Constantia", "Bergvliet", "Plumstead", "Diep River",
+            "Muizenberg", "Kirstenhof", "Heathfield", "Tokai",
+            "Steenberg", "Retreat", "Lakeside", "Kalk Bay",
+            "Fish Hoek", "Glencairn", "Simon's Town"
+          ]
+        },
+        {
+          "id": "bloubergstrand-table-view",
+          "name": "Blouberg & Table View",
+          "suburbs": [
+            "Bloubergstrand", "Table View", "Milnerton", "West Beach",
+            "Parklands", "Sunset Beach", "Big Bay", "Sunningdale",
+            "Flamingo Vlei", "Tableview"
+          ]
+        },
+        {
+          "id": "century-city",
+          "name": "Century City & Surrounds",
+          "suburbs": [
+            "Century City", "Marconi Beam", "Monte Vista",
+            "Edgemead", "De Tijger"
+          ]
+        },
+        {
+          "id": "northern-suburbs-north-n1",
+          "name": "Northern Suburbs",
+          "suburbs": [
+            "Durbanville", "Tygervalley", "Brackenfell", "Kraaifontein",
+            "Panorama", "Plattekloof", "Bothasig", "Belville",
+            "Parow", "Goodwood", "Boston", "Oakdale", "Kuils River",
+            "Kuilsriver", "Kenridge"
+          ]
+        },
+        {
+          "id": "strand-somerset-west",
+          "name": "Strand & Somerset West",
+          "suburbs": [
+            "Somerset West", "Strand", "Gordon's Bay", "Stellenbosch",
+            "Macassar", "Sir Lowry's Pass"
+          ]
+        },
+        {
+          "id": "winelands",
+          "name": "Winelands",
+          "suburbs": [
+            "Stellenbosch", "Paarl", "Worcester", "Franschhoek",
+            "Wellington", "Grabouw", "Ceres"
+          ]
+        },
+        {
+          "id": "west-coast",
+          "name": "West Coast",
+          "suburbs": [
+            "Melkbosstrand", "Langebaan", "St Helena Bay",
+            "Porterville", "Saldanha", "Vredenburg",
+            "Darling", "Yzerfontein"
+          ]
+        },
+        {
+          "id": "garden-route",
+          "name": "Garden Route",
+          "suburbs": [
+            "George", "Mossel Bay", "Sedgefield", "Knysna",
+            "Plettenberg Bay", "Wilderness", "Hartenbos",
+            "Great Brak River", "Oudtshoorn"
+          ]
+        },
+        {
+          "id": "overberg",
+          "name": "Overberg",
+          "suburbs": [
+            "Hermanus", "Betty's Bay", "Swellendam", "Bredasdorp",
+            "Caledon", "Stanford", "Kleinmond"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kwazulu-natal",
+      "name": "KwaZulu-Natal",
+      "areas": [
+        {
+          "id": "durban-central-berea",
+          "name": "Durban Central & Berea",
+          "suburbs": [
+            "Durban Central", "Berea", "Musgrave", "Glenwood",
+            "Morningside", "Overport", "Umbilo", "Greyville"
+          ]
+        },
+        {
+          "id": "durban-north",
+          "name": "Durban North",
+          "suburbs": [
+            "Durban North", "Umhlanga Rocks", "La Lucia",
+            "Glenashley", "Redhill", "Mount Edgecombe"
+          ]
+        },
+        {
+          "id": "umhlanga-ballito",
+          "name": "Umhlanga & Ballito",
+          "suburbs": [
+            "Umhlanga", "Umhlanga Ridge", "Ballito", "Salt Rock",
+            "Dolphin Coast", "Sheffield Beach", "Stanger", "Mandini"
+          ]
+        },
+        {
+          "id": "durban-south",
+          "name": "Durban South",
+          "suburbs": [
+            "Amanzimtoti", "Illovo Beach", "Bluff", "Chatsworth",
+            "Montclair", "Isipingo", "Kingsburgh", "Warner Beach",
+            "Umlazi"
+          ]
+        },
+        {
+          "id": "durban-west-hillcrest",
+          "name": "Hillcrest & Outer West",
+          "suburbs": [
+            "Hillcrest", "Kloof", "Pinetown", "New Germany",
+            "Westville", "Queensburgh", "Gillitts", "Assagay"
+          ]
+        },
+        {
+          "id": "pietermaritzburg",
+          "name": "Pietermaritzburg",
+          "suburbs": [
+            "Pietermaritzburg", "Northdale", "Scottsville",
+            "Hayfields", "Wembley", "Hilton", "Howick"
+          ]
+        },
+        {
+          "id": "richards-bay",
+          "name": "Richards Bay & North Coast",
+          "suburbs": [
+            "Richards Bay", "Empangeni", "Mtubatuba",
+            "Eshowe", "Ulundi"
+          ]
+        },
+        {
+          "id": "south-coast-kzn",
+          "name": "South Coast",
+          "suburbs": [
+            "Port Shepstone", "Margate", "Uvongo", "Shelly Beach",
+            "Hibberdene", "Scottburgh", "Park Rynie"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eastern-cape",
+      "name": "Eastern Cape",
+      "areas": [
+        {
+          "id": "gqeberha",
+          "name": "Gqeberha (Port Elizabeth)",
+          "suburbs": [
+            "Newton Park", "Walmer", "Gqeberha Central", "Summerstrand",
+            "Humewood", "Greenacres", "Charlo", "Mill Park",
+            "Framesby", "Lorraine", "Hunters Retreat"
+          ]
+        },
+        {
+          "id": "east-london",
+          "name": "East London",
+          "suburbs": [
+            "East London", "Cambridge", "Nahoon", "Vincent",
+            "Beacon Bay", "Berea", "Gonubie", "Mdantsane"
+          ]
+        },
+        {
+          "id": "garden-route-ec",
+          "name": "Garden Route Eastern Cape",
+          "suburbs": [
+            "Jeffreys Bay", "St Francis Bay", "Humansdorp",
+            "Grahamstown", "Port Alfred"
+          ]
+        },
+        {
+          "id": "inland-eastern-cape",
+          "name": "Inland Eastern Cape",
+          "suburbs": [
+            "Queenstown", "Graaff-Reinet", "Aliwal North",
+            "Cradock", "Bhisho", "King William's Town"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "free-state",
+      "name": "Free State",
+      "areas": [
+        {
+          "id": "bloemfontein",
+          "name": "Bloemfontein",
+          "suburbs": [
+            "Bloemfontein", "Waverley", "Westdene", "Universitas",
+            "Heuwelsig", "Bultfontein", "Willows", "Brandwag",
+            "Langenhovenpark", "Pentagon Park", "Fichardt Park"
+          ]
+        },
+        {
+          "id": "free-state-other",
+          "name": "Other Free State",
+          "suburbs": [
+            "Welkom", "Sasolburg", "Bethlehem", "Kroonstad",
+            "Parys", "Virginia", "Phuthaditjhaba"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "limpopo",
+      "name": "Limpopo",
+      "areas": [
+        {
+          "id": "polokwane",
+          "name": "Polokwane",
+          "suburbs": [
+            "Polokwane", "Seshego", "Bendor", "Flora Park",
+            "Ivypark", "Ladanna", "Nirvana", "Superbia"
+          ]
+        },
+        {
+          "id": "tzaneen-phalaborwa",
+          "name": "Tzaneen & Phalaborwa",
+          "suburbs": [
+            "Tzaneen", "Phalaborwa", "Lephalale", "Mokopane",
+            "Bela-Bela", "Thabazimbi"
+          ]
+        },
+        {
+          "id": "limpopo-other",
+          "name": "Other Limpopo",
+          "suburbs": [
+            "Louis Trichardt", "Thohoyandou", "Giyani",
+            "Malamulele", "Burgersfort"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mpumalanga",
+      "name": "Mpumalanga",
+      "areas": [
+        {
+          "id": "emalahleni-witbank",
+          "name": "Emalahleni (Witbank)",
+          "suburbs": [
+            "Emalahleni", "Witbank", "Del Judor", "Reyno Ridge",
+            "Clewer", "Tasbet Park"
+          ]
+        },
+        {
+          "id": "nelspruit-mbombela",
+          "name": "Nelspruit (Mbombela)",
+          "suburbs": [
+            "Nelspruit", "Mbombela", "White River", "Hazyview",
+            "Barberton", "Komatipoort"
+          ]
+        },
+        {
+          "id": "middelburg-mpumalanga",
+          "name": "Middelburg",
+          "suburbs": [
+            "Middelburg", "Aerorand", "Mhluzi",
+            "Nasaret", "Dennesig"
+          ]
+        },
+        {
+          "id": "mpumalanga-other",
+          "name": "Other Mpumalanga",
+          "suburbs": [
+            "Secunda", "Ermelo", "Standerton", "Bethal",
+            "Lydenburg", "Graskop", "Sabie", "Pilgrim's Rest"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "north-west",
+      "name": "North West",
+      "areas": [
+        {
+          "id": "rustenburg",
+          "name": "Rustenburg",
+          "suburbs": [
+            "Rustenburg", "Waterfall East", "Proteapark",
+            "Cashan", "Tlhabane"
+          ]
+        },
+        {
+          "id": "mahikeng",
+          "name": "Mahikeng (Mafikeng)",
+          "suburbs": [
+            "Mahikeng", "Mafikeng", "Mmabatho", "Lichtenburg"
+          ]
+        },
+        {
+          "id": "klerksdorp-potchefstroom",
+          "name": "Klerksdorp & Potchefstroom",
+          "suburbs": [
+            "Klerksdorp", "Potchefstroom", "Stilfontein",
+            "Orkney", "Hartbeespoort", "Brits"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "northern-cape",
+      "name": "Northern Cape",
+      "areas": [
+        {
+          "id": "kimberley",
+          "name": "Kimberley",
+          "suburbs": [
+            "Kimberley", "Galeshewe", "Beaconsfield",
+            "Herlear", "Phutanang"
+          ]
+        },
+        {
+          "id": "northern-cape-other",
+          "name": "Other Northern Cape",
+          "suburbs": [
+            "Upington", "Springbok", "De Aar", "Kuruman",
+            "Kathu", "Douglas"
+          ]
+        }
+      ]
+    }
+  ]
+}
