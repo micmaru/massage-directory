@@ -3,10 +3,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Suppliers: public read, no public write
-    match /suppliers/{document=**} {
+    // Suppliers: public read, authenticated user can create their own document
+    match /suppliers/{supplierId} {
       allow read: if true;
-      allow write: if false;
+      allow create: if request.auth != null && request.auth.uid == supplierId;
     }
 
     // Enquiries: public read and write (customer contact form submissions)

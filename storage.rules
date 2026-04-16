@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ID photos — write: own authenticated user only, read: authenticated only (admin use)
+    match /suppliers/{uid}/id/{filename} {
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow read:  if request.auth != null;
+    }
+
+    // Profile photos — write: own authenticated user only, read: public
+    match /suppliers/{uid}/photos/{filename} {
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow read:  if true;
+    }
+
+    // Deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+  }
+}

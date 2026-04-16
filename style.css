@@ -395,6 +395,7 @@ button.card:active {
   background-repeat: no-repeat;
   background-position: right var(--space-4) center;
   padding-right: 40px;
+  line-height: 44px;
   cursor: pointer;
 }
 
