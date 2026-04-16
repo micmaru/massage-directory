@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Send Enquiry — MassageMap</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Page header ── */
+    .header__back {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--accent-light);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      text-decoration: none;
+      min-width: 72px;
+      padding: var(--space-2);
+      margin: calc(-1 * var(--space-2));
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      transition: color var(--ease);
+    }
+    .header__back:hover { color: var(--text); }
+
+    .header__page-title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      pointer-events: none;
+      margin: 0;
+    }
+
+    /* ── Form card ── */
+    .enquiry-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--space-5) var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .enquiry-to {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: var(--space-5);
+    }
+
+    .enquiry-to span {
+      color: var(--accent-light);
+    }
+
+    /* ── Form fields ── */
+    .field {
+      margin-bottom: var(--space-4);
+    }
+
+    .field label {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: var(--space-2);
+    }
+
+    .field label .required {
+      color: var(--accent-light);
+      margin-left: 2px;
+    }
+
+    .field label .optional {
+      font-weight: 400;
+      color: var(--text-muted);
+      opacity: 0.6;
+      margin-left: 4px;
+    }
+
+    .input {
+      width: 100%;
+      height: 44px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: var(--text-base);
+      padding: 0 var(--space-4);
+      transition: border-color var(--ease);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.18);
+    }
+
+    .input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    textarea.input {
+      height: auto;
+      padding: var(--space-3) var(--space-4);
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.5;
+    }
+
+    .char-count {
+      text-align: right;
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      margin-top: var(--space-1);
+      opacity: 0.7;
+    }
+
+    .char-count.near-limit {
+      color: #f59e0b;
+    }
+
+    .char-count.at-limit {
+      color: #ef4444;
+    }
+
+    /* ── Submit button ── */
+    .submit-btn {
+      width: 100%;
+      height: 48px;
+      font-size: var(--text-base);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fixed header -->
+  <header class="header" style="position:relative;">
+    <a class="header__back" href="javascript:history.back()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Back
+    </a>
+    <p class="header__page-title">Enquiry</p>
+    <div style="min-width:72px;"></div>
+  </header>
+
+  <!-- Main content -->
+  <main class="container" style="padding-top: var(--space-5);">
+
+    <div class="enquiry-card">
+      <p class="enquiry-to" id="enquiryHeading">Send enquiry to <span id="therapistName">therapist</span></p>
+
+      <form id="enquiryForm" novalidate>
+
+        <!-- Hidden supplier ID -->
+        <input type="hidden" id="supplierId" name="supplierId" />
+
+        <!-- Customer name -->
+        <div class="field">
+          <label for="customerName">Your name <span class="required">*</span></label>
+          <input class="input" type="text" id="customerName" name="customerName"
+                 placeholder="e.g. Jane Smith" autocomplete="name" required />
+        </div>
+
+        <!-- Customer cell -->
+        <div class="field">
+          <label for="customerCell">Cell number <span class="required">*</span></label>
+          <input class="input" type="tel" id="customerCell" name="customerCell"
+                 placeholder="e.g. 082 123 4567" autocomplete="tel" required />
+        </div>
+
+        <!-- Customer email (optional) -->
+        <div class="field">
+          <label for="customerEmail">
+            Email address <span class="optional">(optional)</span>
+          </label>
+          <input class="input" type="email" id="customerEmail" name="customerEmail"
+                 placeholder="e.g. jane@example.com" autocomplete="email" />
+        </div>
+
+        <!-- Message -->
+        <div class="field">
+          <label for="message">Message <span class="required">*</span></label>
+          <textarea class="input" id="message" name="message"
+                    placeholder="Tell the therapist what you're looking for…"
+                    maxlength="500" required></textarea>
+          <p class="char-count" id="charCount">0 / 500</p>
+        </div>
+
+        <!-- Inline error -->
+        <p id="formError" style="display:none; color:#ef4444; font-size:var(--text-sm);
+           margin-bottom:var(--space-4);">
+          Something went wrong. Please try again.
+        </p>
+
+        <button type="submit" class="btn btn--primary submit-btn" id="submitBtn">Send Enquiry</button>
+
+      </form>
+    </div>
+
+    <!-- Success state (hidden until submit succeeds) -->
+    <div id="successCard" class="enquiry-card" style="display:none; text-align:center;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+           stroke="var(--green)" stroke-width="2" stroke-linecap="round"
+           stroke-linejoin="round" style="margin: 0 auto var(--space-4);">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+      <p style="font-size:var(--text-lg); font-weight:700; color:var(--text);
+                margin-bottom:var(--space-3);">Enquiry sent!</p>
+      <p style="font-size:var(--text-sm); color:var(--text-muted);
+                margin-bottom:var(--space-5);">
+        Your enquiry has been sent. The therapist will contact you shortly.
+      </p>
+      <a href="javascript:history.back()" class="btn btn--primary" style="width:100%;">
+        Back to listing
+      </a>
+    </div>
+
+  </main>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, addDoc, doc, getDoc, serverTimestamp }
+      from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+    // Function URLs — swap these for deployed URLs in production
+    const EMAIL_FN_URL = 'http://localhost:3001/send-enquiry-email';
+    const SMS_FN_URL   = 'http://localhost:3002/send-enquiry-sms';
+
+    // ── Read URL params ──────────────────────────────────────────
+    const params      = new URLSearchParams(window.location.search);
+    const supplierId  = params.get('supplierId')  || '';
+    const displayName = params.get('displayName') || 'therapist';
+
+    document.getElementById('supplierId').value          = supplierId;
+    document.getElementById('therapistName').textContent = displayName;
+
+    // ── Char counter ─────────────────────────────────────────────
+    const messageEl = document.getElementById('message');
+    const charCount = document.getElementById('charCount');
+
+    messageEl.addEventListener('input', () => {
+      const len = messageEl.value.length;
+      charCount.textContent = `${len} / 500`;
+      charCount.classList.toggle('near-limit', len >= 400 && len < 500);
+      charCount.classList.toggle('at-limit',   len >= 500);
+    });
+
+    // ── Form submit ───────────────────────────────────────────────
+    document.getElementById('enquiryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name  = document.getElementById('customerName').value.trim();
+      const cell  = document.getElementById('customerCell').value.trim();
+      const email = document.getElementById('customerEmail').value.trim();
+      const msg   = messageEl.value.trim();
+      const errorEl  = document.getElementById('formError');
+      const submitBtn = document.getElementById('submitBtn');
+
+      // Client-side validation
+      if (!name) { document.getElementById('customerName').focus(); return; }
+      if (!cell)  { document.getElementById('customerCell').focus(); return; }
+      if (!msg)   { messageEl.focus(); return; }
+
+      // Disable button while saving
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending…';
+      errorEl.style.display = 'none';
+
+      try {
+        await addDoc(collection(db, 'enquiries'), {
+          supplierId:       supplierId,
+          customerName:     name,
+          customerCell:     cell,
+          customerEmail:    email,
+          message:          msg,
+          createdAt:        serverTimestamp(),
+          notificationSent: false,
+        });
+
+        // Show success immediately — email notification is fire-and-forget
+        document.getElementById('enquiryForm').closest('.enquiry-card').style.display = 'none';
+        document.getElementById('successCard').style.display = 'block';
+
+        // Fetch supplier details then fire email + SMS notifications (non-blocking)
+        (async () => {
+          try {
+            const supplierSnap = await getDoc(doc(db, 'suppliers', supplierId));
+            if (!supplierSnap.exists()) return;
+            const s            = supplierSnap.data();
+            const supplierName = s.displayName || s.firstName || 'Therapist';
+
+            // Email notification
+            try {
+              await fetch(EMAIL_FN_URL, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  supplierEmail: s.email || '',
+                  supplierName,
+                  customerName:  name,
+                  customerCell:  cell,
+                  customerEmail: email,
+                  message:       msg,
+                }),
+              });
+            } catch (emailErr) {
+              console.error('Email notification failed (non-blocking):', emailErr);
+            }
+
+            // SMS notification
+            try {
+              await fetch(SMS_FN_URL, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  supplierCell: s.cell || s.contactCell || '',
+                  supplierName,
+                  customerName: name,
+                  customerCell: cell,
+                  message:      msg,
+                }),
+              });
+            } catch (smsErr) {
+              console.error('SMS notification failed (non-blocking):', smsErr);
+            }
+
+          } catch (supplierErr) {
+            console.error('Supplier fetch failed (non-blocking):', supplierErr);
+          }
+        })();
+
+      } catch (err) {
+        console.error('Enquiry save failed:', err);
+        errorEl.style.display = 'block';
+        submitBtn.disabled    = false;
+        submitBtn.textContent = 'Send Enquiry';
+      }
+    });
+  </script>
+
+</body>
+</html>
