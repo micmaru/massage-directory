@@ -143,6 +143,10 @@ const individualClassifications = [
   'massage','massage','massage','holistic','massage',
   'holistic','massage','massage','holistic','adult',
 ];
+const individualDisplayMassageTypes = [
+  'Massage', 'Sport',   'Massage', 'Reiki',  'Chinese',
+  'Indian',  'Massage', 'Sport',   'Reiki',  'Adult',
+];
 
 for (let i = 0; i < 10; i++) {
   const gender    = individualGenders[i];
@@ -152,14 +156,17 @@ for (let i = 0; i < 10; i++) {
   const addr      = pick(loc.addressTemplates);
   const svcCount  = 2 + Math.floor(Math.random() * 3);  // 2–4 services
   const mtCount   = 1 + Math.floor(Math.random() * 3);  // 1–3 massage types
+  const cell      = saCell();
 
   therapists.push({
-    supplierType:      'individual',
-    classification:    individualClassifications[i],
+    supplierType:        'individual',
+    classification:      individualClassifications[i],
+    displayMassageType:  individualDisplayMassageTypes[i],
     firstName,
     lastName,
-    displayName:       `${firstName} ${lastName}`,
-    cellNumber:        saCell(),
+    displayName:         `${firstName} ${lastName}`,
+    cellNumber:          cell,
+    whatsappNumber:      cell,
     email:             `${firstName.toLowerCase().replace(/\s/g,'')}.${lastName.toLowerCase().replace(/[\s']/g,'')}@gmail.com`,
     suburb:            loc.suburb,
     province:          loc.province,
@@ -183,7 +190,8 @@ for (let i = 0; i < 10; i++) {
 
 // 5 spas
 const spaLocations = LOCATIONS.slice(5, 10);
-const spaClassifications = ['massage', 'holistic', 'massage', 'holistic', 'massage'];
+const spaClassifications        = ['massage', 'holistic', 'massage', 'holistic', 'massage'];
+const spaDisplayMassageTypes    = ['Massage', 'Indian',   'Massage', 'Reiki',    'Chinese'];
 
 for (let i = 0; i < 5; i++) {
   const loc      = spaLocations[i % spaLocations.length];
@@ -191,14 +199,17 @@ for (let i = 0; i < 5; i++) {
   const spaName  = SPA_NAMES[i];
   const svcCount = 3 + Math.floor(Math.random() * 2);  // 3–4 services
   const mtCount  = 2 + Math.floor(Math.random() * 3);  // 2–4 massage types
+  const cell     = saCell();
 
   therapists.push({
-    supplierType:      'spa',
-    classification:    spaClassifications[i],
-    firstName:         '',
-    lastName:          '',
-    displayName:       spaName,
-    cellNumber:        saCell(),
+    supplierType:        'spa',
+    classification:      spaClassifications[i],
+    displayMassageType:  spaDisplayMassageTypes[i],
+    firstName:           '',
+    lastName:            '',
+    displayName:         spaName,
+    cellNumber:          cell,
+    whatsappNumber:      cell,
     email:             `info@${spaName.toLowerCase().replace(/[\s&]/g,'-')}.co.za`,
     suburb:            loc.suburb,
     province:          loc.province,

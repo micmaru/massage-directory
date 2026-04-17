@@ -44,145 +44,226 @@
       margin: 0;
     }
 
-    /* ── Profile hero card ── */
-    .profile-hero {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: var(--space-5) var(--space-4);
-      margin-bottom: var(--space-4);
-    }
-
-    .profile-hero__name {
-      font-size: var(--text-xl);
-      font-weight: 700;
-      color: var(--text);
-      margin: 0 0 var(--space-2);
-      line-height: 1.2;
-    }
-
-    .profile-hero__location {
-      font-size: var(--text-sm);
-      color: var(--text-muted);
-      margin-bottom: var(--space-3);
-    }
-
-    .profile-hero__meta {
+    /* ── Stepper layout ── */
+    .stepper-layout {
       display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      flex-wrap: wrap;
+      gap: 14px;
+      align-items: flex-start;
     }
-
-    .profile-hero__price {
-      margin-top: var(--space-3);
-      padding-top: var(--space-3);
-      border-top: 1px solid var(--border);
-      font-size: var(--text-sm);
-      color: var(--text-muted);
-      display: flex;
-      align-items: baseline;
-      gap: var(--space-2);
-    }
-
-    .profile-hero__price strong {
-      font-size: var(--text-lg);
-      font-weight: 700;
-      color: var(--green);
-    }
-
-    /* ── Active badge (green, pulsing dot) ── */
-    .badge--active {
-      background: rgba(16, 185, 129, 0.12);
-      color: var(--green);
-      border-color: rgba(16, 185, 129, 0.28);
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-1);
-    }
-
-    .badge--active::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      flex-shrink: 0;
-    }
-
-    /* ── Profile sections ── */
-    .profile-section {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: var(--space-4);
-      margin-bottom: var(--space-3);
-    }
-
-    .profile-section__label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: var(--text-muted);
-      margin-bottom: var(--space-3);
-    }
-
-    /* ── Badge clusters ── */
-    .badge-cluster {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-2);
-    }
-
-    /* service badge — neutral */
-    .badge--service {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text);
-      border-color: rgba(255, 255, 255, 0.1);
-      font-size: var(--text-xs);
-      font-weight: 500;
-    }
-
-    /* ── Availability rows ── */
-    .hours-list {
+    .stepper-col {
       display: flex;
       flex-direction: column;
-      gap: var(--space-2);
+      align-items: center;
+      padding-top: 2px;
+      flex-shrink: 0;
+    }
+    .stepper-ball {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+      text-decoration: none;
+      line-height: 1;
+    }
+    .stepper-ball--active {
+      background: #6c63ff;
+      color: #fff;
+    }
+    .stepper-ball--past {
+      background: #2a2f3d;
+      border: 1.5px solid #4a5568;
+      color: #4a5568;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .stepper-ball--past:hover {
+      border-color: #6c63ff;
+      color: #6c63ff;
+    }
+    .stepper-line {
+      width: 1.5px;
+      height: 20px;
+      background: #2a2f3d;
+    }
+    .content-col {
+      flex: 1;
+      min-width: 0;
     }
 
+    /* ── Profile photo ── */
+    .profile-photo {
+      width: 100%;
+      height: 140px;
+      border-radius: 12px;
+      background: #161b27;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .profile-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .profile-initials {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #6c63ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Profile identity ── */
+    .profile-identity {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .profile-identity__name {
+      font-size: 17px;
+      font-weight: 500;
+      color: #e2e8f0;
+      margin-bottom: 4px;
+    }
+    .profile-identity__meta {
+      font-size: 12px;
+      color: #8892a4;
+      margin-bottom: 10px;
+    }
+
+    /* ── Massage type badge ── */
+    .mtype-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .mtype--massage { background: #3C3489; color: #CECBF6; }
+    .mtype--adult   { background: #854F0B; color: #FAC775; }
+    .mtype--chinese { background: #085041; color: #9FE1CB; }
+    .mtype--indian  { background: #085041; color: #9FE1CB; }
+    .mtype--sport   { background: #0C447C; color: #B5D4F4; }
+    .mtype--reiki   { background: #3C3489; color: #CECBF6; }
+
+    /* ── Expandable buttons ── */
+    .expand-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .expand-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .expand-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 0.5px solid #6c63ff;
+      font-size: var(--text-base);
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      font-family: var(--font-sans);
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+    .expand-btn--outline {
+      background: #161b27;
+      color: #6c63ff;
+    }
+    .expand-btn--filled {
+      background: #6c63ff;
+      color: #fff;
+    }
+    .expand-btn:hover { opacity: 0.85; }
+    .expand-btn.is-open { border-radius: 12px 12px 0 0; }
+
+    .expand-chevron {
+      font-size: 16px;
+      line-height: 1;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .expand-btn.is-open .expand-chevron {
+      transform: rotate(180deg);
+    }
+
+    .expand-panel {
+      display: none;
+      padding: 14px 16px;
+      border: 0.5px solid #6c63ff;
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      background: #161b27;
+    }
+    .expand-panel.is-open { display: block; }
+
+    /* ── Hours rows ── */
     .hours-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: var(--text-sm);
+      padding: 3px 0;
     }
+    .hours-row__day  { color: #8892a4; }
+    .hours-row__time { color: #e2e8f0; font-variant-numeric: tabular-nums; }
 
-    .hours-row__days {
-      color: var(--text);
-      font-weight: 500;
-    }
-
-    .hours-row__time {
-      color: var(--text-muted);
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* ── Mobile massage row ── */
-    .info-row {
+    /* ── Massage type pills in panel ── */
+    .mtype-pill-cluster {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .mtype-pill {
+      background: #1e2435;
+      color: #e2e8f0;
+      border-radius: 20px;
+      padding: 4px 12px;
       font-size: var(--text-sm);
-      color: var(--text);
-      font-weight: 500;
     }
 
-    /* ── Send Enquiry CTA ── */
-    .cta-wrap {
-      margin-top: var(--space-5);
-      margin-bottom: var(--space-3);
+    /* ── Contact buttons ── */
+    .contact-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
+    .contact-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #1e2435;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #e2e8f0;
+      font-size: var(--text-sm);
+      font-weight: 500;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+    .contact-btn:hover { background: #252d42; }
 
     /* ── Empty / error state ── */
     .empty-state {
@@ -190,7 +271,6 @@
       padding: var(--space-8) var(--space-4);
       color: var(--text-muted);
     }
-
     .empty-state__icon {
       font-size: 2.5rem;
       margin-bottom: var(--space-3);
@@ -213,7 +293,12 @@
        Main Content
   ══════════════════════════════════════ -->
   <main class="page">
-    <div id="content"></div>
+    <div class="stepper-layout">
+      <div class="stepper-col" id="stepperCol"></div>
+      <div class="content-col">
+        <div id="content"></div>
+      </div>
+    </div>
   </main>
 
 
@@ -260,14 +345,156 @@
     const id       = params.get('id')       || '';
     const suburb   = params.get('suburb')   || '';
     const province = params.get('province') || '';
+    const type     = params.get('type')     || '';
 
     /* ── Back button ──────────────────────────────────────── */
-    document.getElementById('backBtn').href = suburb
-      ? `listings.html?suburb=${encodeURIComponent(suburb)}&province=${encodeURIComponent(province)}`
-      : 'listings.html';
+    {
+      let backHref = 'listings.html';
+      const bp = [];
+      if (suburb)   bp.push(`suburb=${encodeURIComponent(suburb)}`);
+      if (province) bp.push(`province=${encodeURIComponent(province)}`);
+      if (type)     bp.push(`type=${encodeURIComponent(type)}`);
+      if (bp.length) backHref += '?' + bp.join('&');
+      document.getElementById('backBtn').href = backHref;
+    }
 
     /* ── DOM refs ─────────────────────────────────────────── */
     const content = document.getElementById('content');
+
+    /* ── Stepper ─────────────────────────────────────────── */
+    (function buildStepper() {
+      const col = document.getElementById('stepperCol');
+      const hrefs = [
+        'index.html',
+        `suburb.html?type=${encodeURIComponent(type)}`,
+        `suburb.html?type=${encodeURIComponent(type)}&province=${encodeURIComponent(province)}`,
+        `listings.html?suburb=${encodeURIComponent(suburb)}&province=${encodeURIComponent(province)}&type=${encodeURIComponent(type)}`,
+      ];
+      let html = '';
+      for (let i = 0; i < 5; i++) {
+        if (i > 0) html += '<div class="stepper-line"></div>';
+        const n = i + 1;
+        if (n === 5) {
+          html += `<div class="stepper-ball stepper-ball--active">${n}</div>`;
+        } else {
+          html += `<a href="${hrefs[i]}" class="stepper-ball stepper-ball--past">${n}</a>`;
+        }
+      }
+      col.innerHTML = html;
+    })();
+
+    /* ── Helpers ─────────────────────────────────────────── */
+    function massageTypeBadge(val) {
+      const label = (val || 'Massage').trim();
+      const clsMap = {
+        'Massage': 'mtype--massage',
+        'Adult':   'mtype--adult',
+        'Chinese': 'mtype--chinese',
+        'Indian':  'mtype--indian',
+        'Sport':   'mtype--sport',
+        'Reiki':   'mtype--reiki',
+      };
+      const cls = clsMap[label] || 'mtype--massage';
+      return `<span class="mtype-badge ${cls}">${label}</span>`;
+    }
+
+    function getInitials(name) {
+      const words = (name || '').trim().split(/\s+/).filter(Boolean);
+      if (!words.length) return '?';
+      if (words.length === 1) return words[0][0].toUpperCase();
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+
+    function getPhotoUrl(t) {
+      if (t.photos && t.photos.length) {
+        const first = t.photos[0];
+        if (typeof first === 'string') return first;
+        if (first && first.url) return first.url;
+      }
+      if (t.photoVisible === 'public' && t.photoUrl) return t.photoUrl;
+      return null;
+    }
+
+    function saToWa(phone) {
+      const digits = (phone || '').replace(/\D/g, '');
+      if (!digits) return '';
+      if (digits.startsWith('27')) return digits;
+      if (digits.startsWith('0')) return '27' + digits.slice(1);
+      return digits;
+    }
+
+    function saToTel(phone) {
+      const digits = (phone || '').replace(/\D/g, '');
+      if (!digits) return '';
+      if (digits.startsWith('27')) return '+' + digits;
+      if (digits.startsWith('0')) return '+27' + digits.slice(1);
+      return '+' + digits;
+    }
+
+    function renderHours(weeklyHours, availableFrom, availableTo) {
+      if (!weeklyHours) {
+        if (availableFrom && availableTo) {
+          return `<div class="hours-row">
+            <span class="hours-row__day">Mon – Sun</span>
+            <span class="hours-row__time">${availableFrom} – ${availableTo}</span>
+          </div>`;
+        }
+        return '<p style="color:var(--text-muted);font-size:var(--text-sm);margin:0">Not specified</p>';
+      }
+
+      const DAYS   = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+      const LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+      const rows = DAYS.map((d, i) => {
+        const h = weeklyHours[d];
+        let time = 'Closed';
+        if (h) {
+          if (typeof h === 'string') time = h;
+          else if (h.from && h.to)  time = `${h.from} – ${h.to}`;
+        }
+        return { label: LABELS[i], time };
+      });
+
+      const allSame = rows.every(r => r.time === rows[0].time) && rows[0].time !== 'Closed';
+      if (allSame) {
+        return `<div class="hours-row">
+          <span class="hours-row__day">Mon – Sun</span>
+          <span class="hours-row__time">${rows[0].time}</span>
+        </div>`;
+      }
+
+      return rows.map(r =>
+        `<div class="hours-row">
+          <span class="hours-row__day">${r.label}</span>
+          <span class="hours-row__time">${r.time}</span>
+        </div>`
+      ).join('');
+    }
+
+    /* ── Panel toggle ─────────────────────────────────────── */
+    function togglePanel(n) {
+      for (let i = 1; i <= 3; i++) {
+        const btn   = document.getElementById(`expandBtn${i}`);
+        const panel = document.getElementById(`expandPanel${i}`);
+        if (!btn || !panel) continue;
+        if (i === n) {
+          const isOpen = panel.classList.contains('is-open');
+          btn.classList.toggle('is-open', !isOpen);
+          panel.classList.toggle('is-open', !isOpen);
+        } else {
+          btn.classList.remove('is-open');
+          panel.classList.remove('is-open');
+        }
+      }
+    }
+
+    function attachExpandListeners() {
+      for (let i = 1; i <= 3; i++) {
+        const n = i;
+        document.getElementById(`expandBtn${n}`)
+          ?.addEventListener('click', () => togglePanel(n));
+      }
+    }
 
     /* ── Load & render ────────────────────────────────────── */
     async function init() {
@@ -307,115 +534,98 @@
 
         const t           = snap.data();
         const displayName = t.displayName || t.firstName || 'Therapist';
-        const firstName   = t.firstName || displayName.split(' ')[0];
+        const photoUrl    = getPhotoUrl(t);
 
         document.title = `${displayName} — MassageMap`;
-        document.getElementById('pageTitle').textContent = firstName;
+        document.getElementById('pageTitle').textContent = displayName;
 
-        const GENDER_LABEL = {
-          ladies:     'Ladies only',
-          gentlemen:  'Gentlemen only',
-          both:       'All genders',
-        };
+        /* Photo or initials */
+        const photoHtml = photoUrl
+          ? `<img src="${photoUrl}" alt="${displayName}">`
+          : `<div class="profile-initials">${getInitials(displayName)}</div>`;
 
-        const yesNo = val =>
-          val
-            ? '<span class="badge badge--verified">Yes</span>'
-            : '<span style="color:var(--text-muted);font-size:var(--text-sm)">No</span>';
+        /* Gender · suburb meta line */
+        const genderStr = type !== 'spa' && t.gender
+          ? (t.gender === 'female' ? 'Female' : t.gender === 'male' ? 'Male' : t.gender)
+          : '';
+        const metaParts = [genderStr, t.suburb || suburb].filter(Boolean);
+        const metaLine  = metaParts.join(' · ');
+
+        /* Massage types panel */
+        const massageTypesPills = (t.massageTypes && t.massageTypes.length)
+          ? `<div class="mtype-pill-cluster">
+               ${t.massageTypes.map(mt => `<span class="mtype-pill">${mt}</span>`).join('')}
+             </div>`
+          : '<p style="color:var(--text-muted);font-size:var(--text-sm);margin:0">Not specified</p>';
+
+        /* Hours panel */
+        const hoursHtml = renderHours(t.weeklyHours, t.availableFrom, t.availableTo);
+
+        /* Contact panel */
+        let contactHtml;
+        if (type !== 'spa') {
+          const rawPhone = t.cellNumber || t.whatsappNumber || t.phone || t.phoneNumber || '';
+          const waNum    = saToWa(rawPhone);
+          const telNum   = saToTel(rawPhone);
+          const waLink   = waNum  ? `<a href="https://wa.me/${waNum}" class="contact-btn" target="_blank" rel="noopener noreferrer"><span>💬</span><span>WhatsApp</span></a>` : '';
+          const telLink  = telNum ? `<a href="tel:${telNum}" class="contact-btn"><span>📞</span><span>Call</span></a>` : '';
+          contactHtml = waLink || telLink
+            ? `<div class="contact-group">${waLink}${telLink}</div>`
+            : '<p style="color:var(--text-muted);font-size:var(--text-sm);margin:0">No contact details available</p>';
+        } else {
+          const enquiryUrl = `enquiry.html?supplierId=${encodeURIComponent(id)}&displayName=${encodeURIComponent(displayName)}`;
+          contactHtml = `<div class="contact-group">
+            <a href="${enquiryUrl}" class="contact-btn"><span>✉️</span><span>Send Enquiry</span></a>
+          </div>`;
+        }
 
         content.innerHTML = `
+          <!-- Photo -->
+          <div class="profile-photo">${photoHtml}</div>
 
-          <!-- ── Hero ── -->
-          <div class="profile-hero">
-            <h2 class="profile-hero__name">${displayName}</h2>
-            <p class="profile-hero__location">📍 ${t.suburb || suburb}${province ? ', ' + province : ''}</p>
-            <div class="profile-hero__meta">
-              <span class="badge badge--active">Active</span>
-              ${t.supplierType === 'spa' ? '<span class="badge badge--holistic">Spa</span>' : ''}
-            </div>
+          <!-- Identity -->
+          <div class="profile-identity">
+            <div class="profile-identity__name">${displayName}</div>
+            ${metaLine ? `<div class="profile-identity__meta">${metaLine}</div>` : ''}
+            ${massageTypeBadge(t.displayMassageType)}
           </div>
 
-          ${t.photoUrl && t.photoVisible === 'public' ? `
-          <!-- ── Photo ── -->
-          <div class="profile-section" style="padding:0;overflow:hidden">
-            <img src="${t.photoUrl}" alt="${displayName}"
-              style="width:100%;display:block;object-fit:cover;max-height:220px">
-          </div>` : ''}
+          <!-- Expandable sections -->
+          <div class="expand-group">
 
-          ${t.about ? `
-          <!-- ── About ── -->
-          <div class="profile-section">
-            <p class="profile-section__label">About</p>
-            <p style="font-size:var(--text-sm);color:var(--text);line-height:1.6;margin:0">${t.about}</p>
-          </div>` : ''}
-
-          ${t.services && t.services.length ? `
-          <!-- ── Services Offered ── -->
-          <div class="profile-section">
-            <p class="profile-section__label">Services Offered</p>
-            <div class="badge-cluster">
-              ${t.services.map(s => `<span class="badge badge--service">${s}</span>`).join('')}
-            </div>
-          </div>` : ''}
-
-          ${t.massageTypes && t.massageTypes.length ? `
-          <!-- ── Massage Types ── -->
-          <div class="profile-section">
-            <p class="profile-section__label">Massage Types</p>
-            <div class="badge-cluster">
-              ${t.massageTypes.map(mt =>
-                `<span class="badge badge--massage" style="font-size:var(--text-xs)">${mt}</span>`
-              ).join('')}
-            </div>
-          </div>` : ''}
-
-          <!-- ── Availability ── -->
-          <div class="profile-section">
-            <p class="profile-section__label">Available Hours</p>
-            <div class="hours-list">
-              <div class="hours-row">
-                <span class="hours-row__days">Mon – Sun</span>
-                <span class="hours-row__time">${t.availableFrom || '–'} – ${t.availableTo || '–'}</span>
+            <div class="expand-item">
+              <button class="expand-btn expand-btn--outline" id="expandBtn1">
+                <span>Types of massage</span>
+                <span class="expand-chevron">▾</span>
+              </button>
+              <div class="expand-panel" id="expandPanel1">
+                ${massageTypesPills}
               </div>
             </div>
-          </div>
 
-          <!-- ── Details ── -->
-          <div class="profile-section">
-            <p class="profile-section__label">Details</p>
-            <div class="hours-list">
-              <div class="hours-row">
-                <span class="hours-row__days">Mobile massage</span>
-                <span>${yesNo(t.mobileAvailable)}</span>
+            <div class="expand-item">
+              <button class="expand-btn expand-btn--outline" id="expandBtn2">
+                <span>Working hours</span>
+                <span class="expand-chevron">▾</span>
+              </button>
+              <div class="expand-panel" id="expandPanel2">
+                ${hoursHtml}
               </div>
-              <div class="hours-row">
-                <span class="hours-row__days">Shower facilities</span>
-                <span>${yesNo(t.showerFacilities)}</span>
-              </div>
-              <div class="hours-row">
-                <span class="hours-row__days">Parking available</span>
-                <span>${yesNo(t.parkingAvailable)}</span>
-              </div>
-              ${t.genderServed ? `
-              <div class="hours-row">
-                <span class="hours-row__days">Serves</span>
-                <span style="color:var(--text-muted);font-size:var(--text-sm)">
-                  ${GENDER_LABEL[t.genderServed] || t.genderServed}
-                </span>
-              </div>` : ''}
             </div>
-          </div>
 
-          <!-- ── CTA ── -->
-          <div class="cta-wrap">
-            <button class="btn btn--primary btn--full btn--lg" id="enquiryBtn">
-              Send Enquiry
-            </button>
+            <div class="expand-item">
+              <button class="expand-btn expand-btn--filled" id="expandBtn3">
+                <span>Contact details</span>
+                <span class="expand-chevron">▾</span>
+              </button>
+              <div class="expand-panel" id="expandPanel3">
+                ${contactHtml}
+              </div>
+            </div>
+
           </div>`;
 
-        document.getElementById('enquiryBtn').addEventListener('click', () => {
-          // TODO: open enquiry form / WhatsApp
-        });
+        attachExpandListeners();
 
       } catch (err) {
         console.error('Firestore error:', err);

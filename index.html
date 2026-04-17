@@ -6,208 +6,354 @@
   <title>MassageMap — Find Massage Therapists in South Africa</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* ── Hero ── */
-    .hero {
-      padding: var(--space-5) 0 var(--space-5);
-    }
-
-    /* ── Section header ── */
-    .section-header {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      margin-bottom: var(--space-3);
-    }
-
-    /* ── Province grid ── */
-    .province-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-3);
-    }
-
-    .province-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: var(--space-4) var(--space-4) var(--space-3);
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 5px;
-      cursor: pointer;
-      font-family: var(--font-sans);
-      text-align: left;
-      transition: background var(--ease), border-color var(--ease), box-shadow var(--ease);
-      -webkit-tap-highlight-color: transparent;
-      position: relative;
-    }
-
-    .province-card:hover {
-      background: var(--bg-card-hover);
-    }
-
-    .province-card:active {
-      transform: scale(0.97);
-    }
-
-    .province-card__name {
-      font-size: var(--text-sm);
-      font-weight: 700;
+    /* ── Hamburger button ── */
+    .header__hamburger {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: none;
+      background: none;
       color: var(--text);
-      line-height: 1.3;
-    }
-
-    .province-card__count {
-      font-size: var(--text-xs);
-      color: var(--text-muted);
-      line-height: 1;
-    }
-
-    /* ── Suburb rows (search results) ── */
-    .suburb-item {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 12px var(--space-4);
-      background: none;
-      border: none;
-      border-top: 1px solid var(--border);
-      color: var(--text);
-      font-family: var(--font-sans);
-      font-size: var(--text-sm);
-      text-align: left;
+      justify-content: center;
       cursor: pointer;
       transition: background var(--ease);
       -webkit-tap-highlight-color: transparent;
     }
-
-    .suburb-item:first-child {
-      border-top: none;
+    .header__hamburger:hover { background: var(--bg-card-hover); }
+    .header__hamburger:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
 
-    .suburb-item:hover {
-      background: var(--bg-card-hover);
+    /* ── Home brand (absolute-centred inside fixed header) ── */
+    .header__home-brand {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: var(--text-lg);
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text);
+      white-space: nowrap;
+      pointer-events: none;
     }
 
-    .suburb-item:active {
-      background: rgba(255, 255, 255, 0.04);
+    /* ── Drawer backdrop ── */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 150;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    .drawer-backdrop--open {
+      opacity: 1;
+      visibility: visible;
     }
 
-    .suburb-item__name {
-      font-weight: 500;
+    /* ── Drawer panel ── */
+    .drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 200;
+      width: 280px;
+      max-width: 82vw;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
+    .drawer--open { transform: translateX(0); }
 
-    /* province badge shown in search results */
-    .suburb-item__province {
-      font-size: var(--text-xs);
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .suburb-item__right {
+    .drawer__head {
       display: flex;
       align-items: center;
-      gap: var(--space-2);
+      justify-content: space-between;
+      padding: 0 var(--space-4);
+      height: var(--header-h);
+      border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
+    .drawer__brand {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+    .drawer__close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.06);
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--ease), color var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .drawer__close:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+    .drawer__close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-    .suburb-item__count {
+    .drawer__nav { padding: var(--space-3) 0; }
+    .drawer__link {
+      display: flex;
+      align-items: center;
+      padding: 15px var(--space-5);
+      color: var(--text);
+      font-size: var(--text-base);
+      font-weight: 500;
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: background var(--ease), border-color var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .drawer__link:hover {
+      background: var(--bg-card-hover);
+      border-left-color: var(--accent);
+      color: var(--text);
+    }
+
+    /* ── Main layout ── */
+    .home-main {
+      display: flex;
+      flex-direction: column;
+      padding: var(--space-4);
+      max-width: 480px;
+      margin-inline: auto;
+      min-height: calc(100dvh - var(--header-h) - var(--nav-h) - env(safe-area-inset-bottom, 0px));
+    }
+
+    /* ── Hero ── */
+    .home-hero {
+      padding: var(--space-8) 0 var(--space-6);
+      text-align: center;
+    }
+    .home-hero__title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #e2e8f0;
+      line-height: 1.2;
+      margin-bottom: var(--space-2);
+      letter-spacing: -0.5px;
+    }
+    .home-hero__sub {
       font-size: var(--text-sm);
       color: var(--text-muted);
-      min-width: 20px;
-      text-align: right;
+      line-height: 1.5;
     }
 
-    .suburb-item__chevron {
+    /* ── Action cards ── */
+    .home-cards {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+    .home-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: var(--space-5);
+      border-radius: var(--radius);
+      text-decoration: none;
+      transition: opacity var(--ease), transform var(--ease), box-shadow var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .home-card:active { transform: scale(0.98); }
+
+    .home-card--filled {
+      background: var(--accent);
+      border: 1px solid transparent;
+    }
+    .home-card--filled:hover {
+      opacity: 0.92;
+      box-shadow: 0 6px 28px rgba(108,99,255,0.45);
+    }
+
+    .home-card--outlined {
+      background: #161b27;
+      border: 1px solid var(--accent);
+    }
+    .home-card--outlined:hover {
+      background: #1c2436;
+      box-shadow: 0 4px 24px rgba(108,99,255,0.18);
+    }
+
+    .home-card__title { font-size: var(--text-lg); font-weight: 700; }
+    .home-card--filled  .home-card__title { color: #fff; }
+    .home-card--outlined .home-card__title { color: #e2e8f0; }
+
+    .home-card__sub { font-size: var(--text-sm); }
+    .home-card--filled  .home-card__sub { color: rgba(255,255,255,0.78); }
+    .home-card--outlined .home-card__sub { color: var(--text-muted); }
+
+    /* ── Register footer ── */
+    .home-footer {
+      text-align: center;
+      font-size: var(--text-sm);
       color: var(--text-muted);
-      font-size: 16px;
-      opacity: 0.35;
+      margin-top: auto;
+      padding-bottom: var(--space-4);
+    }
+    .home-footer__link {
+      color: var(--accent);
+      font-weight: 600;
+      margin-left: 4px;
+      text-decoration: none;
+    }
+    .home-footer__link:hover { color: var(--accent-light); }
+
+    /* ── Stepper layout ── */
+    .stepper-layout {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .stepper-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 2px;
+      flex-shrink: 0;
+    }
+    .stepper-ball {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+      text-decoration: none;
       line-height: 1;
     }
-
-    /* ── Search results container ── */
-    .search-results-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
+    .stepper-ball--active {
+      background: #6c63ff;
+      color: #fff;
     }
-
-    /* ── No results ── */
-    .no-results {
-      text-align: center;
-      padding: var(--space-8) var(--space-4);
-      color: var(--text-muted);
+    .stepper-ball--past {
+      background: #2a2f3d;
+      border: 1.5px solid #4a5568;
+      color: #4a5568;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
     }
-
-    .no-results__icon {
-      font-size: 2.25rem;
-      margin-bottom: var(--space-3);
+    .stepper-ball--past:hover {
+      border-color: #6c63ff;
+      color: #6c63ff;
     }
-
-    .hidden { display: none !important; }
+    .stepper-line {
+      width: 1.5px;
+      height: 20px;
+      background: #2a2f3d;
+    }
+    .content-col {
+      flex: 1;
+      min-width: 0;
+    }
   </style>
 </head>
 <body>
 
   <!-- ══════════════════════════════════════
+       Drawer backdrop
+  ══════════════════════════════════════ -->
+  <div id="drawerBackdrop" class="drawer-backdrop" aria-hidden="true"></div>
+
+
+  <!-- ══════════════════════════════════════
+       Hamburger drawer
+  ══════════════════════════════════════ -->
+  <nav id="drawer" class="drawer" aria-label="Site navigation" aria-hidden="true">
+    <div class="drawer__head">
+      <span class="drawer__brand">
+        <span style="color:var(--accent)">Massage</span>Map
+      </span>
+      <button id="drawerClose" class="drawer__close" aria-label="Close menu">✕</button>
+    </div>
+    <div class="drawer__nav">
+      <a href="suburb.html?type=individual" class="drawer__link">Find a therapist</a>
+      <a href="suburb.html?type=spa"        class="drawer__link">Find a spa</a>
+      <a href="register.html"               class="drawer__link">Register as a Therapist / Spa</a>
+      <a href="about.html"                  class="drawer__link">About MassageMap</a>
+    </div>
+  </nav>
+
+
+  <!-- ══════════════════════════════════════
        Fixed Header
   ══════════════════════════════════════ -->
   <header class="header">
-    <div class="header__logo">💆 <span>Massage</span>Map</div>
-    <div class="header__actions">
-      <button class="header__icon-btn" id="headerSearchBtn" aria-label="Focus search">🔍</button>
-    </div>
+    <button
+      id="burgerBtn"
+      class="header__hamburger"
+      aria-label="Open menu"
+      aria-expanded="false"
+      aria-controls="drawer"
+    >
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+        <path d="M1 1h16M1 7h16M1 13h16"
+              stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <span class="header__home-brand" aria-hidden="true">
+      <span style="color:var(--accent)">Massage</span>Map
+    </span>
+    <div style="width:36px" aria-hidden="true"></div>
   </header>
 
 
   <!-- ══════════════════════════════════════
-       Main
+       Main Content
   ══════════════════════════════════════ -->
-  <main class="page">
+  <main class="home-main">
 
-    <!-- Search bar -->
-    <section class="hero">
-      <div class="input-wrapper">
-        <span class="input-wrapper__icon">🔍</span>
-        <input
-          type="search"
-          id="searchInput"
-          class="input"
-          placeholder="Search suburb or area..."
-          autocomplete="off"
-          autocorrect="off"
-          spellcheck="false"
-        />
+    <div class="stepper-layout">
+      <div class="stepper-col">
+        <div class="stepper-ball stepper-ball--active">1</div>
       </div>
-    </section>
+      <div class="content-col">
 
-    <!-- Province grid (default view) -->
-    <div id="gridSection">
-      <div class="section-header">
-        <span class="section-title" style="margin:0">Browse by Province</span>
-        <span class="text-muted text-sm" id="totalSummary"></span>
+        <section class="home-hero">
+          <h1 class="home-hero__title">Find your perfect massage</h1>
+          <p class="home-hero__sub">Browse therapists and spas across South Africa</p>
+        </section>
+
+        <div class="home-cards">
+          <a href="suburb.html?type=individual" class="home-card home-card--filled">
+            <span class="home-card__title">Find a therapist</span>
+            <span class="home-card__sub">Individual massage therapists near you</span>
+          </a>
+          <a href="suburb.html?type=spa" class="home-card home-card--outlined">
+            <span class="home-card__title">Find a spa</span>
+            <span class="home-card__sub">Spa treatments and facilities near you</span>
+          </a>
+        </div>
+
       </div>
-      <div class="province-grid" id="provinceGrid"></div>
     </div>
 
-    <!-- Search results (shown when query is active) -->
-    <div id="searchSection" class="hidden">
-      <div class="section-header">
-        <span class="section-title" style="margin:0">Results</span>
-        <span class="text-muted text-sm" id="searchCount"></span>
-      </div>
-      <div class="search-results-card" id="searchResults"></div>
-    </div>
-
-    <!-- No results -->
-    <div class="no-results hidden" id="noResults">
-      <div class="no-results__icon">🔍</div>
-      <p>No areas found</p>
-      <p class="text-sm text-muted" style="margin-top:var(--space-2)">Try a different suburb name</p>
-    </div>
+    <p class="home-footer">
+      Are you a therapist or spa?<a href="register.html" class="home-footer__link">Join here</a>
+    </p>
 
   </main>
 
@@ -230,10 +376,10 @@
         </button>
       </li>
       <li class="bottom-nav__item">
-        <button class="bottom-nav__link">
+        <a href="register.html" class="bottom-nav__link">
           <span aria-hidden="true">✍️</span>
           <span>Register</span>
-        </button>
+        </a>
       </li>
       <li class="bottom-nav__item">
         <button class="bottom-nav__link">
@@ -245,169 +391,32 @@
   </nav>
 
 
-  <script type="module">
-    import { db } from './firebase-config.js';
-    import { collection, query, where, getDocs }
-      from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+  <script>
+    const burgerBtn      = document.getElementById('burgerBtn');
+    const drawer         = document.getElementById('drawer');
+    const drawerBackdrop = document.getElementById('drawerBackdrop');
+    const drawerClose    = document.getElementById('drawerClose');
 
-    /* ── Province display order (ID → display name) ───────── */
-    const PROVINCE_ORDER = [
-      { id: 'gauteng',       name: 'Gauteng'       },
-      { id: 'western-cape',  name: 'Western Cape'  },
-      { id: 'kwazulu-natal', name: 'KwaZulu-Natal' },
-      { id: 'eastern-cape',  name: 'Eastern Cape'  },
-      { id: 'free-state',    name: 'Free State'    },
-      { id: 'north-west',    name: 'North West'    },
-      { id: 'mpumalanga',    name: 'Mpumalanga'    },
-      { id: 'limpopo',       name: 'Limpopo'       },
-      { id: 'northern-cape', name: 'Northern Cape' },
-    ];
-    const PROVINCE_NAME = Object.fromEntries(PROVINCE_ORDER.map(p => [p.id, p.name]));
-
-    /* ── DOM refs ─────────────────────────────────────────── */
-    const grid         = document.getElementById('provinceGrid');
-    const gridSection  = document.getElementById('gridSection');
-    const searchSec    = document.getElementById('searchSection');
-    const searchRes    = document.getElementById('searchResults');
-    const noResults    = document.getElementById('noResults');
-    const searchInput  = document.getElementById('searchInput');
-    const totalSummary = document.getElementById('totalSummary');
-    const searchCount  = document.getElementById('searchCount');
-
-    /* ── State ────────────────────────────────────────────── */
-    let provinceCounts = {};  // provinceId → count (all active incl. adult)
-    let suburbIndex    = [];  // [{ suburb, provinceId, provinceName, count }] excl. adult
-
-    /* ── Fetch all active suppliers ───────────────────────── */
-    async function loadData() {
-      grid.innerHTML =
-        '<p style="color:var(--text-muted);font-size:var(--text-sm);padding:var(--space-4)">Loading…</p>';
-
-      const snap = await getDocs(
-        query(collection(db, 'suppliers'), where('status', '==', 'active'))
-      );
-
-      provinceCounts = {};
-      const suburbMap = {}; // "suburb||provinceId" → { suburb, provinceId, count }
-
-      snap.forEach(docSnap => {
-        const d = docSnap.data();
-        const pId = d.province || '';
-
-        // Province count — all active including adult
-        provinceCounts[pId] = (provinceCounts[pId] || 0) + 1;
-
-        // Suburb index — exclude adult
-        if (d.classification !== 'adult' && d.suburb) {
-          const key = `${d.suburb}||${pId}`;
-          if (!suburbMap[key]) suburbMap[key] = { suburb: d.suburb, provinceId: pId, count: 0 };
-          suburbMap[key].count++;
-        }
-      });
-
-      suburbIndex = Object.values(suburbMap).map(s => ({
-        ...s,
-        provinceName: PROVINCE_NAME[s.provinceId] || s.provinceId,
-      }));
-
-      buildGrid();
+    function openDrawer() {
+      drawer.classList.add('drawer--open');
+      drawer.setAttribute('aria-hidden', 'false');
+      drawerBackdrop.classList.add('drawer-backdrop--open');
+      burgerBtn.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
     }
 
-    /* ── Build province grid ──────────────────────────────── */
-    function buildGrid() {
-      grid.innerHTML = '';
-
-      const grandTotal = Object.values(provinceCounts).reduce((s, n) => s + n, 0);
-      totalSummary.textContent = `${grandTotal.toLocaleString()} therapist${grandTotal !== 1 ? 's' : ''}`;
-
-      PROVINCE_ORDER.forEach((province, idx) => {
-        const count = provinceCounts[province.id] || 0;
-        const card  = document.createElement('button');
-        card.className  = 'province-card';
-        card.dataset.idx = idx;
-        card.innerHTML = `
-          <span class="province-card__name">${province.name}</span>
-          <span class="province-card__count">${count} therapist${count !== 1 ? 's' : ''}</span>`;
-        grid.appendChild(card);
-      });
+    function closeDrawer() {
+      drawer.classList.remove('drawer--open');
+      drawer.setAttribute('aria-hidden', 'true');
+      drawerBackdrop.classList.remove('drawer-backdrop--open');
+      burgerBtn.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
     }
 
-    /* ── Highlight matching text ──────────────────────────── */
-    function highlight(text, q) {
-      if (!q) return text;
-      const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-      return text.replace(re, '<mark style="background:rgba(108,99,255,0.3);color:var(--text);border-radius:2px">$1</mark>');
-    }
-
-    /* ── Province card click → suburb screen ─────────────── */
-    grid.addEventListener('click', e => {
-      const card = e.target.closest('.province-card');
-      if (!card) return;
-      const province = PROVINCE_ORDER[parseInt(card.dataset.idx)];
-      window.location.href = `suburb.html?province=${encodeURIComponent(province.name)}`;
-    });
-
-    /* ── Search ───────────────────────────────────────────── */
-    searchInput.addEventListener('input', () => {
-      const q = searchInput.value.trim().toLowerCase();
-
-      if (!q) {
-        gridSection.classList.remove('hidden');
-        searchSec.classList.add('hidden');
-        noResults.classList.add('hidden');
-        return;
-      }
-
-      gridSection.classList.add('hidden');
-      searchSec.classList.remove('hidden');
-
-      const matches = suburbIndex.filter(s =>
-        s.suburb.toLowerCase().includes(q) || s.provinceName.toLowerCase().includes(q)
-      );
-
-      if (matches.length === 0) {
-        searchRes.innerHTML = '';
-        noResults.classList.remove('hidden');
-        searchCount.textContent = '0 found';
-        return;
-      }
-
-      noResults.classList.add('hidden');
-      searchCount.textContent = `${matches.length} area${matches.length !== 1 ? 's' : ''}`;
-
-      searchRes.innerHTML = matches.map(m => `
-        <button class="suburb-item" data-suburb="${m.suburb}" data-province="${m.provinceName}">
-          <span>
-            <span class="suburb-item__name">${highlight(m.suburb, q)}</span>
-            <div class="suburb-item__province">${m.provinceName}</div>
-          </span>
-          <span class="suburb-item__right">
-            <span class="suburb-item__count">${m.count}</span>
-            <span class="suburb-item__chevron">›</span>
-          </span>
-        </button>`).join('');
-    });
-
-    /* ── Search result click → listings ──────────────────── */
-    document.addEventListener('click', e => {
-      const btn = e.target.closest('.suburb-item');
-      if (!btn) return;
-      window.location.href =
-        `listings.html?suburb=${encodeURIComponent(btn.dataset.suburb)}&province=${encodeURIComponent(btn.dataset.province)}`;
-    });
-
-    /* ── Header search button ─────────────────────────────── */
-    document.getElementById('headerSearchBtn').addEventListener('click', () => {
-      searchInput.focus();
-      searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    /* ── Init ─────────────────────────────────────────────── */
-    loadData().catch(err => {
-      console.error('Firestore error:', err);
-      grid.innerHTML =
-        '<p style="color:var(--text-muted);padding:var(--space-4)">Failed to load data. Please refresh.</p>';
-    });
+    burgerBtn.addEventListener('click', openDrawer);
+    drawerClose.addEventListener('click', closeDrawer);
+    drawerBackdrop.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
   </script>
 
 </body>
