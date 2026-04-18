@@ -140,8 +140,8 @@
       gap: 8px;
     }
     .listing-card__gender {
-      font-size: 11px;
-      color: #8892a4;
+      font-size: 12px;
+      color: #94a3b8;
     }
     .listing-card__chevron {
       font-size: 20px;
@@ -371,7 +371,7 @@
         const profileBase = `profile.html?suburb=${encodeURIComponent(suburb)}&province=${encodeURIComponent(province)}${type ? `&type=${encodeURIComponent(type)}` : ''}`;
 
         content.innerHTML = therapists.map(t => {
-          const gl = type !== 'spa' ? genderLabel(t.gender) : '';
+          const gl = type !== 'spa' ? genderLabel(t.therapistGender) : '';
           return `
             <a href="${profileBase}&id=${t.id}" class="listing-card">
               <div class="listing-card__body">
