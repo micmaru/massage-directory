@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proceed to Payment — MassageMap</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+  <style> 
+    body { padding-top: 0; padding-bottom: var(--space-8); }
+
+    /* ── Header ── */
+    .pay-header {
+      height: 56px; display: flex; align-items: center; justify-content: center;
+      border-bottom: 1px solid var(--border); background: var(--bg);
+    }
+    .pay-logo { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+    .pay-logo span { color: var(--accent); }
+
+    /* ── Content ── */
+    .pay-wrap {
+      max-width: 480px; margin: 0 auto;
+      padding: var(--space-8) var(--space-5) var(--space-5);
+      display: flex; flex-direction: column; gap: var(--space-5);
+    }
+
+    .pay-heading {
+      font-size: var(--text-2xl); font-weight: 700; color: var(--text); line-height: 1.2;
+    }
+
+    /* ── Order summary card ── */
+    .order-card {
+      background: var(--bg-card); border: 1px solid var(--accent);
+      border-radius: var(--radius); padding: var(--space-5);
+      display: flex; flex-direction: column; gap: var(--space-3);
+    }
+    .order-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: var(--space-4);
+    }
+    .order-label { font-size: var(--text-sm); color: var(--text-muted); }
+    .order-value { font-size: var(--text-sm); font-weight: 600; color: var(--text); text-align: right; }
+    .order-divider { height: 1px; background: var(--border); }
+    .order-total-label { font-size: var(--text-base); font-weight: 600; color: var(--text); }
+    .order-total-value { font-size: var(--text-base); font-weight: 700; color: var(--text); text-align: right; }
+    .order-note {
+      font-size: var(--text-xs); color: var(--text-muted); line-height: 1.5;
+      padding-top: var(--space-1);
+    }
+
+    /* ── Pay button ── */
+    .pay-btn {
+      display: block; width: 100%; padding: 14px var(--space-4);
+      background: var(--accent); color: #fff; border: none; border-radius: 999px;
+      font-family: var(--font-sans); font-size: var(--text-base); font-weight: 700;
+      cursor: pointer; text-align: center; letter-spacing: 0.1px;
+      transition: opacity var(--ease); -webkit-tap-highlight-color: transparent;
+    }
+    .pay-btn:hover { opacity: 0.88; }
+  </style>
+</head>
+<body>
+
+  <header class="pay-header">
+    <div class="pay-logo"><span>Massage</span>Map</div>
+  </header>
+
+  <div class="pay-wrap">
+    <h1 class="pay-heading">Complete your payment</h1>
+
+    <div class="order-card" id="orderSummary">
+      <div class="order-row">
+        <span class="order-label">Account type</span>
+        <span class="order-value" id="sumType"></span>
+      </div>
+      <div class="order-row">
+        <span class="order-label">Subscription term</span>
+        <span class="order-value" id="sumTerm"></span>
+      </div>
+      <div class="order-divider"></div>
+      <div class="order-row">
+        <span class="order-total-label">Total due</span>
+        <span class="order-total-value" id="sumAmount"></span>
+      </div>
+      <p class="order-note">You will be redirected to PayFast to complete your payment securely.</p>
+    </div>
+
+    <form id="payFastForm" method="POST" action="https://sandbox.payfast.co.za/eng/process">
+      <!-- hidden fields injected by JS -->
+      <button type="submit" class="pay-btn">Proceed to Payment</button>
+    </form>
+  </div>
+
+  <script>
+    (function () {
+      const MERCHANT_ID  = '10047518';
+      const MERCHANT_KEY = 'gdt3yjvuitr96';
+      const PASSPHRASE   = 'JohanPayfast2026';
+
+      const params      = new URLSearchParams(location.search);
+      const supplierId  = params.get('supplierId');
+      const type        = params.get('type');
+      const term        = params.get('term');
+      const amount      = params.get('amount');
+
+      if (!supplierId || !type || !term || !amount) {
+        location.replace('subscribe.html');
+        return;
+      }
+
+      // ── Order summary ──
+      const typeLabel = type === 'spa' ? 'Spa' : 'Individual Therapist';
+      const termNum   = parseInt(term, 10);
+      const termLabel = termNum === 1 ? '1 Month' : `${termNum} Months`;
+      const amountNum = parseInt(amount, 10);
+      const amountFmt = 'R' + amountNum.toLocaleString('en-ZA');
+
+      document.getElementById('sumType').textContent   = typeLabel;
+      document.getElementById('sumTerm').textContent   = termLabel;
+      document.getElementById('sumAmount').textContent = amountFmt;
+
+      // ── Build PayFast fields ──
+      const mPaymentId    = supplierId + '_' + Math.floor(Date.now() / 1000);
+      const amountDecimal = parseFloat(amount).toFixed(2);
+      const itemName      = 'MassageMap ' + (type === 'spa' ? 'Spa' : 'Individual') + ' ' + termNum + ' month subscription';
+      const cancelUrl     = 'http://127.0.0.1:5500/subscribe.html?supplierId=' + supplierId + '&type=' + type;
+
+      const fields = {
+        merchant_id:   MERCHANT_ID,
+        merchant_key:  MERCHANT_KEY,
+        return_url:    'http://127.0.0.1:5500/success.html',
+        cancel_url:    cancelUrl,
+        notify_url:    'https://us-central1-massage-directory-57e19.cloudfunctions.net/payfastNotify',
+        name_first:    'MassageMap',
+        name_last:     'Supplier',
+        email_address: 'noreply@massagemap.co.za',
+        m_payment_id:  mPaymentId,
+        amount:        amountDecimal,
+        item_name:     itemName,
+      };
+
+      // ── MD5 signature ──
+      const sortedKeys  = Object.keys(fields).sort();
+      const paramString = sortedKeys
+        .map(k => k + '=' + encodeURIComponent(fields[k]))
+        .join('&');
+      const sigString   = paramString + '&passphrase=' + PASSPHRASE;
+      const signature   = md5(sigString);
+
+      // ── Inject hidden inputs into form ──
+      const form = document.getElementById('payFastForm');
+
+      function addHidden(name, value) {
+        const input = document.createElement('input');
+        input.type  = 'hidden';
+        input.name  = name;
+        input.value = value;
+        form.insertBefore(input, form.querySelector('button'));
+      }
+
+      sortedKeys.forEach(k => addHidden(k, fields[k]));
+      addHidden('signature', signature);
+    })();
+  </script>
+
+</body>
+</html>
+1

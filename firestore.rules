@@ -25,9 +25,10 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Settings: no public access
+    // Settings: public read allowed (pricing config), no public write
     match /settings/{document=**} {
-      allow read, write: if false;
+      allow read: if true;
+      allow write: if false;
     }
 
     // Deny everything else by default

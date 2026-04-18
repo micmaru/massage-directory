@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment Received — MassageMap</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { padding-top: 0; padding-bottom: 0; }
+
+    .success-wrap {
+      min-height: 100dvh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: var(--space-6) var(--space-5); text-align: center;
+    }
+
+    .success-logo {
+      font-size: var(--text-xl); font-weight: 700; letter-spacing: -0.3px;
+      color: var(--text); margin-bottom: var(--space-8);
+    }
+    .success-logo span { color: var(--accent); }
+
+    .success-icon {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: rgba(108, 99, 255, 0.15); border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; margin-bottom: var(--space-5);
+    }
+
+    .success-title {
+      font-size: var(--text-2xl); font-weight: 700; color: var(--text);
+      line-height: 1.2; margin-bottom: var(--space-3);
+    }
+
+    .success-msg {
+      font-size: var(--text-base); color: var(--text-muted);
+      line-height: 1.6; max-width: 340px; margin-bottom: var(--space-8);
+    }
+
+    .success-link {
+      display: inline-block; padding: 13px 32px;
+      background: var(--accent); color: #fff; border-radius: 999px;
+      font-size: var(--text-base); font-weight: 700; letter-spacing: 0.1px;
+      transition: opacity var(--ease); text-decoration: none;
+    }
+    .success-link:hover { opacity: 0.88; color: #fff; }
+  </style>
+</head>
+<body>
+
+  <div class="success-wrap">
+    <div class="success-logo"><span>Massage</span>Map</div>
+
+    <div class="success-icon">✓</div>
+
+    <h1 class="success-title">Payment received — thank you!</h1>
+    <p class="success-msg">Your listing will go live once your ID has been verified. Listings update every 8 hours.</p>
+
+    <a href="index.html" class="success-link">Back to MassageMap</a>
+  </div>
+
+</body>
+</html>
