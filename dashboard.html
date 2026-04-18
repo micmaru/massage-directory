@@ -305,13 +305,33 @@
           </div>
         </div>
 
-        <!-- 8. Services -->
+        <!-- 8. Gender -->
         <div class="expand-item">
           <button class="expand-btn expand-btn--outline" id="accBtn8" onclick="toggleAccordion(8)">
-            <span>Massage Types</span>
+            <span>Gender</span>
             <span class="expand-chevron">▾</span>
           </button>
           <div class="expand-panel" id="accPanel8">
+            <div class="cat-pill-group">
+              <label class="cat-pill"><input type="radio" name="gender" value="female"     /><span>Female</span></label>
+              <label class="cat-pill"><input type="radio" name="gender" value="male"       /><span>Male</span></label>
+              <label class="cat-pill"><input type="radio" name="gender" value="non-binary" /><span>Non-binary</span></label>
+            </div>
+            <div class="section-footer">
+              <button type="button" class="btn btn--primary btn--sm" id="saveBtn_gender" onclick="saveSection('gender')">Save</button>
+              <span class="save-ok  hidden" id="st_gender">Saved ✓</span>
+              <span class="save-err hidden" id="se_gender"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9. Services -->
+        <div class="expand-item">
+          <button class="expand-btn expand-btn--outline" id="accBtn9" onclick="toggleAccordion(9)">
+            <span>Massage Types</span>
+            <span class="expand-chevron">▾</span>
+          </button>
+          <div class="expand-panel" id="accPanel9">
             <div class="check-group">
               <label class="check-item"><input type="checkbox" name="types" value="Swedish"      /><span>Swedish</span></label>
               <label class="check-item"><input type="checkbox" name="types" value="Deep Tissue"  /><span>Deep Tissue</span></label>
@@ -505,6 +525,11 @@
       document.querySelectorAll('input[name="types"]').forEach(cb => {
         cb.checked = types.includes(cb.value);
       });
+
+      if (data.gender) {
+        const r = document.querySelector(`input[name="gender"][value="${data.gender}"]`);
+        if (r) r.checked = true;
+      }
     }
 
     // ════════════════════════════════════════════
@@ -771,6 +796,9 @@
           case 'services':
             data = { massageTypes: Array.from(document.querySelectorAll('input[name="types"]:checked')).map(cb => cb.value) };
             break;
+          case 'gender':
+            data = { gender: document.querySelector('input[name="gender"]:checked')?.value || null };
+            break;
         }
 
         await updateDoc(doc(db, 'suppliers', supplierUid), data);
@@ -791,7 +819,7 @@
     // ACCORDION
     // ════════════════════════════════════════════
     window.toggleAccordion = function(n) {
-      for (let i = 1; i <= 8; i++) {
+      for (let i = 1; i <= 9; i++) {
         const btn   = document.getElementById('accBtn'   + i);
         const panel = document.getElementById('accPanel' + i);
         if (!btn || !panel) continue;

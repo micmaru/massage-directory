@@ -136,8 +136,8 @@ const therapists = [];
 
 // 10 individuals
 const individualGenders = [
-  'female','female','female','female','female',
-  'female','male','male','male','female',
+  'female','male','female','male','female',
+  'female','male','female','male','male',
 ];
 const individualClassifications = [
   'massage','massage','massage','holistic','massage',

@@ -372,7 +372,7 @@
         const profileBase = `profile.html?suburb=${encodeURIComponent(suburb)}&province=${encodeURIComponent(province)}${type ? `&type=${encodeURIComponent(type)}` : ''}`;
 
         content.innerHTML = therapists.map(t => {
-          const gl = type !== 'spa' ? genderLabel(t.therapistGender) : '';
+          const gl = type !== 'spa' ? genderLabel(t.gender) : '';
           return `
             <a href="${profileBase}&id=${t.id}" class="listing-card">
               <div class="listing-card__body">
