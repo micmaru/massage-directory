@@ -140,7 +140,8 @@
       gap: 8px;
     }
     .listing-card__gender {
-      font-size: 12px;
+      font-size: 15px;
+      font-weight: 400;
       color: #94a3b8;
     }
     .listing-card__chevron {
@@ -375,9 +376,8 @@
           return `
             <a href="${profileBase}&id=${t.id}" class="listing-card">
               <div class="listing-card__body">
-                <div class="listing-card__name">${t.displayName || ''}</div>
+                <div class="listing-card__name">${t.displayName || ''}${gl ? `<span class="listing-card__gender"> · ${gl}</span>` : ''}</div>
                 <div class="listing-card__meta">
-                  ${gl ? `<span class="listing-card__gender">${gl}</span>` : ''}
                   ${massageTypeBadge(t.displayMassageType)}
                 </div>
               </div>
