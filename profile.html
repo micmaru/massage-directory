@@ -95,35 +95,24 @@
       min-width: 0;
     }
 
-    /* ── Profile photo ── */
-    .profile-photo {
-      width: 100%;
-      height: 140px;
-      border-radius: 12px;
-      background: #161b27;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 14px;
+    /* ── Profile gallery ── */
+    .profile-gallery { margin-bottom: 14px; }
+    .profile-photo__main-wrap { max-width: 300px; margin: 0 auto; }
+    .profile-photo__main { width: 100%; height: auto; border-radius: 12px; display: block; }
+    .profile-photo__thumbs {
+      display: flex; gap: 8px; margin-top: 8px;
+      max-width: 300px; margin-left: auto; margin-right: auto; overflow-x: auto;
     }
-    .profile-photo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    .profile-photo__thumb {
+      width: 60px; height: 60px; object-fit: cover; border-radius: 6px;
+      cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: border-color 0.15s;
     }
+    .profile-photo__thumb--active { border-color: #6c63ff; }
+    .profile-initials-wrap { display: flex; justify-content: center; margin-bottom: 14px; }
     .profile-initials {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: #6c63ff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: 0.5px;
+      width: 56px; height: 56px; border-radius: 50%; background: #6c63ff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 700; color: #fff; letter-spacing: 0.5px;
     }
 
     /* ── Profile identity ── */
@@ -405,14 +394,12 @@
       return (words[0][0] + words[words.length - 1][0]).toUpperCase();
     }
 
-    function getPhotoUrl(t) {
+    function getPhotoUrls(t) {
       if (t.photos && t.photos.length) {
-        const first = t.photos[0];
-        if (typeof first === 'string') return first;
-        if (first && first.url) return first.url;
+        return t.photos.map(p => typeof p === 'string' ? p : (p && p.url ? p.url : null)).filter(Boolean);
       }
-      if (t.photoVisible === 'public' && t.photoUrl) return t.photoUrl;
-      return null;
+      if (t.photoVisible === 'public' && t.photoUrl) return [t.photoUrl];
+      return [];
     }
 
     function saToWa(phone) {
@@ -534,15 +521,21 @@
 
         const t           = snap.data();
         const displayName = t.displayName || t.firstName || 'Therapist';
-        const photoUrl    = getPhotoUrl(t);
+        const photos = getPhotoUrls(t);
 
         document.title = `${displayName} — MassageMap`;
         document.getElementById('pageTitle').textContent = displayName;
 
-        /* Photo or initials */
-        const photoHtml = photoUrl
-          ? `<img src="${photoUrl}" alt="${displayName}">`
-          : `<div class="profile-initials">${getInitials(displayName)}</div>`;
+        /* Photo gallery or initials */
+        let photoSectionHtml;
+        if (photos.length) {
+          const thumbsHtml = photos.length > 1
+            ? `<div class="profile-photo__thumbs">${photos.map((url, i) => `<img class="profile-photo__thumb${i === 0 ? ' profile-photo__thumb--active' : ''}" src="${url}" alt="" data-idx="${i}">`).join('')}</div>`
+            : '';
+          photoSectionHtml = `<div class="profile-gallery"><div class="profile-photo__main-wrap"><img id="profileMainPhoto" class="profile-photo__main" src="${photos[0]}" alt="${displayName}"></div>${thumbsHtml}</div>`;
+        } else {
+          photoSectionHtml = `<div class="profile-initials-wrap"><div class="profile-initials">${getInitials(displayName)}</div></div>`;
+        }
 
         /* Gender · suburb meta line */
         const genderStr = type !== 'spa' && t.gender
@@ -580,8 +573,8 @@
         }
 
         content.innerHTML = `
-          <!-- Photo -->
-          <div class="profile-photo">${photoHtml}</div>
+          <!-- Photo gallery -->
+          ${photoSectionHtml}
 
           <!-- Identity -->
           <div class="profile-identity">
@@ -626,6 +619,15 @@
           </div>`;
 
         attachExpandListeners();
+
+        /* Thumbnail click → swap main photo */
+        content.querySelectorAll('.profile-photo__thumb').forEach(thumb => {
+          thumb.addEventListener('click', () => {
+            document.getElementById('profileMainPhoto').src = thumb.src;
+            content.querySelectorAll('.profile-photo__thumb').forEach(t => t.classList.remove('profile-photo__thumb--active'));
+            thumb.classList.add('profile-photo__thumb--active');
+          });
+        });
 
       } catch (err) {
         console.error('Firestore error:', err);

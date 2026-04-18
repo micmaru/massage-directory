@@ -6,7 +6,7 @@ service cloud.firestore {
     // Suppliers: public read, authenticated user can create their own document
     match /suppliers/{supplierId} {
       allow read: if true;
-      allow create: if request.auth != null && request.auth.uid == supplierId;
+      allow create, update: if request.auth != null && request.auth.uid == supplierId;
     }
 
     // Enquiries: public read and write (customer contact form submissions)
