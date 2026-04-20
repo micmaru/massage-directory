@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MassageMap — Map View</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Hamburger button ── */
+    .header__hamburger {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: none;
+      background: none;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .header__hamburger:hover { background: var(--bg-card-hover); }
+    .header__hamburger:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ── Home brand (absolute-centred inside fixed header) ── */
+    .header__home-brand {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: var(--text-lg);
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* ── Drawer backdrop ── */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 150;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    .drawer-backdrop--open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* ── Drawer panel ── */
+    .drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 200;
+      width: 280px;
+      max-width: 82vw;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer--open { transform: translateX(0); }
+
+    .drawer__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-4);
+      height: var(--header-h);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .drawer__brand {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+    .drawer__close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.06);
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--ease), color var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .drawer__close:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+    .drawer__close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .drawer__nav { padding: var(--space-3) 0; }
+    .drawer__link {
+      display: flex;
+      align-items: center;
+      padding: 15px var(--space-5);
+      color: var(--text);
+      font-size: var(--text-base);
+      font-weight: 500;
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: background var(--ease), border-color var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .drawer__link:hover {
+      background: var(--bg-card-hover);
+      border-left-color: var(--accent);
+      color: var(--text);
+    }
+    .drawer__link--active {
+      background: var(--bg-card-hover);
+      border-left-color: var(--accent);
+      color: var(--accent-light);
+    }
+
+    /* ── Loading spinner (shown while GPS resolves) ── */
+    .map-loading {
+      position: fixed;
+      top: var(--header-h);
+      left: 0;
+      right: 0;
+      bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── GPS error state ── */
+    .gps-error {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-5);
+      min-height: calc(100dvh - var(--header-h) - var(--nav-h) - env(safe-area-inset-bottom, 0px));
+      padding: var(--space-6) var(--space-4);
+      text-align: center;
+    }
+    .gps-error__icon { font-size: 3rem; line-height: 1; }
+    .gps-error__msg {
+      font-size: var(--text-base);
+      color: var(--text-muted);
+      max-width: 260px;
+      line-height: 1.6;
+    }
+    .gps-error__btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px var(--space-6);
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-size: var(--text-base);
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .gps-error__btn:hover { opacity: 0.88; }
+
+    /* ── Map container fills space between header and bottom nav ── */
+    .map-wrap {
+      position: fixed;
+      top: var(--header-h);
+      left: 0;
+      right: 0;
+      bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+      z-index: 0;
+    }
+    #map { width: 100%; height: 100%; }
+
+    /* ── Mini card bottom sheet ── */
+    .mini-card {
+      position: fixed;
+      bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px);
+      left: var(--space-4);
+      right: var(--space-4);
+      z-index: 100;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: var(--space-4);
+      box-shadow: 0 -2px 28px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .mini-card__row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-2);
+    }
+    .mini-card__info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .mini-card__name {
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: #e2e8f0;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mini-card__meta {
+      font-size: var(--text-sm);
+      color: #94a3b8;
+    }
+    .mini-card__close {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.07);
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--ease), color var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mini-card__close:hover { background: rgba(255,255,255,0.14); color: var(--text); }
+
+    /* massage type badge (same palette as listings.html) */
+    .mtype-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .mtype--massage { background: #3C3489; color: #CECBF6; }
+    .mtype--adult   { background: #854F0B; color: #FAC775; }
+    .mtype--chinese { background: #085041; color: #9FE1CB; }
+    .mtype--indian  { background: #085041; color: #9FE1CB; }
+    .mtype--sport   { background: #0C447C; color: #B5D4F4; }
+    .mtype--reiki   { background: #3C3489; color: #CECBF6; }
+
+    .mini-card__btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9px var(--space-5);
+      border-radius: 999px;
+      border: 1.5px solid #6c63ff;
+      background: transparent;
+      color: #8b85ff;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      text-decoration: none;
+      align-self: flex-start;
+      transition: background var(--ease), color var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mini-card__btn:hover { background: rgba(108,99,255,0.12); color: var(--accent-light); }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       Drawer backdrop
+  ══════════════════════════════════════ -->
+  <div id="drawerBackdrop" class="drawer-backdrop" aria-hidden="true"></div>
+
+
+  <!-- ══════════════════════════════════════
+       Hamburger drawer
+  ══════════════════════════════════════ -->
+  <nav id="drawer" class="drawer" aria-label="Site navigation" aria-hidden="true">
+    <div class="drawer__head">
+      <span class="drawer__brand">
+        <span style="color:var(--accent)">Massage</span>Map
+      </span>
+      <button id="drawerClose" class="drawer__close" aria-label="Close menu">✕</button>
+    </div>
+    <div class="drawer__nav">
+      <a href="suburb.html?type=individual" class="drawer__link">Find a therapist</a>
+      <a href="suburb.html?type=spa"        class="drawer__link">Find a spa</a>
+      <a href="map.html"                    class="drawer__link drawer__link--active">Map view</a>
+      <a href="register.html"               class="drawer__link">Register</a>
+      <a href="dashboard.html"              class="drawer__link">Login as Therapist or Spa</a>
+      <a href="about.html"                  class="drawer__link">About MassageMap</a>
+    </div>
+  </nav>
+
+
+  <!-- ══════════════════════════════════════
+       Fixed Header
+  ══════════════════════════════════════ -->
+  <header class="header">
+    <button
+      id="burgerBtn"
+      class="header__hamburger"
+      aria-label="Open menu"
+      aria-expanded="false"
+      aria-controls="drawer"
+    >
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+        <path d="M1 1h16M1 7h16M1 13h16"
+              stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <span class="header__home-brand" aria-hidden="true">
+      <span style="color:var(--accent)">Massage</span>Map
+    </span>
+    <div style="width:36px" aria-hidden="true"></div>
+  </header>
+
+
+  <!-- ══════════════════════════════════════
+       Loading (GPS pending)
+  ══════════════════════════════════════ -->
+  <div id="mapLoading" class="map-loading" aria-live="polite" aria-label="Requesting location…">
+    <div class="spinner"></div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       GPS denied / unavailable
+  ══════════════════════════════════════ -->
+  <div id="gpsError" class="gps-error" hidden>
+    <div class="gps-error__icon">📍</div>
+    <p class="gps-error__msg">Your location cannot be determined</p>
+    <a href="index.html" class="gps-error__btn">Return to main menu</a>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       Map canvas (shown after GPS granted)
+  ══════════════════════════════════════ -->
+  <div id="mapWrap" class="map-wrap" hidden>
+    <div id="map"></div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       Mini card (tap a pin)
+  ══════════════════════════════════════ -->
+  <div id="miniCard" class="mini-card" hidden>
+    <div class="mini-card__row">
+      <div class="mini-card__info">
+        <div id="mcName"  class="mini-card__name"></div>
+        <div id="mcMeta"  class="mini-card__meta"></div>
+        <div id="mcBadge" style="margin-top:2px"></div>
+      </div>
+      <button id="mcClose" class="mini-card__close" aria-label="Close">✕</button>
+    </div>
+    <a id="mcLink" href="#" class="mini-card__btn">View Profile</a>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       Bottom Navigation
+  ══════════════════════════════════════ -->
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <ul class="bottom-nav__list">
+      <li class="bottom-nav__item">
+        <a href="index.html" class="bottom-nav__link">
+          <span aria-hidden="true">🏠</span>
+          <span>Home</span>
+        </a>
+      </li>
+      <li class="bottom-nav__item">
+        <button class="bottom-nav__link bottom-nav__link--active" aria-current="page">
+          <span aria-hidden="true">🗺️</span>
+          <span>Map</span>
+        </button>
+      </li>
+      <li class="bottom-nav__item">
+        <a href="register.html" class="bottom-nav__link">
+          <span aria-hidden="true">✍️</span>
+          <span>Register</span>
+        </a>
+      </li>
+      <li class="bottom-nav__item">
+        <a href="dashboard.html" class="bottom-nav__link">
+          <span aria-hidden="true">⚙️</span>
+          <span>Admin</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import {
+      collection, getDocs, query, where
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+    /* ── Hamburger ───────────────────────────────────────────── */
+    const burgerBtn      = document.getElementById('burgerBtn');
+    const drawer         = document.getElementById('drawer');
+    const drawerBackdrop = document.getElementById('drawerBackdrop');
+    const drawerClose    = document.getElementById('drawerClose');
+
+    function openDrawer() {
+      drawer.classList.add('drawer--open');
+      drawer.setAttribute('aria-hidden', 'false');
+      drawerBackdrop.classList.add('drawer-backdrop--open');
+      burgerBtn.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeDrawer() {
+      drawer.classList.remove('drawer--open');
+      drawer.setAttribute('aria-hidden', 'true');
+      drawerBackdrop.classList.remove('drawer-backdrop--open');
+      burgerBtn.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+    burgerBtn.addEventListener('click', openDrawer);
+    drawerClose.addEventListener('click', closeDrawer);
+    drawerBackdrop.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+    /* ── DOM refs ────────────────────────────────────────────── */
+    const mapLoading = document.getElementById('mapLoading');
+    const gpsError   = document.getElementById('gpsError');
+    const mapWrap    = document.getElementById('mapWrap');
+    const miniCard   = document.getElementById('miniCard');
+    const mcClose    = document.getElementById('mcClose');
+    const mcName     = document.getElementById('mcName');
+    const mcMeta     = document.getElementById('mcMeta');
+    const mcBadge    = document.getElementById('mcBadge');
+    const mcLink     = document.getElementById('mcLink');
+
+    /* ── Helpers ─────────────────────────────────────────────── */
+    function massageTypeBadge(val) {
+      const label = (val || 'Massage').trim();
+      const clsMap = {
+        'Massage': 'mtype--massage',
+        'Adult':   'mtype--adult',
+        'Chinese': 'mtype--chinese',
+        'Indian':  'mtype--indian',
+        'Sport':   'mtype--sport',
+        'Reiki':   'mtype--reiki',
+      };
+      const cls = clsMap[label] || 'mtype--massage';
+      return `<span class="mtype-badge ${cls}">${label}</span>`;
+    }
+
+    function genderLabel(g) {
+      if (g === 'female') return 'Female';
+      if (g === 'male')   return 'Male';
+      return g || '';
+    }
+
+    /* ── Mini card ───────────────────────────────────────────── */
+    function showMiniCard(d) {
+      mcName.textContent = d.displayName || '';
+
+      const parts = [];
+      if (d.supplierType === 'individual' && d.gender) parts.push(genderLabel(d.gender));
+      if (d.suburb) parts.push(d.suburb);
+      mcMeta.textContent = parts.join(' · ');
+
+      mcBadge.innerHTML = massageTypeBadge(d.displayMassageType);
+      mcLink.href = `profile.html?id=${encodeURIComponent(d.id)}&type=${encodeURIComponent(d.supplierType || '')}`;
+
+      miniCard.hidden = false;
+    }
+
+    function closeMiniCard() {
+      miniCard.hidden = true;
+    }
+
+    mcClose.addEventListener('click', closeMiniCard);
+
+    /* ── Maps API loader (injected only after GPS confirmed) ─── */
+    function loadMapsAPI(key) {
+      return new Promise((resolve, reject) => {
+        window.__mapsCb = resolve;
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=__mapsCb`;
+        s.async = true;
+        s.onerror = () => reject(new Error('Maps API failed to load'));
+        document.head.appendChild(s);
+      });
+    }
+
+    /* ── Map init ────────────────────────────────────────────── */
+    async function initMap(lat, lng) {
+      mapWrap.hidden = false;
+
+      await loadMapsAPI(window.GOOGLE_MAPS_API_KEY || '');
+
+      mapLoading.hidden = true;
+
+      const map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat, lng },
+        zoom: 13,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        zoomControlOptions: {
+          position: google.maps.ControlPosition.RIGHT_CENTER,
+        },
+        styles: [
+          { elementType: 'geometry',            stylers: [{ color: '#1a1f2e' }] },
+          { elementType: 'labels.text.fill',    stylers: [{ color: '#94a3b8' }] },
+          { elementType: 'labels.text.stroke',  stylers: [{ color: '#0f1117' }] },
+          { featureType: 'road', elementType: 'geometry',         stylers: [{ color: '#2a3245' }] },
+          { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#64748b' }] },
+          { featureType: 'water',   elementType: 'geometry', stylers: [{ color: '#0f1117' }] },
+          { featureType: 'poi',     stylers: [{ visibility: 'off' }] },
+          { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+        ],
+      });
+
+      map.addListener('click', closeMiniCard);
+
+      /* Load all active suppliers */
+      try {
+        const snap = await getDocs(
+          query(collection(db, 'suppliers'), where('status', '==', 'active'))
+        );
+
+        snap.forEach(docSnap => {
+          const d = { id: docSnap.id, ...docSnap.data() };
+
+          const pinLat = typeof d.gpsLat === 'number' ? d.gpsLat : parseFloat(d.gpsLat);
+          const pinLng = typeof d.gpsLng === 'number' ? d.gpsLng : parseFloat(d.gpsLng);
+          if (!d.gpsLat || !d.gpsLng || isNaN(pinLat) || isNaN(pinLng)) return;
+
+          const marker = new google.maps.Marker({
+            position: { lat: pinLat, lng: pinLng },
+            map,
+            title: d.displayName || '',
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor:   d.supplierType === 'spa' ? '#EF9F27' : '#378ADD',
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 2,
+              scale: 9,
+            },
+          });
+
+          marker.addListener('click', () => showMiniCard(d));
+        });
+      } catch (err) {
+        console.error('Firestore error:', err);
+      }
+    }
+
+    /* ── GPS request ─────────────────────────────────────────── */
+    if (!navigator.geolocation) {
+      mapLoading.hidden = true;
+      gpsError.hidden   = false;
+    } else {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          initMap(pos.coords.latitude, pos.coords.longitude).catch(() => {
+            mapLoading.hidden = true;
+            gpsError.hidden   = false;
+          });
+        },
+        () => {
+          mapLoading.hidden = true;
+          gpsError.hidden   = false;
+        },
+        { timeout: 10000, maximumAge: 60000 }
+      );
+    }
+  </script>
+
+</body>
+</html>
