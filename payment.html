@@ -125,7 +125,8 @@
       const itemName      = 'MassageMap ' + (type === 'spa' ? 'Spa' : 'Individual') + ' ' + termNum + ' month subscription';
       const cancelUrl     = 'http://127.0.0.1:5500/subscribe.html?supplierId=' + supplierId + '&type=' + type;
 
-      const fields = {
+      // PayFast signature — merchant_key IS included, empty values excluded
+      const pfData = {
         merchant_id:   MERCHANT_ID,
         merchant_key:  MERCHANT_KEY,
         return_url:    'http://127.0.0.1:5500/success.html',
@@ -139,17 +140,22 @@
         item_name:     itemName,
       };
 
-      // ── MD5 signature ──
-      const sortedKeys  = Object.keys(fields).sort();
-      const paramString = sortedKeys
-        .map(k => k + '=' + encodeURIComponent(fields[k]))
+      // Build param string: alphabetical order, exclude empty values, spaces as +
+      const paramString = Object.keys(pfData)
+        .sort()
+        .filter(k => pfData[k] !== '' && pfData[k] !== null && pfData[k] !== undefined)
+        .map(k => k + '=' + encodeURIComponent(pfData[k]).replace(/%20/g, '+'))
         .join('&');
-      const sigString   = paramString + '&passphrase=' + PASSPHRASE;
-      const signature   = md5(sigString);
 
-      // ── Inject hidden inputs into form ──
+      // Append passphrase raw (not encoded)
+      const sigString = paramString + '&passphrase=' + PASSPHRASE;
+      const signature = md5(sigString);
+
+      console.log('sigString:', sigString);
+      console.log('signature:', signature);
+
+      // Inject all fields into form
       const form = document.getElementById('payFastForm');
-
       function addHidden(name, value) {
         const input = document.createElement('input');
         input.type  = 'hidden';
@@ -157,8 +163,7 @@
         input.value = value;
         form.insertBefore(input, form.querySelector('button'));
       }
-
-      sortedKeys.forEach(k => addHidden(k, fields[k]));
+      Object.keys(pfData).sort().forEach(k => addHidden(k, pfData[k]));
       addHidden('signature', signature);
     })();
   </script>

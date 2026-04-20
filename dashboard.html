@@ -350,6 +350,8 @@
         </div>
 
       </div>
+
+      <button type="button" class="btn btn--primary btn--full" style="border-radius: 999px;" onclick="goToSubscribe()">Subscription &amp; Payment</button>
     </div>
   </div>
 
@@ -370,6 +372,16 @@
 
     const auth    = getAuth(app);
     const storage = getStorage(app);
+
+    // Force sign-out any existing session before anything else runs.
+    // signOut resolves even if there was no active session, so this is safe.
+    // localStorage/sessionStorage cleared to remove any cached Firebase tokens.
+    signOut(auth).then(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+      const phoneInput = document.getElementById('cellInput');
+      if (phoneInput) phoneInput.value = '';
+    }).catch(() => {});
 
     // ── State ──
     let confirmationResult = null;
@@ -835,6 +847,16 @@
     };
 
     // ════════════════════════════════════════════
+    // SUBSCRIPTION
+    // ════════════════════════════════════════════
+    window.goToSubscribe = async function() {
+      const user = auth.currentUser;
+      if (!user) return;
+      const snap = await getDoc(doc(db, 'suppliers', user.uid));
+      const supplierType = snap.exists() ? (snap.data().supplierType || 'individual') : 'individual';
+      location.href = `subscribe.html?supplierId=${user.uid}&type=${supplierType}`;
+    };
+
     // LOGOUT
     // ════════════════════════════════════════════
     window.logout = async function() {
