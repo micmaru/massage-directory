@@ -20,4 +20,4 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const db  = getFirestore(app);
 
-window.GOOGLE_MAPS_API_KEY = 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
+window.GOOGLE_MAPS_API_KEY = 'AIzaSyCpzopw_prC9G-HUhJnHy2MqKL2aZ07dPI';

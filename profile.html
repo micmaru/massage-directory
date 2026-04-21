@@ -338,12 +338,18 @@
 
     /* ── Back button ──────────────────────────────────────── */
     {
-      let backHref = 'listings.html';
-      const bp = [];
-      if (suburb)   bp.push(`suburb=${encodeURIComponent(suburb)}`);
-      if (province) bp.push(`province=${encodeURIComponent(province)}`);
-      if (type)     bp.push(`type=${encodeURIComponent(type)}`);
-      if (bp.length) backHref += '?' + bp.join('&');
+      const source = params.get('source') || '';
+      let backHref;
+      if (source === 'map') {
+        backHref = 'map.html';
+      } else {
+        backHref = 'listings.html';
+        const bp = [];
+        if (suburb)   bp.push(`suburb=${encodeURIComponent(suburb)}`);
+        if (province) bp.push(`province=${encodeURIComponent(province)}`);
+        if (type)     bp.push(`type=${encodeURIComponent(type)}`);
+        if (bp.length) backHref += '?' + bp.join('&');
+      }
       document.getElementById('backBtn').href = backHref;
     }
 

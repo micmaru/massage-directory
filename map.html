@@ -134,6 +134,9 @@
       color: var(--accent-light);
     }
 
+    /* Ensure [hidden] attribute always wins over any display set by class CSS */
+    [hidden] { display: none !important; }
+
     /* ── Loading spinner (shown while GPS resolves) ── */
     .map-loading {
       position: fixed;
@@ -202,106 +205,32 @@
     }
     #map { width: 100%; height: 100%; }
 
-    /* ── Mini card bottom sheet ── */
-    .mini-card {
+    /* ── Pin legend bar (fixed above bottom nav) ── */
+    .map-legend {
       position: fixed;
-      bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px);
-      left: var(--space-4);
-      right: var(--space-4);
-      z-index: 100;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: var(--space-4);
-      box-shadow: 0 -2px 28px rgba(0, 0, 0, 0.6);
+      bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+      left: 0;
+      right: 0;
+      height: 40px;
+      z-index: 50;
+      background: rgba(13, 17, 23, 0.88);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
       display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
-      animation: slideUp 0.2s ease;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
     }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .mini-card__row {
+    .map-legend__item {
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: var(--space-2);
-    }
-    .mini-card__info {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .mini-card__name {
-      font-size: var(--text-base);
-      font-weight: 700;
-      color: #e2e8f0;
-      line-height: 1.3;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .mini-card__meta {
-      font-size: var(--text-sm);
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 500;
       color: #94a3b8;
+      user-select: none;
     }
-    .mini-card__close {
-      width: 28px;
-      height: 28px;
-      flex-shrink: 0;
-      border-radius: 50%;
-      border: none;
-      background: rgba(255,255,255,0.07);
-      color: var(--text-muted);
-      font-size: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background var(--ease), color var(--ease);
-      -webkit-tap-highlight-color: transparent;
-    }
-    .mini-card__close:hover { background: rgba(255,255,255,0.14); color: var(--text); }
-
-    /* massage type badge (same palette as listings.html) */
-    .mtype-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 600;
-      line-height: 1.4;
-      white-space: nowrap;
-    }
-    .mtype--massage { background: #3C3489; color: #CECBF6; }
-    .mtype--adult   { background: #854F0B; color: #FAC775; }
-    .mtype--chinese { background: #085041; color: #9FE1CB; }
-    .mtype--indian  { background: #085041; color: #9FE1CB; }
-    .mtype--sport   { background: #0C447C; color: #B5D4F4; }
-    .mtype--reiki   { background: #3C3489; color: #CECBF6; }
-
-    .mini-card__btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 9px var(--space-5);
-      border-radius: 999px;
-      border: 1.5px solid #6c63ff;
-      background: transparent;
-      color: #8b85ff;
-      font-size: var(--text-sm);
-      font-weight: 600;
-      text-decoration: none;
-      align-self: flex-start;
-      transition: background var(--ease), color var(--ease);
-      -webkit-tap-highlight-color: transparent;
-    }
-    .mini-card__btn:hover { background: rgba(108,99,255,0.12); color: var(--accent-light); }
   </style>
 </head>
 <body>
@@ -326,8 +255,9 @@
       <a href="suburb.html?type=individual" class="drawer__link">Find a therapist</a>
       <a href="suburb.html?type=spa"        class="drawer__link">Find a spa</a>
       <a href="map.html"                    class="drawer__link drawer__link--active">Map view</a>
-      <a href="register.html"               class="drawer__link">Register</a>
-      <a href="dashboard.html"              class="drawer__link">Login as Therapist or Spa</a>
+      <a href="register.html?type=individual" class="drawer__link">Register as Therapist</a>
+      <a href="register.html?type=spa"       class="drawer__link">Register as Spa</a>
+      <a href="login.html"                   class="drawer__link">Therapist Login</a>
       <a href="about.html"                  class="drawer__link">About MassageMap</a>
     </div>
   </nav>
@@ -377,24 +307,29 @@
   <!-- ══════════════════════════════════════
        Map canvas (shown after GPS granted)
   ══════════════════════════════════════ -->
-  <div id="mapWrap" class="map-wrap" hidden>
+  <div id="mapWrap" class="map-wrap">
     <div id="map"></div>
   </div>
 
 
   <!-- ══════════════════════════════════════
-       Mini card (tap a pin)
+       Pin legend bar
   ══════════════════════════════════════ -->
-  <div id="miniCard" class="mini-card" hidden>
-    <div class="mini-card__row">
-      <div class="mini-card__info">
-        <div id="mcName"  class="mini-card__name"></div>
-        <div id="mcMeta"  class="mini-card__meta"></div>
-        <div id="mcBadge" style="margin-top:2px"></div>
-      </div>
-      <button id="mcClose" class="mini-card__close" aria-label="Close">✕</button>
+  <div class="map-legend" aria-label="Map legend">
+    <div class="map-legend__item">
+      <svg width="16" height="21" viewBox="0 0 32 42" fill="none" aria-hidden="true">
+        <path d="M16,42 C10,35 1,27 1,16 A15,15 0 1 1 31,16 C31,27 22,35 16,42Z" fill="#E24B4A" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>
+        <text x="16" y="21" font-family="system-ui,Arial,sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">T</text>
+      </svg>
+      <span>Therapist</span>
     </div>
-    <a id="mcLink" href="#" class="mini-card__btn">View Profile</a>
+    <div class="map-legend__item">
+      <svg width="16" height="21" viewBox="0 0 32 42" fill="none" aria-hidden="true">
+        <path d="M16,42 C10,35 1,27 1,16 A15,15 0 1 1 31,16 C31,27 22,35 16,42Z" fill="#EF9F27" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>
+        <text x="16" y="21" font-family="system-ui,Arial,sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">S</text>
+      </svg>
+      <span>Spa</span>
+    </div>
   </div>
 
 
@@ -466,54 +401,16 @@
     const mapLoading = document.getElementById('mapLoading');
     const gpsError   = document.getElementById('gpsError');
     const mapWrap    = document.getElementById('mapWrap');
-    const miniCard   = document.getElementById('miniCard');
-    const mcClose    = document.getElementById('mcClose');
-    const mcName     = document.getElementById('mcName');
-    const mcMeta     = document.getElementById('mcMeta');
-    const mcBadge    = document.getElementById('mcBadge');
-    const mcLink     = document.getElementById('mcLink');
 
-    /* ── Helpers ─────────────────────────────────────────────── */
-    function massageTypeBadge(val) {
-      const label = (val || 'Massage').trim();
-      const clsMap = {
-        'Massage': 'mtype--massage',
-        'Adult':   'mtype--adult',
-        'Chinese': 'mtype--chinese',
-        'Indian':  'mtype--indian',
-        'Sport':   'mtype--sport',
-        'Reiki':   'mtype--reiki',
+    /* ── Teardrop pin icon ───────────────────────────────────── */
+    function pinIcon(color, letter) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42"><path d="M16,42 C10,35 1,27 1,16 A15,15 0 1 1 31,16 C31,27 22,35 16,42Z" fill="${color}" stroke="rgba(0,0,0,0.28)" stroke-width="1"/><text x="16" y="21" font-family="system-ui,Arial,sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">${letter}</text></svg>`;
+      return {
+        url: 'data:image/svg+xml,' + encodeURIComponent(svg),
+        scaledSize: new google.maps.Size(32, 42),
+        anchor:     new google.maps.Point(16, 42),
       };
-      const cls = clsMap[label] || 'mtype--massage';
-      return `<span class="mtype-badge ${cls}">${label}</span>`;
     }
-
-    function genderLabel(g) {
-      if (g === 'female') return 'Female';
-      if (g === 'male')   return 'Male';
-      return g || '';
-    }
-
-    /* ── Mini card ───────────────────────────────────────────── */
-    function showMiniCard(d) {
-      mcName.textContent = d.displayName || '';
-
-      const parts = [];
-      if (d.supplierType === 'individual' && d.gender) parts.push(genderLabel(d.gender));
-      if (d.suburb) parts.push(d.suburb);
-      mcMeta.textContent = parts.join(' · ');
-
-      mcBadge.innerHTML = massageTypeBadge(d.displayMassageType);
-      mcLink.href = `profile.html?id=${encodeURIComponent(d.id)}&type=${encodeURIComponent(d.supplierType || '')}`;
-
-      miniCard.hidden = false;
-    }
-
-    function closeMiniCard() {
-      miniCard.hidden = true;
-    }
-
-    mcClose.addEventListener('click', closeMiniCard);
 
     /* ── Maps API loader (injected only after GPS confirmed) ─── */
     function loadMapsAPI(key) {
@@ -529,8 +426,6 @@
 
     /* ── Map init ────────────────────────────────────────────── */
     async function initMap(lat, lng) {
-      mapWrap.hidden = false;
-
       await loadMapsAPI(window.GOOGLE_MAPS_API_KEY || '');
 
       mapLoading.hidden = true;
@@ -545,18 +440,88 @@
           position: google.maps.ControlPosition.RIGHT_CENTER,
         },
         styles: [
-          { elementType: 'geometry',            stylers: [{ color: '#1a1f2e' }] },
-          { elementType: 'labels.text.fill',    stylers: [{ color: '#94a3b8' }] },
-          { elementType: 'labels.text.stroke',  stylers: [{ color: '#0f1117' }] },
-          { featureType: 'road', elementType: 'geometry',         stylers: [{ color: '#2a3245' }] },
-          { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#64748b' }] },
-          { featureType: 'water',   elementType: 'geometry', stylers: [{ color: '#0f1117' }] },
+          /* ── Base geometry ── */
+          { elementType: 'geometry',           stylers: [{ color: '#1a1f2e' }] },
+          { elementType: 'labels.text.stroke', stylers: [{ color: '#0d1117' }] },
+          { elementType: 'labels.text.fill',   stylers: [{ color: '#6b7280' }] },
+
+          /* ── Administrative (country / province / city names) ── */
+          { featureType: 'administrative',
+            elementType: 'geometry', stylers: [{ visibility: 'off' }] },
+          { featureType: 'administrative.country',
+            elementType: 'labels.text.fill', stylers: [{ color: '#9ca3af' }] },
+          { featureType: 'administrative.province',
+            elementType: 'labels.text.fill', stylers: [{ color: '#6b7280' }] },
+          { featureType: 'administrative.locality',
+            elementType: 'labels.text.fill', stylers: [{ color: '#94a3b8' }] },
+          { featureType: 'administrative.neighborhood',
+            elementType: 'labels',           stylers: [{ visibility: 'off' }] },
+
+          /* ── Water ── */
+          { featureType: 'water',
+            elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
+          { featureType: 'water',
+            elementType: 'labels.text.fill', stylers: [{ color: '#374151' }] },
+
+          /* ── Landscape / terrain ── */
+          { featureType: 'landscape',
+            elementType: 'geometry', stylers: [{ color: '#1e2435' }] },
+          { featureType: 'landscape.natural',
+            elementType: 'geometry', stylers: [{ color: '#181e2d' }] },
+
+          /* ── POI — hide completely ── */
           { featureType: 'poi',     stylers: [{ visibility: 'off' }] },
+          { featureType: 'poi.park',
+            elementType: 'geometry', stylers: [{ color: '#1a2232' }, { visibility: 'on' }] },
+          { featureType: 'poi.park',
+            elementType: 'labels',   stylers: [{ visibility: 'off' }] },
+
+          /* ── Transit — hide completely ── */
           { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+
+          /* ── Roads — muted grey tones, no shields ── */
+          { featureType: 'road',
+            elementType: 'geometry',           stylers: [{ color: '#242c3d' }] },
+          { featureType: 'road',
+            elementType: 'geometry.stroke',    stylers: [{ color: '#1a2030' }] },
+          { featureType: 'road',
+            elementType: 'labels.icon',        stylers: [{ visibility: 'off' }] },
+          { featureType: 'road',
+            elementType: 'labels.text.fill',   stylers: [{ color: '#4b5563' }] },
+          { featureType: 'road',
+            elementType: 'labels.text.stroke', stylers: [{ color: '#0d1117' }] },
+
+          /* Arterial roads — slightly lighter so the grid reads */
+          { featureType: 'road.arterial',
+            elementType: 'geometry',           stylers: [{ color: '#2e3a50' }] },
+          { featureType: 'road.arterial',
+            elementType: 'labels.text.fill',   stylers: [{ color: '#556070' }] },
+          { featureType: 'road.arterial',
+            elementType: 'labels.icon',        stylers: [{ visibility: 'off' }] },
+
+          /* Highways — still slightly visible but stripped of shields */
+          { featureType: 'road.highway',
+            elementType: 'geometry',           stylers: [{ color: '#354055' }] },
+          { featureType: 'road.highway',
+            elementType: 'geometry.stroke',    stylers: [{ color: '#1a2030' }] },
+          { featureType: 'road.highway',
+            elementType: 'labels.icon',        stylers: [{ visibility: 'off' }] },
+          { featureType: 'road.highway',
+            elementType: 'labels.text.fill',   stylers: [{ color: '#4b5563' }] },
+          { featureType: 'road.highway.controlled_access',
+            elementType: 'geometry',           stylers: [{ color: '#2e3a50' }] },
+          { featureType: 'road.highway.controlled_access',
+            elementType: 'labels.icon',        stylers: [{ visibility: 'off' }] },
+
+          /* Local roads — very subtle */
+          { featureType: 'road.local',
+            elementType: 'geometry',           stylers: [{ color: '#1e2738' }] },
+          { featureType: 'road.local',
+            elementType: 'labels',             stylers: [{ visibility: 'off' }] },
         ],
       });
 
-      map.addListener('click', closeMiniCard);
+      google.maps.event.trigger(map, 'resize');
 
       /* Load all active suppliers */
       try {
@@ -571,21 +536,17 @@
           const pinLng = typeof d.gpsLng === 'number' ? d.gpsLng : parseFloat(d.gpsLng);
           if (!d.gpsLat || !d.gpsLng || isNaN(pinLat) || isNaN(pinLng)) return;
 
+          const isSpa  = d.supplierType === 'spa';
           const marker = new google.maps.Marker({
             position: { lat: pinLat, lng: pinLng },
             map,
             title: d.displayName || '',
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              fillColor:   d.supplierType === 'spa' ? '#EF9F27' : '#378ADD',
-              fillOpacity: 1,
-              strokeColor: '#ffffff',
-              strokeWeight: 2,
-              scale: 9,
-            },
+            icon:  pinIcon(isSpa ? '#EF9F27' : '#E24B4A', isSpa ? 'S' : 'T'),
           });
 
-          marker.addListener('click', () => showMiniCard(d));
+          marker.addListener('click', () => {
+            window.location.href = `profile.html?id=${encodeURIComponent(d.id)}&type=${encodeURIComponent(d.supplierType || '')}&source=map`;
+          });
         });
       } catch (err) {
         console.error('Firestore error:', err);
@@ -602,11 +563,13 @@
           initMap(pos.coords.latitude, pos.coords.longitude).catch(() => {
             mapLoading.hidden = true;
             gpsError.hidden   = false;
+            mapWrap.hidden    = true;
           });
         },
         () => {
           mapLoading.hidden = true;
           gpsError.hidden   = false;
+          mapWrap.hidden    = true;
         },
         { timeout: 10000, maximumAge: 60000 }
       );

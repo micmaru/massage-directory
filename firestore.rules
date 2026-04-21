@@ -26,6 +26,11 @@ service cloud.firestore {
     }
 
     // Settings: public read allowed (pricing config), no public write
+    // Exception: authenticated users may increment the supplier counter during registration
+    match /settings/supplierCounter {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
     match /settings/{document=**} {
       allow read: if true;
       allow write: if false;

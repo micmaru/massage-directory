@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registration Confirmed — MassageMap</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .info-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100dvh - var(--header-h) - var(--nav-h));
+      padding: var(--space-6) var(--space-4);
+      text-align: center;
+    }
+
+    .info-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.12);
+      border: 2px solid rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: var(--space-5);
+      color: var(--green, #10b981);
+    }
+
+    .info-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: var(--space-3);
+    }
+
+    .info-body {
+      font-size: var(--text-base);
+      color: var(--text-muted);
+      max-width: 320px;
+      line-height: 1.6;
+      margin-bottom: var(--space-6);
+    }
+
+    .membership-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: var(--space-5) var(--space-6);
+      margin-bottom: var(--space-6);
+      width: 100%;
+      max-width: 340px;
+    }
+
+    .membership-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: var(--space-2);
+    }
+
+    .membership-number {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+      word-break: break-all;
+    }
+
+    .membership-note {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      margin-top: var(--space-3);
+      line-height: 1.5;
+    }
+
+    .info-next {
+      font-size: var(--text-sm);
+      color: var(--text-muted);
+      max-width: 300px;
+      line-height: 1.6;
+    }
+
+    .info-home-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: var(--space-6);
+      padding: 12px var(--space-7);
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-size: var(--text-base);
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity var(--ease);
+    }
+    .info-home-btn:hover { opacity: 0.88; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div style="min-width:40px"></div>
+    <span style="font-size:var(--text-lg);font-weight:700;letter-spacing:-0.3px;color:var(--text)">
+      <span style="color:var(--accent)">Massage</span>Map
+    </span>
+    <div style="min-width:40px"></div>
+  </header>
+
+  <main class="info-wrap">
+
+    <div class="info-icon">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+
+    <h1 class="info-title">Registration received!</h1>
+    <p class="info-body">
+      Thank you for registering on MassageMap. We will contact you to verify
+      and activate your listing.
+    </p>
+
+    <div class="membership-box">
+      <div class="membership-label">Your membership number</div>
+      <div class="membership-number" id="membershipNumber">—</div>
+      <div class="membership-note">
+        Please keep this number for your records. You will need it if you
+        contact MassageMap support.
+      </div>
+    </div>
+
+    <p class="info-next">
+      Once your listing is approved you will receive a confirmation and your
+      profile will appear in search results.
+    </p>
+
+    <a href="index.html" class="info-home-btn">Return to home</a>
+
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const num    = params.get('num') || '';
+    if (num) {
+      document.getElementById('membershipNumber').textContent = num;
+    } else {
+      document.getElementById('membershipNumber').textContent = 'Not available';
+    }
+  </script>
+
+</body>
+</html>
