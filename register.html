@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — MassageMap</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Register-specific styles ── */
+    body { padding-top: 0; padding-bottom: 0; }
+
+    /* ── Page layout ── */
+    .reg-layout { display: flex; min-height: 100dvh; }
+
+    /* Sidebar */
+    .reg-sidebar {
+      width: 200px; flex-shrink: 0; position: sticky; top: 0;
+      height: 100dvh; background: var(--bg-card); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: var(--space-6) var(--space-4); overflow-y: auto;
+    }
+    .reg-sidebar__logo {
+      font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.3px;
+      color: var(--text); margin-bottom: var(--space-8); flex-shrink: 0;
+    }
+    .reg-sidebar__logo span { color: var(--accent); }
+    .reg-steps { display: flex; flex-direction: column; flex: 1; }
+    .reg-step { display: flex; align-items: center; gap: var(--space-3); }
+    .reg-step__dot {
+      width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%;
+      border: 2px solid var(--border); background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: var(--text-xs); font-weight: 700; color: var(--text-muted);
+      transition: background var(--ease), border-color var(--ease), color var(--ease);
+    }
+    .reg-step__label {
+      font-size: var(--text-sm); font-weight: 500; color: var(--text-muted);
+      line-height: 1.3; transition: color var(--ease);
+    }
+    .reg-step--active .reg-step__dot {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+      box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.2);
+    }
+    .reg-step--active .reg-step__label { color: var(--text); font-weight: 600; }
+    .reg-step--done .reg-step__dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .reg-connector {
+      width: 2px; height: 20px; margin-left: 13px; background: var(--border);
+      flex-shrink: 0; transition: background var(--ease);
+    }
+    .reg-connector--done { background: var(--accent); }
+    .reg-sidebar__back {
+      display: flex; align-items: center; gap: var(--space-2);
+      margin-top: var(--space-6); flex-shrink: 0; background: none; border: none;
+      color: var(--text-muted); font-family: var(--font-sans); font-size: var(--text-sm);
+      font-weight: 500; cursor: pointer; padding: var(--space-2) 0;
+      transition: color var(--ease); -webkit-tap-highlight-color: transparent;
+    }
+    .reg-sidebar__back:hover { color: var(--text); }
+
+    /* Content area */
+    .reg-content { flex: 1; min-width: 0; padding: var(--space-8) var(--space-6); max-width: 560px; }
+
+    /* Mobile sidebar */
+    @media (max-width: 600px) {
+      .reg-sidebar {
+        width: 52px; padding: var(--space-5) var(--space-2); align-items: center;
+      }
+      .reg-sidebar__logo { font-size: var(--text-sm); font-weight: 700; margin-bottom: var(--space-5); text-align: center; }
+      .reg-sidebar__logo .logo-text { display: none; }
+      .reg-step__label, .reg-back__label { display: none; }
+      .reg-connector { margin-left: 11px; }
+      .reg-content { padding: var(--space-5) var(--space-3); }
+    }
+
+    /* Back to home link */
+    .reg-back-home {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--text-muted); font-size: var(--text-sm); font-weight: 500;
+      text-decoration: none; margin-bottom: var(--space-5);
+      transition: color var(--ease); -webkit-tap-highlight-color: transparent;
+    }
+    .reg-back-home:hover { color: var(--text); }
+
+    /* Form card */
+    .form-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: var(--space-5); margin-bottom: var(--space-4);
+    }
+    .form-card__title { font-size: var(--text-lg); font-weight: 700; color: var(--text); margin-bottom: var(--space-1); }
+    .form-card__subtitle { font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-5); }
+
+    /* Field layout */
+    .field-stack { display: flex; flex-direction: column; gap: var(--space-4); }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+
+
+    /* Toggle */
+    .toggle-wrap { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+    .toggle-wrap__label { font-size: var(--text-base); color: var(--text); flex: 1; }
+    .toggle { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle__track {
+      position: absolute; inset: 0; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 13px; cursor: pointer; transition: background var(--ease), border-color var(--ease);
+    }
+    .toggle__track::after {
+      content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+      border-radius: 50%; background: var(--text-muted); transition: transform var(--ease), background var(--ease);
+    }
+    .toggle input:checked + .toggle__track { background: var(--accent); border-color: var(--accent); }
+    .toggle input:checked + .toggle__track::after { transform: translateX(22px); background: #fff; }
+    .toggle input:focus-visible + .toggle__track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* Checkbox group */
+    .check-group { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+    .check-item {
+      display: flex; align-items: center; gap: var(--space-2);
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: var(--space-2) var(--space-3); cursor: pointer;
+      transition: border-color var(--ease), background var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .check-item:hover { border-color: rgba(108, 99, 255, 0.4); background: rgba(108, 99, 255, 0.05); }
+    .check-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+    .check-item__label { font-size: var(--text-sm); color: var(--text); cursor: pointer; line-height: 1.3; }
+    .check-item:has(input:checked) { border-color: var(--accent); background: rgba(108, 99, 255, 0.08); }
+    .check-item:has(input:disabled) { opacity: 0.65; cursor: default; }
+
+    /* Radio group */
+    .radio-group { display: flex; flex-direction: column; gap: var(--space-2); }
+    .radio-item {
+      display: flex; align-items: center; gap: var(--space-3); background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px; padding: var(--space-3) var(--space-4);
+      cursor: pointer; transition: border-color var(--ease), background var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .radio-item:hover { border-color: rgba(108, 99, 255, 0.4); }
+    .radio-item input[type="radio"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+    .radio-item__label { font-size: var(--text-base); color: var(--text); cursor: pointer; }
+    .radio-item:has(input:checked) { border-color: var(--accent); background: rgba(108, 99, 255, 0.08); }
+
+    /* Category pill group */
+    .cat-pill-group { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .cat-pill {
+      display: flex; align-items: center;
+      background: #161B27; border: 1px solid var(--border);
+      border-radius: 999px; padding: 7px 16px;
+      cursor: pointer; transition: background var(--ease), border-color var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cat-pill input[type="radio"] { display: none; }
+    .cat-pill span { font-size: var(--text-sm); color: var(--text); font-weight: 500; cursor: pointer; }
+    .cat-pill:has(input:checked) { background: #6C63FF; border-color: #6C63FF; }
+    .cat-pill:has(input:checked) span { color: #fff; }
+    .cat-pill:hover:not(:has(input:checked)) { border-color: rgba(108, 99, 255, 0.4); }
+
+    /* Section label */
+    .form-section-label {
+      font-size: var(--text-xs); font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: var(--space-2);
+    }
+
+    /* Photo uploads */
+    .photo-slots { display: flex; flex-direction: column; gap: var(--space-3); }
+    .photo-slot { border: 1px dashed var(--border); border-radius: var(--radius); padding: var(--space-4); background: var(--bg); }
+    .photo-slot--required { border-color: rgba(108, 99, 255, 0.35); background: rgba(108, 99, 255, 0.04); }
+    .photo-slot__upload { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); }
+    .photo-slot__upload:last-child { margin-bottom: 0; }
+    .photo-slot__btn {
+      display: inline-flex; align-items: center; gap: var(--space-2); height: 36px;
+      padding: 0 var(--space-4); background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-muted); font-family: var(--font-sans);
+      font-size: var(--text-sm); font-weight: 500; cursor: pointer;
+      transition: border-color var(--ease), color var(--ease); flex-shrink: 0;
+    }
+    .photo-slot__btn:hover { border-color: var(--accent); color: var(--text); }
+    .photo-slot__filename { font-size: var(--text-sm); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .photo-slot input[type="file"] { display: none; }
+    .photo-slot__privacy { display: flex; align-items: center; justify-content: space-between; }
+    .photo-slot__privacy-label { font-size: var(--text-sm); color: var(--text-muted); }
+    .photo-slot__privacy-label span { color: var(--text); font-weight: 500; }
+    .photo-required-note { font-size: var(--text-xs); color: var(--accent-light); margin-top: var(--space-2); display: flex; align-items: center; gap: var(--space-1); }
+
+    /* Field note */
+    .field__note { font-size: var(--text-xs); color: var(--text-muted); display: flex; align-items: center; gap: var(--space-1); }
+    .field__note svg { flex-shrink: 0; color: var(--accent-light); }
+
+    /* Nav buttons */
+    .form-nav { display: flex; gap: var(--space-3); margin-top: var(--space-5); }
+
+    /* T&C */
+    .tnc-row {
+      display: flex; align-items: flex-start; gap: var(--space-3);
+      background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-4);
+    }
+    .tnc-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; margin-top: 1px; }
+    .tnc-row__text { font-size: var(--text-sm); color: var(--text-muted); line-height: 1.5; }
+    .tnc-row__text a { color: var(--accent-light); text-decoration: underline; text-underline-offset: 2px; }
+
+    /* Error */
+    .field--error .input, .field--error .textarea, .field--error .select { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); }
+    .field--error .field__label { color: #ef4444; }
+    .error-msg { font-size: var(--text-xs); color: #ef4444; margin-top: var(--space-1); }
+
+    /* Success screen */
+    .success-screen { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: var(--space-8) var(--space-4); min-height: 60vh; }
+    .success-screen__icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(16, 185, 129, 0.12); border: 2px solid rgba(16, 185, 129, 0.3);
+      display: flex; align-items: center; justify-content: center; margin-bottom: var(--space-5); color: var(--green);
+    }
+    .success-screen__title { font-size: var(--text-xl); font-weight: 700; color: var(--text); margin-bottom: var(--space-3); }
+    .success-screen__body { font-size: var(--text-base); color: var(--text-muted); max-width: 300px; line-height: 1.6; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      align-items: flex-end; justify-content: center; padding: 0;
+    }
+    .modal-overlay--open { display: flex; }
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-width: 480px;
+      max-height: 80vh; overflow-y: auto; padding: var(--space-6);
+      box-shadow: var(--shadow-md); animation: slideUp 0.22s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5); }
+    .modal__title { font-size: var(--text-lg); font-weight: 700; color: var(--text); }
+    .modal__close {
+      width: 32px; height: 32px; border: none; border-radius: 50%; background: var(--bg);
+      color: var(--text-muted); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background var(--ease), color var(--ease);
+    }
+    .modal__close:hover { background: var(--bg-card-hover); color: var(--text); }
+    .modal__body p { font-size: var(--text-sm); color: var(--text-muted); line-height: 1.7; margin-bottom: var(--space-4); }
+    .modal__body p:last-child { margin-bottom: 0; }
+    @media (min-width: 640px) {
+      .modal { border-radius: var(--radius); margin-bottom: var(--space-8); }
+      .modal-overlay { align-items: center; padding: var(--space-4); }
+    }
+
+    .select:disabled { opacity: 0.45; cursor: not-allowed; }
+    .hidden { display: none !important; }
+
+    /* ── NEW: Cell + OTP ── */
+    .cell-input-row { display: flex; gap: var(--space-2); }
+    .cell-input-row .input { flex: 1; min-width: 0; }
+    .btn--otp {
+      flex-shrink: 0; height: 44px; padding: 0 var(--space-4);
+      background: var(--accent); border: none; border-radius: var(--radius);
+      color: #fff; font-family: var(--font-sans); font-size: var(--text-sm);
+      font-weight: 600; cursor: pointer; transition: opacity var(--ease); white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn--otp:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn--otp--resend {
+      background: none; border: 1px solid var(--border); color: var(--text-muted);
+      font-size: var(--text-xs); height: 36px;
+    }
+    .otp-section {
+      padding: var(--space-4); background: rgba(108, 99, 255, 0.06);
+      border: 1px solid rgba(108, 99, 255, 0.2); border-radius: var(--radius);
+      display: flex; flex-direction: column; gap: var(--space-3);
+    }
+    .otp-status { font-size: var(--text-sm); color: var(--text-muted); }
+    .otp-input { letter-spacing: 8px; font-size: var(--text-lg); text-align: center; font-family: monospace; }
+    .phone-verified {
+      display: flex; align-items: center; gap: var(--space-2);
+      color: var(--green); font-size: var(--text-sm); font-weight: 600;
+      padding: var(--space-3) var(--space-4);
+      background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: var(--radius);
+    }
+
+    /* ── NEW: Weekly hours grid ── */
+    .hours-grid {
+      border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    }
+    .hours-row {
+      display: flex; align-items: center; gap: var(--space-2);
+      padding: 9px var(--space-3); border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .hours-row:last-child { border-bottom: none; }
+    .hours-row:nth-child(even) { background: rgba(255,255,255,0.015); }
+    .hours-row__day {
+      width: 36px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.4px; color: var(--text-muted); flex-shrink: 0;
+    }
+    .hours-row__times { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+    .hours-row__sep { color: var(--text-muted); font-size: var(--text-xs); flex-shrink: 0; }
+    .select--sm {
+      flex: 1; min-width: 0; height: 30px; padding: 0 4px;
+      font-size: 12px; font-family: var(--font-sans);
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); cursor: pointer;
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 4px center;
+      padding-right: 18px;
+    }
+    .select--sm:disabled { opacity: 0.3; cursor: not-allowed; }
+    .select--sm:focus { outline: none; border-color: var(--accent); }
+
+    /* ── NEW: Qualifications ── */
+    .qual-list { display: flex; flex-direction: column; gap: var(--space-2); }
+    .qual-row {
+      display: grid; grid-template-columns: 1fr 72px 1fr 32px;
+      gap: var(--space-2); align-items: start;
+    }
+    @media (max-width: 520px) {
+      .qual-row { grid-template-columns: 1fr 32px; }
+      .qual-row input:nth-child(1) { grid-column: 1; }
+      .qual-row input:nth-child(2) { grid-column: 1; }
+      .qual-row input:nth-child(3) { grid-column: 1; }
+      .qual-row .qual-remove { grid-column: 2; grid-row: 1 / 4; align-self: center; }
+    }
+    .qual-remove {
+      width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg); color: var(--text-muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1;
+      transition: border-color var(--ease), color var(--ease);
+      -webkit-tap-highlight-color: transparent; flex-shrink: 0; align-self: start;
+    }
+    .qual-remove:hover { border-color: #ef4444; color: #ef4444; }
+    .qual-add-btn {
+      display: flex; align-items: center; gap: var(--space-2); background: none;
+      border: 1px dashed var(--border); border-radius: var(--radius);
+      color: var(--text-muted); font-family: var(--font-sans); font-size: var(--text-sm);
+      font-weight: 500; padding: var(--space-3) var(--space-4); cursor: pointer; width: 100%;
+      margin-top: var(--space-2); transition: border-color var(--ease), color var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .qual-add-btn:hover { border-color: var(--accent); color: var(--accent-light); }
+
+    /* ── NEW: Specials textarea min-height ── */
+    .textarea--specials { min-height: 80px; }
+
+    /* ── NEW: Submit loading ── */
+    .btn--loading { position: relative; pointer-events: none; opacity: 0.7; }
+    .btn--loading::after {
+      content: ''; position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+    /* ── NEW: Conditional shown field ── */
+    .conditional-field { margin-top: var(--space-1); }
+  </style>
+</head>
+<body>
+
+  <!-- Invisible reCAPTCHA anchor (required by Firebase Phone Auth) -->
+  <div id="recaptcha-container"></div>
+
+  <div class="reg-layout">
+
+    <!-- Sidebar -->
+    <aside class="reg-sidebar">
+      <div class="reg-sidebar__logo">
+        <span class="logo-text">Massage</span><span>Map</span>
+      </div>
+      <div class="reg-steps">
+        <div class="reg-step reg-step--active" id="sideStep1">
+          <div class="reg-step__dot" id="sideDot1">1</div>
+          <div class="reg-step__label">Verify Number</div>
+        </div>
+        <div class="reg-connector" id="sideConn1"></div>
+        <div class="reg-step" id="sideStep2">
+          <div class="reg-step__dot" id="sideDot2">2</div>
+          <div class="reg-step__label">Location &amp; Services</div>
+        </div>
+        <div class="reg-connector" id="sideConn2"></div>
+        <div class="reg-step" id="sideStep3">
+          <div class="reg-step__dot" id="sideDot3">3</div>
+          <div class="reg-step__label">Availability &amp; Details</div>
+        </div>
+      </div>
+      <button type="button" class="reg-sidebar__back hidden" id="sideBackBtn" onclick="goBack()">
+        <span aria-hidden="true">←</span>
+        <span class="reg-back__label">Back</span>
+      </button>
+    </aside>
+
+    <!-- Form content -->
+    <div class="reg-content" id="mainContent">
+
+    <a href="index.html" class="reg-back-home">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </a>
+
+    <!-- ══════════════════════════════════════════
+         STEP 1 — Verify Number
+    ══════════════════════════════════════════ -->
+    <div id="step1">
+      <div class="form-card">
+        <div class="form-card__title" id="step1Title">Get Started</div>
+        <div class="form-card__subtitle">Enter your cell number — we'll check if you already have an account.</div>
+
+        <div class="field-stack">
+
+          <!-- Cell number -->
+          <div class="field" id="cellField">
+            <label class="field__label" for="cell">Cell Number</label>
+            <input class="input" id="cell" name="cell" type="tel" placeholder="e.g. 082 123 4567" autocomplete="tel" />
+          </div>
+
+          <!-- OTP entry (hidden until OTP sent) -->
+          <div id="otpSection" class="hidden">
+            <div class="otp-section">
+              <div class="otp-status" id="otpStatusMsg">OTP sent — enter the 6-digit code below.</div>
+              <div class="cell-input-row">
+                <input class="input otp-input" id="otpInput" type="tel" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="_ _ _ _ _ _" />
+                <button type="button" class="btn--otp" onclick="verifyOtp()">Verify</button>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span id="otpError" style="font-size:var(--text-xs); color:#ef4444;"></span>
+                <button type="button" class="btn--otp btn--otp--resend" id="resendBtn" onclick="resendOtp()" style="margin-left:auto;">Resend OTP</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Phone verified badge -->
+          <div id="phoneVerifiedBadge" class="hidden phone-verified">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Phone number verified
+          </div>
+
+        </div>
+      </div>
+
+      <div class="form-nav">
+        <button type="button" class="btn btn--primary btn--full" id="nextBtn" onclick="handleNext()">Next</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         STEP 2 — Location & Services
+    ══════════════════════════════════════════ -->
+    <div id="step2" class="hidden">
+      <div class="form-card">
+        <div class="form-card__title">Location &amp; Services</div>
+        <div class="form-card__subtitle">Where you operate and what you offer.</div>
+
+        <div class="field-stack">
+
+          <!-- Location cascades -->
+          <div class="field" id="provinceField">
+            <label class="field__label" for="province">Province</label>
+            <select class="select" id="province" name="province" onchange="onProvinceChange()">
+              <option value="">Select province…</option>
+            </select>
+          </div>
+
+          <div class="field" id="areaField">
+            <label class="field__label" for="area">Area</label>
+            <select class="select" id="area" name="area" disabled onchange="onAreaChange()">
+              <option value="">Select area…</option>
+            </select>
+          </div>
+
+          <div class="field" id="suburbField">
+            <label class="field__label" for="suburb">Suburb</label>
+            <select class="select" id="suburb" name="suburb" disabled>
+              <option value="">Select suburb…</option>
+            </select>
+          </div>
+
+          <!-- Street address -->
+          <div class="field" id="addressField">
+            <label class="field__label" for="address">Street Address</label>
+            <input class="input" id="address" name="address" type="text" placeholder="Your street address" autocomplete="street-address" />
+            <div class="field__note" style="margin-top:var(--space-1);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Stored for admin verification only — never shown publicly.
+            </div>
+          </div>
+
+          <!-- Address visibility -->
+          <div class="toggle-wrap">
+            <div>
+              <div class="toggle-wrap__label">Show full address on listing</div>
+              <div style="font-size:var(--text-xs); color:var(--text-muted); margin-top:2px;">Off = suburb only (recommended)</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="addressVisible" name="addressVisible" />
+              <span class="toggle__track"></span>
+            </label>
+          </div>
+
+          <!-- Premises type -->
+          <div>
+            <div class="form-section-label">Premises Type</div>
+            <div class="radio-group" style="flex-direction:row; flex-wrap:wrap;">
+              <label class="radio-item" style="flex:1; min-width:140px;">
+                <input type="radio" name="premisesType" value="home" />
+                <span class="radio-item__label">Home studio</span>
+              </label>
+              <label class="radio-item" style="flex:1; min-width:140px;">
+                <input type="radio" name="premisesType" value="business" />
+                <span class="radio-item__label">Business premises</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Services offered -->
+          <div>
+            <div class="form-section-label">Services Offered</div>
+            <div class="check-group" id="servicesGroup">
+              <label class="check-item"><input type="checkbox" name="services" value="Full Body" /><span class="check-item__label">Full Body</span></label>
+              <label class="check-item"><input type="checkbox" name="services" value="Back & Neck" /><span class="check-item__label">Back &amp; Neck</span></label>
+              <label class="check-item"><input type="checkbox" name="services" value="Facial" /><span class="check-item__label">Facial</span></label>
+              <label class="check-item"><input type="checkbox" name="services" value="Foot Massage" /><span class="check-item__label">Foot Massage</span></label>
+              <label class="check-item"><input type="checkbox" name="services" value="Head Massage" /><span class="check-item__label">Head Massage</span></label>
+              <label class="check-item"><input type="checkbox" name="services" value="Couples Massage" /><span class="check-item__label">Couples Massage</span></label>
+            </div>
+          </div>
+
+          <!-- Public massage category (single-select) -->
+          <div id="displayMassageTypeField">
+            <div class="form-section-label">Your public massage category (choose one)</div>
+            <div class="cat-pill-group">
+              <label class="cat-pill"><input type="radio" name="displayMassageType" value="Massage" /><span>Massage</span></label>
+              <label class="cat-pill"><input type="radio" name="displayMassageType" value="Sport" /><span>Sport</span></label>
+              <label class="cat-pill"><input type="radio" name="displayMassageType" value="Reiki" /><span>Reiki</span></label>
+              <label class="cat-pill"><input type="radio" name="displayMassageType" value="Chinese" /><span>Chinese</span></label>
+              <label class="cat-pill"><input type="radio" name="displayMassageType" value="Indian" /><span>Indian</span></label>
+              <label class="cat-pill"><input type="radio" name="displayMassageType" value="Adult" /><span>Adult</span></label>
+            </div>
+          </div>
+
+          <!-- Massage types -->
+          <div>
+            <div class="form-section-label">Massage Types</div>
+            <div class="check-group" id="typesGroup">
+              <label class="check-item"><input type="checkbox" name="types" value="Swedish" /><span class="check-item__label">Swedish</span></label>
+              <label class="check-item"><input type="checkbox" name="types" value="Deep Tissue" /><span class="check-item__label">Deep Tissue</span></label>
+              <label class="check-item"><input type="checkbox" name="types" value="Hot Stone" /><span class="check-item__label">Hot Stone</span></label>
+              <label class="check-item"><input type="checkbox" name="types" value="Thai" /><span class="check-item__label">Thai</span></label>
+              <label class="check-item"><input type="checkbox" name="types" value="Sports" /><span class="check-item__label">Sports</span></label>
+              <label class="check-item"><input type="checkbox" name="types" value="Reflexology" /><span class="check-item__label">Reflexology</span></label>
+              <label class="check-item"><input type="checkbox" name="types" value="Aromatherapy" /><span class="check-item__label">Aromatherapy</span></label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="form-nav">
+        <button type="button" class="btn btn--primary btn--full" onclick="goToStep(3)">Next — Availability &amp; Details</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         STEP 3 — Availability & Details
+    ══════════════════════════════════════════ -->
+    <div id="step3" class="hidden">
+      <div class="form-card">
+        <div class="form-card__title">Availability &amp; Details</div>
+        <div class="form-card__subtitle">Help clients find and book you.</div>
+
+        <div class="field-stack">
+
+          <!-- Clients served -->
+          <div>
+            <div class="form-section-label">Clients Served</div>
+            <div class="radio-group">
+              <label class="radio-item"><input type="radio" name="gender" value="ladies" /><span class="radio-item__label">Ladies only</span></label>
+              <label class="radio-item"><input type="radio" name="gender" value="gents" /><span class="radio-item__label">Gentlemen only</span></label>
+              <label class="radio-item"><input type="radio" name="gender" value="both" /><span class="radio-item__label">Both</span></label>
+            </div>
+          </div>
+
+          <!-- Mobile massage -->
+          <div class="toggle-wrap">
+            <div class="toggle-wrap__label">Mobile massage available</div>
+            <label class="toggle">
+              <input type="checkbox" id="mobileMassage" name="mobileMassage" onchange="onMobileToggle()" />
+              <span class="toggle__track"></span>
+            </label>
+          </div>
+
+          <!-- Willing to travel (conditional on mobile) -->
+          <div class="field hidden conditional-field" id="travelKmField">
+            <label class="field__label" for="willingToTravelKm">Willing to travel up to</label>
+            <select class="select" id="willingToTravelKm" name="willingToTravelKm">
+              <option value="10">10 km</option>
+              <option value="25">25 km</option>
+              <option value="50">50 km</option>
+              <option value="100">100 km</option>
+            </select>
+          </div>
+
+          <!-- Weekly hours -->
+          <div>
+            <div class="form-section-label" style="margin-bottom:var(--space-3);">Weekly Availability</div>
+            <div class="hours-grid" id="weeklyHoursGrid">
+              <!-- Built by JS -->
+            </div>
+          </div>
+
+          <!-- Available outside hours -->
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+            <input type="checkbox" id="availableOutsideHours" name="availableOutsideHours" style="width:16px; height:16px; accent-color:var(--accent); flex-shrink:0;" />
+            <span style="font-size:var(--text-sm); color:var(--text);">Available outside stated hours by arrangement</span>
+          </label>
+
+          <!-- About Me -->
+          <div class="field">
+            <label class="field__label" for="aboutMe">About Me</label>
+            <textarea class="textarea" id="aboutMe" name="aboutMe" maxlength="300" placeholder="What makes your service special? A short note for potential clients." oninput="updateCharCount(this)" style="min-height:96px;"></textarea>
+            <div class="field__note" id="aboutMeCount" style="justify-content:flex-end; color:var(--text-muted);">0 / 300</div>
+          </div>
+
+          <!-- Shower / Parking -->
+          <div class="toggle-wrap">
+            <div class="toggle-wrap__label">Shower facilities available</div>
+            <label class="toggle"><input type="checkbox" id="shower" name="shower" /><span class="toggle__track"></span></label>
+          </div>
+          <div class="toggle-wrap">
+            <div class="toggle-wrap__label">Off-street parking available</div>
+            <label class="toggle"><input type="checkbox" id="parking" name="parking" /><span class="toggle__track"></span></label>
+          </div>
+
+          <!-- Qualifications -->
+          <div>
+            <div class="form-section-label">Qualifications</div>
+            <div style="font-size:var(--text-xs); color:var(--text-muted); margin-bottom:var(--space-3);">Institute &nbsp;·&nbsp; Year &nbsp;·&nbsp; Certificate type</div>
+            <div class="qual-list" id="qualList"></div>
+            <button type="button" class="qual-add-btn" onclick="addQualification()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add qualification
+            </button>
+          </div>
+
+          <!-- Affiliations -->
+          <div>
+            <div class="form-section-label">Professional Affiliations</div>
+            <div class="check-group" style="grid-template-columns: 1fr 1fr;">
+              <label class="check-item"><input type="checkbox" name="affiliations" value="SAMA" /><span class="check-item__label">SAMA</span></label>
+              <label class="check-item"><input type="checkbox" name="affiliations" value="SAAMA" /><span class="check-item__label">SAAMA</span></label>
+              <label class="check-item"><input type="checkbox" name="affiliations" value="SATPA" /><span class="check-item__label">SATPA</span></label>
+              <label class="check-item"><input type="checkbox" name="affiliations" value="COMENSA" /><span class="check-item__label">COMENSA</span></label>
+            </div>
+          </div>
+
+          <!-- Website URL -->
+          <div class="field">
+            <label class="field__label" for="websiteUrl">Website / Social Link <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+            <input class="input" id="websiteUrl" name="websiteUrl" type="url" placeholder="https://yourwebsite.com" />
+          </div>
+
+          <!-- Specials / Promotions -->
+          <div class="field">
+            <label class="field__label" for="specialsText">Specials &amp; Promotions <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+            <textarea class="textarea textarea--specials" id="specialsText" name="specialsText" maxlength="200" placeholder="Any current deals or promotions you'd like to highlight…" oninput="updateSpecialsCount(this)"></textarea>
+            <div style="display:flex; justify-content:space-between; margin-top:var(--space-1);">
+              <div class="field__note">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Monitored by admin.
+              </div>
+              <span id="specialsCount" style="font-size:var(--text-xs); color:var(--text-muted);">0 / 200</span>
+            </div>
+          </div>
+
+          <!-- ID Photo (optional) -->
+          <div>
+            <div class="form-section-label">ID / Passport Photo <span style="font-weight:400; color:var(--text-muted); text-transform:none; letter-spacing:0;">(optional)</span></div>
+            <div class="photo-slot" id="idPhotoField">
+              <div class="photo-slot__upload">
+                <label class="photo-slot__btn" for="idPhoto">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  Upload ID photo
+                </label>
+                <input type="file" id="idPhoto" name="idPhoto" accept="image/*" onchange="updateFilename(this,'idPhotoName')" />
+                <span class="photo-slot__filename" id="idPhotoName">No file chosen</span>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:var(--space-2); margin-top:var(--space-2); padding:var(--space-3); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:8px;">
+                <svg style="flex-shrink:0; color:#f59e0b; margin-top:1px;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span style="font-size:var(--text-xs); color:#f59e0b; line-height:1.5;">Your listing will stay inactive until ID is verified and payment is received. You can upload your ID later.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Photos (up to 5) -->
+          <div>
+            <div class="form-section-label">Profile Photos <span style="font-weight:400; color:var(--text-muted); text-transform:none; letter-spacing:0;">(up to 5)</span></div>
+            <div class="photo-slots" id="photoSlots">
+
+              <div class="photo-slot" id="photoSlot1">
+                <div class="photo-slot__upload">
+                  <label class="photo-slot__btn" for="photo1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Upload or take photo
+                  </label>
+                  <input type="file" id="photo1" name="photo1" accept="image/*" capture="environment" onchange="onPhotoChange(this,'name1',1)" />
+                  <span class="photo-slot__filename" id="name1">No file chosen</span>
+                </div>
+                <div class="photo-slot__privacy">
+                  <div class="photo-slot__privacy-label">Visibility: <span id="privLabel1">Keep private</span></div>
+                  <label class="toggle"><input type="checkbox" id="priv1" onchange="updatePrivLabel(this,'privLabel1')" /><span class="toggle__track"></span></label>
+                </div>
+              </div>
+
+              <button type="button" class="qual-add-btn hidden" id="addPhotoBtn2" onclick="revealPhotoSlot(2)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add another photo
+              </button>
+
+              <div class="photo-slot hidden" id="photoSlot2">
+                <div class="photo-slot__upload">
+                  <label class="photo-slot__btn" for="photo2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Choose photo
+                  </label>
+                  <input type="file" id="photo2" name="photo2" accept="image/*" onchange="onPhotoChange(this,'name2',2)" />
+                  <span class="photo-slot__filename" id="name2">No file chosen</span>
+                </div>
+                <div class="photo-slot__privacy">
+                  <div class="photo-slot__privacy-label">Visibility: <span id="privLabel2">Keep private</span></div>
+                  <label class="toggle"><input type="checkbox" id="priv2" onchange="updatePrivLabel(this,'privLabel2')" /><span class="toggle__track"></span></label>
+                </div>
+              </div>
+
+              <button type="button" class="qual-add-btn hidden" id="addPhotoBtn3" onclick="revealPhotoSlot(3)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add another photo
+              </button>
+
+              <div class="photo-slot hidden" id="photoSlot3">
+                <div class="photo-slot__upload">
+                  <label class="photo-slot__btn" for="photo3">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Choose photo
+                  </label>
+                  <input type="file" id="photo3" name="photo3" accept="image/*" onchange="onPhotoChange(this,'name3',3)" />
+                  <span class="photo-slot__filename" id="name3">No file chosen</span>
+                </div>
+                <div class="photo-slot__privacy">
+                  <div class="photo-slot__privacy-label">Visibility: <span id="privLabel3">Keep private</span></div>
+                  <label class="toggle"><input type="checkbox" id="priv3" onchange="updatePrivLabel(this,'privLabel3')" /><span class="toggle__track"></span></label>
+                </div>
+              </div>
+
+              <button type="button" class="qual-add-btn hidden" id="addPhotoBtn4" onclick="revealPhotoSlot(4)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add another photo
+              </button>
+
+              <div class="photo-slot hidden" id="photoSlot4">
+                <div class="photo-slot__upload">
+                  <label class="photo-slot__btn" for="photo4">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Choose photo
+                  </label>
+                  <input type="file" id="photo4" name="photo4" accept="image/*" onchange="onPhotoChange(this,'name4',4)" />
+                  <span class="photo-slot__filename" id="name4">No file chosen</span>
+                </div>
+                <div class="photo-slot__privacy">
+                  <div class="photo-slot__privacy-label">Visibility: <span id="privLabel4">Keep private</span></div>
+                  <label class="toggle"><input type="checkbox" id="priv4" onchange="updatePrivLabel(this,'privLabel4')" /><span class="toggle__track"></span></label>
+                </div>
+              </div>
+
+              <button type="button" class="qual-add-btn hidden" id="addPhotoBtn5" onclick="revealPhotoSlot(5)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add another photo
+              </button>
+
+              <div class="photo-slot hidden" id="photoSlot5">
+                <div class="photo-slot__upload">
+                  <label class="photo-slot__btn" for="photo5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Choose photo
+                  </label>
+                  <input type="file" id="photo5" name="photo5" accept="image/*" onchange="onPhotoChange(this,'name5',5)" />
+                  <span class="photo-slot__filename" id="name5">No file chosen</span>
+                </div>
+                <div class="photo-slot__privacy">
+                  <div class="photo-slot__privacy-label">Visibility: <span id="privLabel5">Keep private</span></div>
+                  <label class="toggle"><input type="checkbox" id="priv5" onchange="updatePrivLabel(this,'privLabel5')" /><span class="toggle__track"></span></label>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Listing classification -->
+          <div>
+            <div class="form-section-label">Listing Classification</div>
+            <div class="radio-group">
+              <label class="radio-item"><input type="radio" name="classification" value="massage" /><span class="radio-item__label">Massage</span></label>
+              <label class="radio-item"><input type="radio" name="classification" value="holistic" /><span class="radio-item__label">Holistic</span></label>
+              <label class="radio-item"><input type="radio" name="classification" value="adult" /><span class="radio-item__label">Adult</span></label>
+            </div>
+          </div>
+
+          <!-- Terms & Conditions -->
+          <div class="tnc-row">
+            <input type="checkbox" id="tncCheck" onchange="onTncChange()" />
+            <div class="tnc-row__text">
+              I agree to the <a href="#" onclick="openModal(event)">Terms &amp; Conditions</a> of MassageMap. I confirm that all information I have provided is accurate and up to date.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Submit error -->
+      <div id="submitError" class="hidden" style="padding:var(--space-3) var(--space-4); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:var(--radius); font-size:var(--text-sm); color:#fca5a5; margin-bottom:var(--space-3);"></div>
+
+      <div class="form-nav">
+        <button type="button" class="btn btn--primary btn--lg btn--full" id="registerBtn" style="opacity:0.4; pointer-events:none;" onclick="submitForm()">Register</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SUCCESS SCREEN
+    ══════════════════════════════════════════ -->
+    <div class="success-screen" id="successScreen">
+      <div class="success-screen__icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="success-screen__title">Registration received</div>
+      <div class="success-screen__body">We will call you to verify and activate your listing. Redirecting…</div>
+    </div>
+
+    </div><!-- /.reg-content -->
+  </div><!-- /.reg-layout -->
+
+  <!-- Terms & Conditions Modal -->
+  <div class="modal-overlay" id="tncModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal__header">
+        <div class="modal__title" id="modalTitle">Terms &amp; Conditions</div>
+        <button class="modal__close" onclick="closeModal()" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal__body">
+        <p>By registering on MassageMap, you agree to provide accurate, up-to-date information about yourself and your services. Your listing will be reviewed by our team before it goes live. We reserve the right to decline or remove listings that do not meet our community standards.</p>
+        <p>Your street address is collected solely for administrative verification purposes and will never be displayed publicly. Only your suburb and area will appear on your public listing. You control which photos are shown publicly — all photos default to private and must be actively set to public by you.</p>
+        <p>MassageMap is a directory service. We do not employ therapists, process client payments, or mediate disputes between therapists and clients. By registering, you confirm that you operate lawfully and that your services comply with applicable regulations. We may update these terms from time to time; continued use of the platform constitutes acceptance of any changes.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/config.js"></script>
+  <script type="module">
+    import { app, db } from './firebase-config.js';
+    import {
+      getAuth, RecaptchaVerifier, signInWithPhoneNumber
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+    import {
+      getStorage, ref as storageRef, uploadBytes, getDownloadURL
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
+    import {
+      collection, doc, setDoc, serverTimestamp, runTransaction,
+      query, where, getDocs
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+    const auth    = getAuth(app);
+    const storage = getStorage(app);
+
+    // ── State ──
+    let currentStep        = 1;
+    let supplierType       = 'individual';
+    let phoneVerified      = false;
+    let confirmationResult = null;
+    let appVerifier        = null;
+    let authUid            = null;
+    let knownSupplierData  = null; // set after Firestore lookup on Next
+
+    // ════════════════════════════════════════════
+    // LOCATIONS
+    // ════════════════════════════════════════════
+    const LOCATIONS = {"provinces":[{"id":"gauteng","name":"Gauteng","areas":[{"id":"sandton-north-johannesburg","name":"Sandton & North Johannesburg","suburbs":["Sandton","Fourways","Bryanston","Bramley","Melrose Arch","Sunninghill","Benmore Gardens","Morningside","Rivonia","Paulshof","Woodmead","Lonehill","Dainfern","Kyalami","Craighall Park","Rosebank","Houghton","Norwood","Orange Grove","Illovo","Parkhurst","Parktown"]},{"id":"east-rand","name":"East Rand","suburbs":["Edenvale","Benoni","Germiston","Kempton Park","Kensington","Boksburg","Bedfordview","Bonaero Park","Alberton","Bracken Gardens","Eastleigh","Brakpan","Springs","Nigel","Devon","Tembisa"]},{"id":"west-rand-randburg","name":"West Rand & Randburg","suburbs":["Northriding","Blairgowrie","Ferndale","Randburg","Randpark Ridge","Craighall","Parkhurst","Horizon","Fontainebleau","Fairland","Florida","Honeydew","Krugersdorp","Muldersdrift","Roodepoort","Weltevredenpark","Northcliff","Linden","Greenside"]},{"id":"pretoria-east","name":"Pretoria East","suburbs":["Waterkloof Ridge","Garsfontein","Hazelwood","Wingate Park","Constantia Park","Brooklyn","Lynnwood","Lynnwood Manor","Menlyn","Moreleta Park","Faerie Glen","Erasmuskloof","Newlands","Die Wilgers","Willowbridge","Ashlea Gardens","Groenkloof","Hatfield"]},{"id":"pretoria-central","name":"Pretoria Central","suburbs":["Arcadia","Sunnyside","Hatfield","Brooklyn","Capital Park","Doornpoort","Elandspoort","Gezina","Pretoria Central","Muckleneuk"]},{"id":"pretoria-north","name":"Pretoria North","suburbs":["Pretoria North","Florauna","Montana","Akasia","Karenpark","Doornpoort","Wonderboom","The Orchards","Rosslyn","Hercules"]},{"id":"centurion","name":"Centurion","suburbs":["Centurion","Wierda Park","Highveld","Hennopspark","Lyttleton Manor","Clubview","Pierre van Ryneveld","Irene","Eldoraigne","Wierdapark","Doringkloof","Theresapark","Rooihuiskraal"]},{"id":"midrand","name":"Midrand","suburbs":["Midrand","Noordwyk","Vorna Valley","Glen Austin","Halfway House","Olifantsfontein","Waterfall","Kyalami","Dainfern","Crowthorne","Sagewood"]},{"id":"johannesburg-south","name":"Johannesburg South","suburbs":["Meyerton","Vereeniging","Homestead","Kibler Park","Mulbarton","Robertsham","Turffontein","Linmeyer","Ridgeway","Johannesburg South","Heidelberg","Alberton","Vanderbijlpark"]},{"id":"soweto-west","name":"Soweto & West Johannesburg","suburbs":["Soweto","Protea Glen","Dobsonville","Roodepoort","Witpoortjie","Florida","Krugersdorp"]}]},{"id":"western-cape","name":"Western Cape","areas":[{"id":"cape-town-city-bowl","name":"Cape Town City Bowl","suburbs":["City Central","Gardens","Foreshore","Woodstock","Oranjezicht","Maitland","De Waterkant","Bo-Kaap","Salt River","Observatory","V&A Waterfront"]},{"id":"cape-town-green-point","name":"Green Point & Atlantic Seaboard","suburbs":["Green Point","Sea Point","Three Anchor Bay","Camps Bay","Clifton","Bantry Bay","Fresnaye","Mouille Point"]},{"id":"cape-town-southern-suburbs-claremont","name":"Southern Suburbs","suburbs":["Claremont","Kenilworth","Rondebosch","Mowbray","Crawford","Lansdowne","Newlands","Pinelands","Bishopscourt","Wynberg","Observatory"]},{"id":"cape-town-constantia","name":"Constantia & Deep South","suburbs":["Constantia","Bergvliet","Plumstead","Diep River","Muizenberg","Kirstenhof","Heathfield","Tokai","Steenberg","Retreat","Lakeside","Kalk Bay","Fish Hoek","Glencairn","Simon's Town"]},{"id":"bloubergstrand-table-view","name":"Blouberg & Table View","suburbs":["Bloubergstrand","Table View","Milnerton","West Beach","Parklands","Sunset Beach","Big Bay","Sunningdale","Flamingo Vlei","Tableview"]},{"id":"century-city","name":"Century City & Surrounds","suburbs":["Century City","Marconi Beam","Monte Vista","Edgemead","De Tijger"]},{"id":"northern-suburbs-north-n1","name":"Northern Suburbs","suburbs":["Durbanville","Tygervalley","Brackenfell","Kraaifontein","Panorama","Plattekloof","Bothasig","Belville","Parow","Goodwood","Boston","Oakdale","Kuils River","Kuilsriver","Kenridge"]},{"id":"strand-somerset-west","name":"Strand & Somerset West","suburbs":["Somerset West","Strand","Gordon's Bay","Stellenbosch","Macassar","Sir Lowry's Pass"]},{"id":"winelands","name":"Winelands","suburbs":["Stellenbosch","Paarl","Worcester","Franschhoek","Wellington","Grabouw","Ceres"]},{"id":"west-coast","name":"West Coast","suburbs":["Melkbosstrand","Langebaan","St Helena Bay","Porterville","Saldanha","Vredenburg","Darling","Yzerfontein"]},{"id":"garden-route","name":"Garden Route","suburbs":["George","Mossel Bay","Sedgefield","Knysna","Plettenberg Bay","Wilderness","Hartenbos","Great Brak River","Oudtshoorn"]},{"id":"overberg","name":"Overberg","suburbs":["Hermanus","Betty's Bay","Swellendam","Bredasdorp","Caledon","Stanford","Kleinmond"]}]},{"id":"kwazulu-natal","name":"KwaZulu-Natal","areas":[{"id":"durban-central-berea","name":"Durban Central & Berea","suburbs":["Durban Central","Berea","Musgrave","Glenwood","Morningside","Overport","Umbilo","Greyville"]},{"id":"durban-north","name":"Durban North","suburbs":["Durban North","Umhlanga Rocks","La Lucia","Glenashley","Redhill","Mount Edgecombe"]},{"id":"umhlanga-ballito","name":"Umhlanga & Ballito","suburbs":["Umhlanga","Umhlanga Ridge","Ballito","Salt Rock","Dolphin Coast","Sheffield Beach","Stanger","Mandini"]},{"id":"durban-south","name":"Durban South","suburbs":["Amanzimtoti","Illovo Beach","Bluff","Chatsworth","Montclair","Isipingo","Kingsburgh","Warner Beach","Umlazi"]},{"id":"durban-west-hillcrest","name":"Hillcrest & Outer West","suburbs":["Hillcrest","Kloof","Pinetown","New Germany","Westville","Queensburgh","Gillitts","Assagay"]},{"id":"pietermaritzburg","name":"Pietermaritzburg","suburbs":["Pietermaritzburg","Northdale","Scottsville","Hayfields","Wembley","Hilton","Howick"]},{"id":"richards-bay","name":"Richards Bay & North Coast","suburbs":["Richards Bay","Empangeni","Mtubatuba","Eshowe","Ulundi"]},{"id":"south-coast-kzn","name":"South Coast","suburbs":["Port Shepstone","Margate","Uvongo","Shelly Beach","Hibberdene","Scottburgh","Park Rynie"]}]},{"id":"eastern-cape","name":"Eastern Cape","areas":[{"id":"gqeberha","name":"Gqeberha (Port Elizabeth)","suburbs":["Newton Park","Walmer","Gqeberha Central","Summerstrand","Humewood","Greenacres","Charlo","Mill Park","Framesby","Lorraine","Hunters Retreat"]},{"id":"east-london","name":"East London","suburbs":["East London","Cambridge","Nahoon","Vincent","Beacon Bay","Berea","Gonubie","Mdantsane"]},{"id":"garden-route-ec","name":"Garden Route Eastern Cape","suburbs":["Jeffreys Bay","St Francis Bay","Humansdorp","Grahamstown","Port Alfred"]},{"id":"inland-eastern-cape","name":"Inland Eastern Cape","suburbs":["Queenstown","Graaff-Reinet","Aliwal North","Cradock","Bhisho","King William's Town"]}]},{"id":"free-state","name":"Free State","areas":[{"id":"bloemfontein","name":"Bloemfontein","suburbs":["Bloemfontein","Waverley","Westdene","Universitas","Heuwelsig","Bultfontein","Willows","Brandwag","Langenhovenpark","Pentagon Park","Fichardt Park"]},{"id":"free-state-other","name":"Other Free State","suburbs":["Welkom","Sasolburg","Bethlehem","Kroonstad","Parys","Virginia","Phuthaditjhaba"]}]},{"id":"limpopo","name":"Limpopo","areas":[{"id":"polokwane","name":"Polokwane","suburbs":["Polokwane","Seshego","Bendor","Flora Park","Ivypark","Ladanna","Nirvana","Superbia"]},{"id":"tzaneen-phalaborwa","name":"Tzaneen & Phalaborwa","suburbs":["Tzaneen","Phalaborwa","Lephalale","Mokopane","Bela-Bela","Thabazimbi"]},{"id":"limpopo-other","name":"Other Limpopo","suburbs":["Louis Trichardt","Thohoyandou","Giyani","Malamulele","Burgersfort"]}]},{"id":"mpumalanga","name":"Mpumalanga","areas":[{"id":"emalahleni-witbank","name":"Emalahleni (Witbank)","suburbs":["Emalahleni","Witbank","Del Judor","Reyno Ridge","Clewer","Tasbet Park"]},{"id":"nelspruit-mbombela","name":"Nelspruit (Mbombela)","suburbs":["Nelspruit","Mbombela","White River","Hazyview","Barberton","Komatipoort"]},{"id":"middelburg-mpumalanga","name":"Middelburg","suburbs":["Middelburg","Aerorand","Mhluzi","Nasaret","Dennesig"]},{"id":"mpumalanga-other","name":"Other Mpumalanga","suburbs":["Secunda","Ermelo","Standerton","Bethal","Lydenburg","Graskop","Sabie","Pilgrim's Rest"]}]},{"id":"north-west","name":"North West","areas":[{"id":"rustenburg","name":"Rustenburg","suburbs":["Rustenburg","Waterfall East","Proteapark","Cashan","Tlhabane"]},{"id":"mahikeng","name":"Mahikeng (Mafikeng)","suburbs":["Mahikeng","Mafikeng","Mmabatho","Lichtenburg"]},{"id":"klerksdorp-potchefstroom","name":"Klerksdorp & Potchefstroom","suburbs":["Klerksdorp","Potchefstroom","Stilfontein","Orkney","Hartbeespoort","Brits"]}]},{"id":"northern-cape","name":"Northern Cape","areas":[{"id":"kimberley","name":"Kimberley","suburbs":["Kimberley","Galeshewe","Beaconsfield","Herlear","Phutanang"]},{"id":"northern-cape-other","name":"Other Northern Cape","suburbs":["Upington","Springbok","De Aar","Kuruman","Kathu","Douglas"]}]}]};
+
+    function populateProvinces() {
+      const sel = document.getElementById('province');
+      LOCATIONS.provinces.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.id; o.textContent = p.name;
+        sel.appendChild(o);
+      });
+    }
+
+    // ════════════════════════════════════════════
+    // SUPPLIER TYPE — set from URL param, no toggle UI
+    // ════════════════════════════════════════════
+    function setSupplierType(type) {
+      supplierType = type;
+    }
+
+    // ════════════════════════════════════════════
+    // LOCATION CASCADES
+    // ════════════════════════════════════════════
+    function onProvinceChange() {
+      const provinceId = document.getElementById('province').value;
+      const areaEl = document.getElementById('area');
+      const suburbEl = document.getElementById('suburb');
+      areaEl.innerHTML = '<option value="">Select area…</option>';
+      suburbEl.innerHTML = '<option value="">Select suburb…</option>';
+      areaEl.disabled = true; suburbEl.disabled = true;
+      if (!provinceId) return;
+      const province = LOCATIONS.provinces.find(p => p.id === provinceId);
+      if (!province) return;
+      province.areas.forEach(a => {
+        const o = document.createElement('option');
+        o.value = a.id; o.textContent = a.name;
+        areaEl.appendChild(o);
+      });
+      areaEl.disabled = false;
+    }
+
+    function onAreaChange() {
+      const provinceId = document.getElementById('province').value;
+      const areaId = document.getElementById('area').value;
+      const suburbEl = document.getElementById('suburb');
+      suburbEl.innerHTML = '<option value="">Select suburb…</option>';
+      suburbEl.disabled = true;
+      if (!areaId) return;
+      const province = LOCATIONS.provinces.find(p => p.id === provinceId);
+      if (!province) return;
+      const area = province.areas.find(a => a.id === areaId);
+      if (!area) return;
+      area.suburbs.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s; o.textContent = s;
+        suburbEl.appendChild(o);
+      });
+      suburbEl.disabled = false;
+    }
+
+    // ════════════════════════════════════════════
+    // PHONE AUTH — OTP
+    // ════════════════════════════════════════════
+    function formatPhoneNumber(raw) {
+      const digits = raw.replace(/\D/g, '');
+      if (digits.startsWith('27') && digits.length === 11) return '+' + digits;
+      if (digits.startsWith('0') && digits.length === 10) return '+27' + digits.slice(1);
+      return '+' + digits;
+    }
+
+    function initRecaptchaVerifier() {
+      if (appVerifier) { try { appVerifier.clear(); } catch(_) {} }
+      appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+    }
+
+    async function handleNext() {
+      clearErrors();
+      const raw = document.getElementById('cell').value.trim();
+      if (!raw) {
+        markError(document.getElementById('cellField'), 'Please enter your cell number.');
+        return;
+      }
+
+      const phone = formatPhoneNumber(raw);
+      const btn   = document.getElementById('nextBtn');
+      btn.disabled    = true;
+      btn.textContent = 'Checking…';
+      document.getElementById('otpError').textContent = '';
+
+      try {
+        // Check Firestore for existing supplier by cellNumber
+        const snap = await getDocs(query(collection(db, 'suppliers'), where('cellNumber', '==', phone)));
+        knownSupplierData = snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+
+        // Send OTP
+        btn.textContent = 'Sending OTP…';
+        initRecaptchaVerifier();
+        confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
+
+        document.getElementById('otpSection').classList.remove('hidden');
+        document.getElementById('phoneVerifiedBadge').classList.add('hidden');
+        document.getElementById('otpStatusMsg').textContent = `OTP sent to ${phone}. Enter the 6-digit code below.`;
+        btn.textContent = 'Resend OTP';
+        btn.disabled    = false;
+
+      } catch (err) {
+        console.error('handleNext error:', err);
+        btn.disabled    = false;
+        btn.textContent = 'Next';
+        let msg = 'Could not send OTP. Please check the number and try again.';
+        if (err.code === 'auth/invalid-phone-number') msg = 'Invalid phone number format.';
+        if (err.code === 'auth/too-many-requests')    msg = 'Too many attempts. Please wait a few minutes.';
+        markError(document.getElementById('cellField'), msg);
+        try { if (appVerifier) appVerifier.clear(); } catch(_) {}
+        appVerifier = null;
+      }
+    }
+
+    async function resendOtp() {
+      const raw = document.getElementById('cell').value.trim();
+      if (!raw) return;
+      const phone = formatPhoneNumber(raw);
+      const btn   = document.getElementById('nextBtn');
+      btn.disabled    = true;
+      btn.textContent = 'Sending…';
+      document.getElementById('otpError').textContent = '';
+
+      try {
+        initRecaptchaVerifier();
+        confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
+        document.getElementById('otpStatusMsg').textContent = `OTP resent to ${phone}. Enter the 6-digit code below.`;
+        btn.textContent = 'Resend OTP';
+        btn.disabled    = false;
+      } catch (err) {
+        console.error('resendOtp error:', err);
+        btn.disabled    = false;
+        btn.textContent = 'Resend OTP';
+        let msg = 'Could not resend OTP. Please try again.';
+        if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please wait a few minutes.';
+        document.getElementById('otpError').textContent = msg;
+        try { if (appVerifier) appVerifier.clear(); } catch(_) {}
+        appVerifier = null;
+      }
+    }
+
+    async function verifyOtp() {
+      const code  = document.getElementById('otpInput').value.trim();
+      const errEl = document.getElementById('otpError');
+      errEl.textContent = '';
+      if (code.length !== 6) { errEl.textContent = 'Please enter all 6 digits.'; return; }
+      if (!confirmationResult) { errEl.textContent = 'Please send OTP first.'; return; }
+
+      const verifyBtn = document.querySelector('#otpSection .btn--otp:not(.btn--otp--resend)');
+      verifyBtn.disabled    = true;
+      verifyBtn.textContent = 'Verifying…';
+
+      try {
+        const credential = await confirmationResult.confirm(code);
+        authUid       = credential.user.uid;
+        phoneVerified = true;
+        document.getElementById('otpSection').classList.add('hidden');
+        document.getElementById('phoneVerifiedBadge').classList.remove('hidden');
+        document.getElementById('nextBtn').disabled    = true;
+        document.getElementById('nextBtn').textContent = 'Verified ✓';
+
+        if (knownSupplierData) {
+          // Existing supplier — redirect to dashboard
+          const type = knownSupplierData.supplierType || 'individual';
+          window.location.href = `dashboard.html?type=${encodeURIComponent(type)}`;
+        } else {
+          // New supplier — continue to registration form
+          goToStep(2);
+        }
+      } catch (err) {
+        console.error('OTP verify error:', err);
+        verifyBtn.disabled    = false;
+        verifyBtn.textContent = 'Verify';
+        let msg = 'Incorrect code. Please try again.';
+        if (err.code === 'auth/code-expired') msg = 'OTP has expired. Please request a new one.';
+        errEl.textContent = msg;
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // CONTACT PREFERENCES
+    // ════════════════════════════════════════════
+    function onWhatsAppCheck() {
+      const el = document.getElementById('contactWhatsApp');
+      if (!el) return;
+      document.getElementById('whatsappNumberField')?.classList.toggle('hidden', !el.checked);
+    }
+
+    // ════════════════════════════════════════════
+    // MOBILE TOGGLE
+    // ════════════════════════════════════════════
+    function onMobileToggle() {
+      const on = document.getElementById('mobileMassage').checked;
+      document.getElementById('travelKmField').classList.toggle('hidden', !on);
+    }
+
+    // ════════════════════════════════════════════
+    // WEEKLY HOURS GRID
+    // ════════════════════════════════════════════
+    const DAYS       = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+    function timeOptions(defaultVal, isTo) {
+      const pad = n => String(n).padStart(2,'0');
+      let out = '';
+      const start = isTo ? 2 : 1;
+      const end   = isTo ? 24 : 23;
+      for (let h = start; h <= end; h++) {
+        const label = h === 24 ? '24:00' : pad(h) + ':00';
+        out += `<option value="${h}"${h === defaultVal ? ' selected' : ''}>${label}</option>`;
+      }
+      return out;
+    }
+
+    function buildWeeklyHoursGrid() {
+      const container = document.getElementById('weeklyHoursGrid');
+      DAYS.forEach((day, i) => {
+        const isWeekday = i < 5;
+        const row = document.createElement('div');
+        row.className = 'hours-row';
+        row.id = 'hoursRow-' + day;
+        row.innerHTML = `
+          <span class="hours-row__day">${DAY_LABELS[i]}</span>
+          <label class="toggle" style="width:40px; height:22px; flex-shrink:0;">
+            <input type="checkbox" id="day-${day}" ${isWeekday ? 'checked' : ''}
+              onchange="onDayToggle('${day}')" style="opacity:0; width:0; height:0; position:absolute;" />
+            <span class="toggle__track" style="border-radius:11px;"></span>
+          </label>
+          <div class="hours-row__times" id="dayTimes-${day}" style="${isWeekday ? '' : 'opacity:0.3;'}">
+            <select class="select--sm" id="dayFrom-${day}" ${isWeekday ? '' : 'disabled'}>${timeOptions(9, false)}</select>
+            <span class="hours-row__sep">–</span>
+            <select class="select--sm" id="dayTo-${day}" ${isWeekday ? '' : 'disabled'}>${timeOptions(17, true)}</select>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function onDayToggle(day) {
+      const checked = document.getElementById('day-' + day).checked;
+      const timesEl = document.getElementById('dayTimes-' + day);
+      timesEl.style.opacity = checked ? '1' : '0.3';
+      timesEl.querySelectorAll('select').forEach(s => { s.disabled = !checked; });
+    }
+
+    // ════════════════════════════════════════════
+    // QUALIFICATIONS
+    // ════════════════════════════════════════════
+    function addQualification() {
+      const list = document.getElementById('qualList');
+      const row = document.createElement('div');
+      row.className = 'qual-row';
+      row.innerHTML = `
+        <input class="input" type="text" placeholder="Institute / School" style="font-size:var(--text-sm);" />
+        <input class="input" type="number" placeholder="Year" min="1970" max="2099" style="font-size:var(--text-sm);" />
+        <input class="input" type="text" placeholder="Certificate / Diploma" style="font-size:var(--text-sm);" />
+        <button type="button" class="qual-remove" onclick="removeQualification(this)" aria-label="Remove">×</button>
+      `;
+      list.appendChild(row);
+    }
+
+    function removeQualification(btn) {
+      const row = btn.closest('.qual-row');
+      if (document.querySelectorAll('.qual-row').length > 1) {
+        row.remove();
+      } else {
+        // Clear the last row instead of removing it
+        row.querySelectorAll('input').forEach(i => { i.value = ''; });
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // PHOTO HELPERS
+    // ════════════════════════════════════════════
+    function updateFilename(input, labelId) {
+      document.getElementById(labelId).textContent = input.files.length ? input.files[0].name : 'No file chosen';
+    }
+
+    function onPhotoChange(input, labelId, slotIndex) {
+      updateFilename(input, labelId);
+      if (input.files.length && slotIndex < 5) {
+        document.getElementById('addPhotoBtn' + (slotIndex + 1)).classList.remove('hidden');
+      }
+    }
+
+    function revealPhotoSlot(n) {
+      document.getElementById('addPhotoBtn' + n).classList.add('hidden');
+      document.getElementById('photoSlot' + n).classList.remove('hidden');
+    }
+
+    function updatePrivLabel(toggle, labelId) {
+      document.getElementById(labelId).textContent = toggle.checked ? 'Show publicly' : 'Keep private';
+    }
+
+    // ════════════════════════════════════════════
+    // CHAR COUNTERS
+    // ════════════════════════════════════════════
+    function updateCharCount(el) {
+      document.getElementById('aboutMeCount').textContent = el.value.length + ' / 300';
+    }
+
+    function updateSpecialsCount(el) {
+      document.getElementById('specialsCount').textContent = el.value.length + ' / 200';
+    }
+
+    // ════════════════════════════════════════════
+    // T&C
+    // ════════════════════════════════════════════
+    function onTncChange() {
+      const checked = document.getElementById('tncCheck').checked;
+      const btn = document.getElementById('registerBtn');
+      btn.style.opacity = checked ? '1' : '0.4';
+      btn.style.pointerEvents = checked ? 'auto' : 'none';
+    }
+
+    // ════════════════════════════════════════════
+    // MODAL
+    // ════════════════════════════════════════════
+    function openModal(e) {
+      e.preventDefault();
+      document.getElementById('tncModal').classList.add('modal-overlay--open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      document.getElementById('tncModal').classList.remove('modal-overlay--open');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('tncModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+    // ════════════════════════════════════════════
+    // VALIDATION
+    // ════════════════════════════════════════════
+    function clearErrors() {
+      document.querySelectorAll('.field--error').forEach(f => f.classList.remove('field--error'));
+      document.querySelectorAll('.error-msg').forEach(m => m.remove());
+    }
+
+    function markError(fieldEl, msg) {
+      fieldEl.classList.add('field--error');
+      if (!fieldEl.querySelector('.error-msg')) {
+        const span = document.createElement('span');
+        span.className = 'error-msg';
+        span.textContent = msg;
+        fieldEl.appendChild(span);
+      }
+    }
+
+    function validateStep1() {
+      clearErrors();
+      if (!phoneVerified) {
+        markError(document.getElementById('cellField'), 'Please verify your cell number with OTP before continuing.');
+        return false;
+      }
+      return true;
+    }
+
+    function validateStep2() {
+      clearErrors();
+      let ok = true;
+      if (!document.getElementById('province').value) { markError(document.getElementById('provinceField'), 'Please select a province.'); ok = false; }
+      if (!document.getElementById('area').value)     { markError(document.getElementById('areaField'),    'Please select an area.');     ok = false; }
+      if (!document.getElementById('suburb').value)   { markError(document.getElementById('suburbField'),  'Please select a suburb.');    ok = false; }
+      if (!v('address')) { markError(document.getElementById('addressField'), 'Street address is required.'); ok = false; }
+      if (!document.querySelector('input[name="displayMassageType"]:checked')) {
+        markError(document.getElementById('displayMassageTypeField'), 'Please choose your public massage category.');
+        ok = false;
+      }
+      return ok;
+    }
+
+    function validateStep3() {
+      clearErrors();
+      return true;
+    }
+
+    // ════════════════════════════════════════════
+    // STEP NAVIGATION
+    // ════════════════════════════════════════════
+    function goToStep(n) {
+      if (n > currentStep) {
+        if (currentStep === 1 && !validateStep1()) return;
+        if (currentStep === 2 && !validateStep2()) return;
+      }
+      document.getElementById('step' + currentStep).classList.add('hidden');
+      clearErrors();
+      currentStep = n;
+      document.getElementById('step' + currentStep).classList.remove('hidden');
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goBack() {
+      if (currentStep > 1) goToStep(currentStep - 1);
+    }
+
+    function updateProgress() {
+      for (let i = 1; i <= 3; i++) {
+        const step = document.getElementById('sideStep' + i);
+        const dot  = document.getElementById('sideDot' + i);
+        step.classList.remove('reg-step--active', 'reg-step--done');
+        if (i < currentStep) {
+          step.classList.add('reg-step--done');
+          dot.textContent = '✓';
+        } else {
+          dot.textContent = String(i);
+          if (i === currentStep) step.classList.add('reg-step--active');
+        }
+      }
+      for (let i = 1; i <= 2; i++) {
+        document.getElementById('sideConn' + i).classList.toggle('reg-connector--done', i < currentStep);
+      }
+      document.getElementById('sideBackBtn').classList.toggle('hidden', currentStep === 1);
+    }
+
+    // ════════════════════════════════════════════
+    // FIREBASE STORAGE UPLOAD
+    // ════════════════════════════════════════════
+    async function uploadPhoto(file, path) {
+      const ref = storageRef(storage, path);
+      await uploadBytes(ref, file);
+      const url = await getDownloadURL(ref);
+      return { storagePath: path, url };
+    }
+
+    // ════════════════════════════════════════════
+    // REFERRAL CODE
+    // ════════════════════════════════════════════
+    function generateReferralCode(firstName) {
+      const prefix = (firstName || '').replace(/\s/g, '').toUpperCase().slice(0, 3).padEnd(3, 'X');
+      const chars  = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let suffix   = '';
+      for (let i = 0; i < 5; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+      return prefix + suffix;
+    }
+
+    // ════════════════════════════════════════════
+    // BUILD FORM DATA
+    // ════════════════════════════════════════════
+    function buildFormData(idResult, profilePhotos) {
+      const weeklyHours = {};
+      DAYS.forEach(day => {
+        const available = document.getElementById('day-' + day).checked;
+        weeklyHours[day] = {
+          available,
+          from: available ? parseInt(document.getElementById('dayFrom-' + day).value) : null,
+          to:   available ? parseInt(document.getElementById('dayTo-'   + day).value) : null
+        };
+      });
+
+      const qualifications = [];
+      document.querySelectorAll('.qual-row').forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        if (inputs[0] && inputs[0].value.trim()) {
+          qualifications.push({
+            institute:       inputs[0].value.trim(),
+            year:            inputs[1] ? (parseInt(inputs[1].value) || null) : null,
+            certificateType: inputs[2] ? inputs[2].value.trim() : ''
+          });
+        }
+      });
+
+      const getChecked = (name) =>
+        Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
+
+      return {
+        supplierType,
+        cellNumber:         formatPhoneNumber(v('cell')),
+        uid:                authUid,
+
+        province:      document.getElementById('province').value,
+        area:          document.getElementById('area').value,
+        suburb:        document.getElementById('suburb').value,
+        address:       v('address'),
+        addressVisible: document.getElementById('addressVisible').checked,
+        premisesType:  document.querySelector('input[name="premisesType"]:checked')?.value || null,
+        services:      getChecked('services'),
+        massageTypes:       getChecked('types'),
+        displayMassageType: document.querySelector('input[name="displayMassageType"]:checked')?.value || null,
+
+        genderServed:           document.querySelector('input[name="gender"]:checked')?.value || null,
+        mobileAvailable:        document.getElementById('mobileMassage').checked,
+        willingToTravelKm:      document.getElementById('mobileMassage').checked
+                                  ? parseInt(v('willingToTravelKm')) : null,
+        weeklyHours,
+        availableOutsideHours:  document.getElementById('availableOutsideHours').checked,
+        aboutMe:                v('aboutMe'),
+        shower:                 document.getElementById('shower').checked,
+        parking:                document.getElementById('parking').checked,
+        qualifications,
+        affiliations:           getChecked('affiliations'),
+        websiteUrl:             v('websiteUrl'),
+        specialsText:           v('specialsText'),
+
+        idPhotoUrl:    idResult,
+        photos:        profilePhotos,
+
+        classification: document.querySelector('input[name="classification"]:checked')?.value || null,
+
+        status:       'pending',
+        referralCode: generateReferralCode(v('firstName')),
+        createdAt:    serverTimestamp()
+      };
+    }
+
+    // ════════════════════════════════════════════
+    // SUBMIT
+    // ════════════════════════════════════════════
+    async function submitForm() {
+      if (!validateStep3()) return;
+
+      const btn     = document.getElementById('registerBtn');
+      const errDiv  = document.getElementById('submitError');
+      errDiv.classList.add('hidden');
+      btn.classList.add('btn--loading');
+      btn.textContent = 'Registering…';
+
+      try {
+        const uid = auth.currentUser?.uid || authUid;
+        if (!uid) throw new Error('Phone verification is required. Please go back and verify your number.');
+
+        // 1. Upload ID photo (optional)
+        let idResult = null;
+        const idFile = document.getElementById('idPhoto').files[0];
+        if (idFile) {
+          idResult = await uploadPhoto(idFile, `suppliers/${uid}/id/${idFile.name}`);
+        }
+
+        // 2. Upload profile photos
+        const profilePhotos = [];
+        for (let i = 1; i <= 5; i++) {
+          const fileInput = document.getElementById('photo' + i);
+          if (fileInput.files[0]) {
+            const file    = fileInput.files[0];
+            const visible = document.getElementById('priv' + i).checked;
+            const result  = await uploadPhoto(file, `suppliers/${uid}/photos/${i}-${file.name}`);
+            profilePhotos.push({ ...result, visibility: visible ? 'public' : 'private' });
+          }
+        }
+
+        // 3. Build document
+        const data = buildFormData(idResult, profilePhotos);
+
+        // 4. Atomically increment supplier counter and save document
+        let supplierNumber;
+        const counterRef  = doc(db, 'settings', 'supplierCounter');
+        const supplierRef = doc(db, 'suppliers', uid);
+        await runTransaction(db, async (tx) => {
+          const counterSnap = await tx.get(counterRef);
+          const lastNumber  = counterSnap.exists() ? (counterSnap.data().lastNumber || 0) : 0;
+          const next        = lastNumber + 1;
+          const year        = new Date().getFullYear();
+          const suffix      = data.supplierType === 'spa' ? 'S' : 'T';
+          supplierNumber    = `MM-${year}-${String(next).padStart(5, '0')}-${suffix}`;
+          tx.set(counterRef, { lastNumber: next }, { merge: true });
+          tx.set(supplierRef, { ...data, supplierNumber });
+        });
+
+        // 5. Fire welcome email (non-fatal — server may not be running in all envs)
+        fetch('http://localhost:3002/send-welcome-email', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            supplierEmail:  data.email,
+            supplierName:   data.displayName || data.firstName || '',
+            supplierNumber,
+            supplierType:   data.supplierType,
+          }),
+        }).catch(() => {});
+
+        // 6. Admin email notification (non-fatal)
+        fetch('http://localhost:3003/send-admin-notification', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            supplierName:  data.displayName || data.firstName || '',
+            supplierType:  data.supplierType,
+            supplierNumber,
+            province:      data.province,
+            area:          data.area,
+            cellNumber:    data.cellNumber,
+            registeredAt:  new Date().toISOString(),
+          }),
+        }).catch(() => {});
+
+        // 7. Telegram notification (non-fatal)
+        {
+          const tgMsg = [
+            'New MassageMap Registration',
+            `Name: ${data.displayName || data.firstName || ''}`,
+            `Type: ${data.supplierType === 'spa' ? 'Spa' : 'Individual Therapist'}`,
+            `Number: ${supplierNumber}`,
+            `Area: ${data.province}, ${data.area}`,
+            `Cell: ${data.cellNumber || ''}`,
+          ].join('\n');
+          fetch(
+            `https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage` +
+            `?chat_id=${CONFIG.TELEGRAM_CHAT_ID}&text=${encodeURIComponent(tgMsg)}`
+          ).catch(() => {});
+        }
+
+        // 8. Success UI
+        document.getElementById('step3').classList.add('hidden');
+        for (let i = 1; i <= 3; i++) {
+          document.getElementById('sideStep' + i).classList.remove('reg-step--active');
+          document.getElementById('sideStep' + i).classList.add('reg-step--done');
+          document.getElementById('sideDot' + i).textContent = '✓';
+        }
+        for (let i = 1; i <= 2; i++) {
+          document.getElementById('sideConn' + i).classList.add('reg-connector--done');
+        }
+        document.getElementById('sideBackBtn').classList.add('hidden');
+        const s = document.getElementById('successScreen');
+        s.style.display = 'flex';
+
+        // 9. Redirect to info.html with membership number in URL
+        setTimeout(() => {
+          window.location.href = `info.html?num=${encodeURIComponent(supplierNumber)}`;
+        }, 3000);
+
+      } catch (err) {
+        console.error('Submit error:', err);
+        btn.classList.remove('btn--loading');
+        btn.textContent = 'Register';
+        errDiv.textContent = 'An error occurred: ' + (err.message || 'please try again.');
+        errDiv.classList.remove('hidden');
+        window.scrollTo({ top: document.getElementById('step3').offsetTop, behavior: 'smooth' });
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // VALUE HELPER
+    // ════════════════════════════════════════════
+    function v(id) {
+      return (document.getElementById(id)?.value || '').trim();
+    }
+
+    // ── Init ──
+    // Determine supplierType from URL param (?type=individual or ?type=spa)
+    const _urlType = new URLSearchParams(window.location.search).get('type');
+    setSupplierType(_urlType === 'spa' ? 'spa' : 'individual');
+    document.title = (supplierType === 'spa' ? 'Spa' : 'Therapist') + ' Registration — MassageMap';
+
+    populateProvinces();
+    buildWeeklyHoursGrid();
+    addQualification(); // start with one empty row
+
+    // ════════════════════════════════════════════
+    // EXPOSE GLOBALS (onclick handlers need these)
+    // ════════════════════════════════════════════
+    window.onProvinceChange     = onProvinceChange;
+    window.onAreaChange         = onAreaChange;
+    window.handleNext           = handleNext;
+    window.resendOtp            = resendOtp;
+    window.verifyOtp            = verifyOtp;
+    window.onWhatsAppCheck      = onWhatsAppCheck;
+    window.onMobileToggle       = onMobileToggle;
+    window.onDayToggle          = onDayToggle;
+    window.addQualification     = addQualification;
+    window.removeQualification  = removeQualification;
+    window.updateFilename       = updateFilename;
+    window.onPhotoChange        = onPhotoChange;
+    window.revealPhotoSlot      = revealPhotoSlot;
+    window.updatePrivLabel      = updatePrivLabel;
+    window.updateCharCount      = updateCharCount;
+    window.updateSpecialsCount  = updateSpecialsCount;
+    window.onTncChange          = onTncChange;
+    window.openModal            = openModal;
+    window.closeModal           = closeModal;
+    window.goToStep             = goToStep;
+    window.goBack               = goBack;
+    window.submitForm           = submitForm;
+  </script>
+
+</body>
+</html>
