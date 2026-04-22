@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "email": "node functions/sendEnquiryEmail.js",
-    "sms":   "node functions/sendEnquirySms.js"
+    "sms":   "node functions/sendEnquirySms.js",
+    "admin": "node functions/sendAdminNotification.js",
+    "welcome": "node functions/sendWelcomeEmail.js"
   },
   "dependencies": {
     "resend": "^3.5.0"
