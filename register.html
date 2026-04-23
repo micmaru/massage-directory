@@ -207,10 +207,6 @@
       -webkit-tap-highlight-color: transparent;
     }
     .btn--otp:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn--otp--resend {
-      background: none; border: 1px solid var(--border); color: var(--text-muted);
-      font-size: var(--text-xs); height: 36px;
-    }
     .otp-section {
       padding: var(--space-4); background: rgba(108, 99, 255, 0.06);
       border: 1px solid rgba(108, 99, 255, 0.2); border-radius: var(--radius);
@@ -433,42 +429,53 @@
          OTP PHASE — phone verification
     ══════════════════════════════════════════ -->
     <div id="otpPhase">
-      <div class="form-card">
-        <div class="form-card__title">Get Started</div>
-        <div class="form-card__subtitle">Enter your cell number — we'll check if you already have an account.</div>
 
-        <div class="field-stack">
-
-          <div class="field" id="cellField">
-            <label class="field__label" for="cell">Cell Number</label>
-            <input class="input" id="cell" name="cell" type="tel" placeholder="e.g. 082 123 4567" autocomplete="tel" />
-          </div>
-
-          <div id="otpSection" class="hidden">
-            <div class="otp-section">
-              <div class="otp-status" id="otpStatusMsg">OTP sent — enter the 6-digit code below.</div>
-              <div class="cell-input-row">
-                <input class="input otp-input" id="otpInput" type="tel" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="_ _ _ _ _ _" />
-                <button type="button" class="btn--otp" onclick="verifyOtp()">Verify</button>
-              </div>
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span id="otpError" style="font-size:var(--text-xs); color:#ef4444;"></span>
-                <button type="button" class="btn--otp btn--otp--resend" id="resendBtn" onclick="resendOtp()" style="margin-left:auto;">Resend OTP</button>
-              </div>
+      <!-- ── SCREEN 1: Phone entry ── -->
+      <div id="phoneScreen">
+        <div class="form-card">
+          <div class="form-card__title">Get Started</div>
+          <div class="form-card__subtitle">Enter your cell number to continue.</div>
+          <div class="field-stack">
+            <div class="field" id="cellField">
+              <label class="field__label" for="cell">Cell Number</label>
+              <input class="input" id="cell" name="cell" type="tel" placeholder="e.g. 082 123 4567" autocomplete="tel" />
             </div>
           </div>
-
-          <div id="phoneVerifiedBadge" class="hidden phone-verified">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Phone number verified
-          </div>
-
+        </div>
+        <div class="form-nav">
+          <button type="button" class="btn btn--primary btn--full" id="nextBtn" onclick="handleNext()">Next</button>
         </div>
       </div>
 
-      <div class="form-nav">
-        <button type="button" class="btn btn--primary btn--full" id="nextBtn" onclick="handleNext()">Send OTP</button>
+      <!-- ── SCREEN 2: OTP entry (hidden until OTP sent) ── -->
+      <div id="otpScreen" class="hidden">
+        <div class="form-card">
+          <div class="form-card__title">Verify Your Number</div>
+          <div class="otp-section" style="margin-top:0; border:none; background:none; padding:0;">
+            <div class="otp-status" id="otpStatusMsg">OTP sent — enter the 6-digit code below.</div>
+            <div class="cell-input-row" style="margin-top:var(--space-3);">
+              <input class="input otp-input" id="otpInput" type="tel" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="_ _ _ _ _ _" />
+              <button type="button" class="btn--otp" id="verifyBtn" onclick="verifyOtp()">Verify</button>
+            </div>
+            <span id="otpError" style="font-size:var(--text-xs); color:#ef4444; display:block; margin-top:var(--space-2);"></span>
+          </div>
+        </div>
+        <div class="form-nav">
+          <button type="button" class="btn btn--secondary btn--full" id="resendBtn" onclick="resendOtp()">Resend OTP</button>
+        </div>
       </div>
+
+      <!-- ── SCREEN 3: Welcome back (returning supplier with valid session) ── -->
+      <div id="welcomeBack" class="hidden">
+        <div class="form-card" style="text-align:center; padding: var(--space-8) var(--space-5);">
+          <div style="width:64px; height:64px; border-radius:50%; background:rgba(108,99,255,0.12); border:2px solid rgba(108,99,255,0.3); display:flex; align-items:center; justify-content:center; margin:0 auto var(--space-5); color:var(--accent-light);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="form-card__title">Welcome back, <span id="welcomeName" style="color:var(--accent-light);"></span>!</div>
+          <div class="form-card__subtitle" style="margin-bottom:0;">Taking you to your dashboard…</div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ══════════════════════════════════════════
@@ -1101,26 +1108,37 @@
     const btn   = document.getElementById('nextBtn');
     btn.disabled    = true;
     btn.textContent = 'Checking…';
-    document.getElementById('otpError').textContent = '';
 
     try {
+      // 1. Firestore lookup
       const snap = await getDocs(query(collection(db, 'suppliers'), where('cellNumber', '==', phone)));
       knownSupplierData = snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
 
+      if (knownSupplierData) {
+        // Returning supplier — check localStorage session first
+        const session = getValidSession(phone);
+        if (session) {
+          // Valid 30-day session — skip OTP entirely
+          showWelcomeBack(session.displayName, session.supplierType);
+          return;
+        }
+        // Session absent or expired — fall through to OTP
+      }
+
+      // 2. Send OTP (new supplier OR returning supplier with no valid session)
       btn.textContent = 'Sending OTP…';
       initRecaptchaVerifier();
       confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
 
-      document.getElementById('otpSection').classList.remove('hidden');
-      document.getElementById('phoneVerifiedBadge').classList.add('hidden');
+      // Switch to OTP screen
+      document.getElementById('phoneScreen').classList.add('hidden');
       document.getElementById('otpStatusMsg').textContent = `OTP sent to ${phone}. Enter the 6-digit code below.`;
-      btn.textContent = 'Resend OTP';
-      btn.disabled    = false;
+      document.getElementById('otpScreen').classList.remove('hidden');
 
     } catch (err) {
       console.error('handleNext error:', err);
       btn.disabled    = false;
-      btn.textContent = 'Send OTP';
+      btn.textContent = 'Next';
       let msg = 'Could not send OTP. Please check the number and try again.';
       if (err.code === 'auth/invalid-phone-number') msg = 'Invalid phone number format.';
       if (err.code === 'auth/too-many-requests')    msg = 'Too many attempts. Please wait a few minutes.';
@@ -1134,16 +1152,19 @@
     const raw   = document.getElementById('cell').value.trim();
     if (!raw) return;
     const phone = formatPhoneNumber(raw);
-    const btn   = document.getElementById('nextBtn');
-    btn.disabled = true; btn.textContent = 'Sending…';
+    const btn   = document.getElementById('resendBtn');
+    btn.disabled    = true;
+    btn.textContent = 'Sending…';
     document.getElementById('otpError').textContent = '';
     try {
       initRecaptchaVerifier();
       confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
-      document.getElementById('otpStatusMsg').textContent = `OTP resent to ${phone}.`;
-      btn.textContent = 'Resend OTP'; btn.disabled = false;
+      document.getElementById('otpStatusMsg').textContent = `OTP resent to ${phone}. Enter the 6-digit code below.`;
+      btn.textContent = 'Resend OTP';
+      btn.disabled    = false;
     } catch (err) {
-      btn.disabled = false; btn.textContent = 'Resend OTP';
+      btn.disabled    = false;
+      btn.textContent = 'Resend OTP';
       let msg = 'Could not resend OTP.';
       if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please wait a few minutes.';
       document.getElementById('otpError').textContent = msg;
@@ -1159,7 +1180,7 @@
     if (code.length !== 6)    { errEl.textContent = 'Please enter all 6 digits.'; return; }
     if (!confirmationResult)  { errEl.textContent = 'Please send OTP first.'; return; }
 
-    const verifyBtn = document.querySelector('#otpSection .btn--otp:not(.btn--otp--resend)');
+    const verifyBtn = document.getElementById('verifyBtn');
     verifyBtn.disabled = true; verifyBtn.textContent = 'Verifying…';
 
     try {
@@ -1168,12 +1189,14 @@
       phoneVerified = true;
       verifiedPhone = formatPhoneNumber(document.getElementById('cell').value.trim());
 
-      document.getElementById('otpSection').classList.add('hidden');
-      document.getElementById('phoneVerifiedBadge').classList.remove('hidden');
+      document.getElementById('otpScreen').classList.add('hidden');
 
       if (knownSupplierData) {
-        const type = knownSupplierData.supplierType || 'individual';
-        window.location.href = `dashboard.html?type=${encodeURIComponent(type)}`;
+        // Store a fresh 30-day session token then show welcome
+        const displayName  = knownSupplierData.displayName || knownSupplierData.firstName || '';
+        const supplierType = knownSupplierData.supplierType || 'individual';
+        storeSession(verifiedPhone, displayName, supplierType);
+        showWelcomeBack(displayName, supplierType);
       } else {
         startRegistration();
       }
@@ -1184,6 +1207,49 @@
       if (err.code === 'auth/code-expired') msg = 'OTP has expired. Please request a new one.';
       errEl.textContent = msg;
     }
+  }
+
+  // ════════════════════════════════════════════
+  // SESSION TOKEN HELPERS (30-day localStorage)
+  // ════════════════════════════════════════════
+  function sessionKey(phone) {
+    return 'mm_session_' + phone;
+  }
+
+  function getValidSession(phone) {
+    try {
+      const raw = localStorage.getItem(sessionKey(phone));
+      if (!raw) return null;
+      const session = JSON.parse(raw);
+      if (!session.expiry || Date.now() > session.expiry) {
+        localStorage.removeItem(sessionKey(phone));
+        return null;
+      }
+      return session;
+    } catch (_) { return null; }
+  }
+
+  function storeSession(phone, displayName, supplierType) {
+    const session = {
+      displayName,
+      supplierType,
+      expiry: Date.now() + 30 * 24 * 60 * 60 * 1000
+    };
+    localStorage.setItem(sessionKey(phone), JSON.stringify(session));
+  }
+
+  // ════════════════════════════════════════════
+  // WELCOME BACK (returning supplier)
+  // ════════════════════════════════════════════
+  function showWelcomeBack(displayName, supplierType) {
+    document.getElementById('phoneScreen').classList.add('hidden');
+    document.getElementById('otpScreen').classList.add('hidden');
+    document.getElementById('welcomeName').textContent = displayName || 'there';
+    document.getElementById('welcomeBack').classList.remove('hidden');
+    const type = supplierType || 'individual';
+    setTimeout(() => {
+      window.location.href = `dashboard.html?type=${encodeURIComponent(type)}`;
+    }, 2000);
   }
 
   // ════════════════════════════════════════════
@@ -1630,6 +1696,8 @@
         tx.set(counterRef,  { lastNumber: next }, { merge: true });
         tx.set(supplierRef, { ...data, supplierNumber });
       });
+
+      storeSession(verifiedPhone, data.displayName, data.supplierType);
 
       // 6. Telegram notification (non-fatal)
       {
