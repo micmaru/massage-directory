@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register as Spa — MassageMap</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { padding-top: 0; padding-bottom: 0; }
+
+    /* ── Layout ── */
+    .reg-layout { display: flex; min-height: 100dvh; }
+
+    /* ── Sidebar ── */
+    .reg-sidebar {
+      width: 200px; flex-shrink: 0; position: sticky; top: 0;
+      height: 100dvh; background: var(--bg-card); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: var(--space-6) var(--space-4); overflow-y: auto;
+    }
+    .reg-sidebar__logo {
+      font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.3px;
+      color: var(--text); margin-bottom: var(--space-8); flex-shrink: 0;
+    }
+    .reg-sidebar__logo span { color: var(--accent); }
+    .reg-steps { display: flex; flex-direction: column; flex: 1; }
+    .reg-step { display: flex; align-items: center; gap: var(--space-3); }
+    .reg-step__dot {
+      width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%;
+      border: 2px solid var(--border); background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: var(--text-xs); font-weight: 700; color: var(--text-muted);
+      transition: background var(--ease), border-color var(--ease), color var(--ease);
+    }
+    .reg-step__label {
+      font-size: var(--text-sm); font-weight: 500; color: var(--text-muted);
+      line-height: 1.3; transition: color var(--ease);
+    }
+    .reg-step--active .reg-step__dot {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+      box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.2);
+    }
+    .reg-step--active .reg-step__label { color: var(--text); font-weight: 600; }
+    .reg-step--done .reg-step__dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .reg-step--done .reg-step__label { color: var(--text-muted); }
+    .reg-connector {
+      width: 2px; height: 20px; margin-left: 13px; background: var(--border);
+      flex-shrink: 0; transition: background var(--ease);
+    }
+    .reg-connector--done { background: var(--accent); }
+    .reg-sidebar__back {
+      display: flex; align-items: center; gap: var(--space-2);
+      margin-top: var(--space-6); flex-shrink: 0; background: none; border: none;
+      color: var(--text-muted); font-family: var(--font-sans); font-size: var(--text-sm);
+      font-weight: 500; cursor: pointer; padding: var(--space-2) 0;
+      transition: color var(--ease); -webkit-tap-highlight-color: transparent;
+    }
+    .reg-sidebar__back:hover { color: var(--text); }
+
+    /* ── Mobile sidebar ── */
+    @media (max-width: 600px) {
+      .reg-sidebar {
+        width: 52px; padding: var(--space-5) var(--space-2); align-items: center;
+      }
+      .reg-sidebar__logo { font-size: var(--text-sm); font-weight: 700; margin-bottom: var(--space-5); text-align: center; }
+      .reg-sidebar__logo .logo-text { display: none; }
+      .reg-step__label, .reg-back__label { display: none; }
+      .reg-connector { margin-left: 11px; }
+      .reg-content { padding: var(--space-5) var(--space-3); }
+    }
+
+    /* ── Content ── */
+    .reg-content { flex: 1; min-width: 0; padding: var(--space-8) var(--space-6); max-width: 560px; }
+
+    /* ── Back to home ── */
+    .reg-back-home {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--text-muted); font-size: var(--text-sm); font-weight: 500;
+      text-decoration: none; margin-bottom: var(--space-5);
+      transition: color var(--ease); -webkit-tap-highlight-color: transparent;
+    }
+    .reg-back-home:hover { color: var(--text); }
+
+    /* ── Page heading ── */
+    .reg-main-heading {
+      font-size: var(--text-2xl); font-weight: 700; color: var(--text);
+      margin-bottom: var(--space-4); letter-spacing: -0.3px;
+    }
+    @media (max-width: 600px) {
+      .reg-main-heading { font-size: var(--text-xl); margin-bottom: var(--space-3); }
+    }
+
+    /* ── Mobile step bar ── */
+    .mobile-step-bar {
+      display: none;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: var(--space-3) var(--space-4);
+      margin-bottom: var(--space-4);
+      position: sticky; top: 0; z-index: 10;
+    }
+    @media (max-width: 600px) {
+      .mobile-step-bar { display: block; }
+    }
+    .mobile-step-bar__top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: var(--space-2);
+    }
+    .mobile-step-bar__num {
+      font-size: var(--text-xs); font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.6px; color: var(--accent-light);
+    }
+    .mobile-step-bar__name {
+      font-size: var(--text-sm); font-weight: 600; color: var(--text);
+    }
+    .mobile-step-bar__segs {
+      display: flex; gap: 4px;
+    }
+    .mobile-step-seg {
+      flex: 1; height: 4px; background: var(--border);
+      border-radius: 99px; transition: background 0.28s ease;
+    }
+    .mobile-step-seg--active { background: var(--accent-light); }
+    .mobile-step-seg--done { background: var(--accent); }
+
+    /* ── Form card ── */
+    .form-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: var(--space-5); margin-bottom: var(--space-4);
+    }
+    .form-card__title { font-size: var(--text-lg); font-weight: 700; color: var(--text); margin-bottom: var(--space-1); }
+    .form-card__subtitle { font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-5); }
+
+    /* ── Field layout ── */
+    .field-stack { display: flex; flex-direction: column; gap: var(--space-4); }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    @media (max-width: 360px) { .field-row { grid-template-columns: 1fr; } }
+
+    /* ── Section label ── */
+    .form-section-label {
+      font-size: var(--text-xs); font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: var(--space-2);
+    }
+
+    /* ── Toggle ── */
+    .toggle-wrap { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+    .toggle-wrap__label { font-size: var(--text-base); color: var(--text); flex: 1; }
+    .toggle { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle__track {
+      position: absolute; inset: 0; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 13px; cursor: pointer; transition: background var(--ease), border-color var(--ease);
+    }
+    .toggle__track::after {
+      content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+      border-radius: 50%; background: var(--text-muted); transition: transform var(--ease), background var(--ease);
+    }
+    .toggle input:checked + .toggle__track { background: var(--accent); border-color: var(--accent); }
+    .toggle input:checked + .toggle__track::after { transform: translateX(22px); background: #fff; }
+
+    /* ── Checkbox group ── */
+    .check-group { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+    .check-group--1col { grid-template-columns: 1fr; }
+    .check-group--3col { grid-template-columns: 1fr 1fr 1fr; }
+    @media (max-width: 400px) { .check-group--3col { grid-template-columns: 1fr 1fr; } }
+    .check-item {
+      display: flex; align-items: center; gap: var(--space-2);
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: var(--space-2) var(--space-3); cursor: pointer;
+      transition: border-color var(--ease), background var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .check-item:hover { border-color: rgba(108, 99, 255, 0.4); background: rgba(108, 99, 255, 0.05); }
+    .check-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+    .check-item__label { font-size: var(--text-sm); color: var(--text); cursor: pointer; line-height: 1.3; }
+    .check-item:has(input:checked) { border-color: var(--accent); background: rgba(108, 99, 255, 0.08); }
+    .check-item:has(input:disabled) { opacity: 0.65; cursor: default; }
+
+    /* ── Radio group ── */
+    .radio-group { display: flex; flex-direction: column; gap: var(--space-2); }
+    .radio-group--row { flex-direction: row; flex-wrap: wrap; }
+    .radio-item {
+      display: flex; align-items: center; gap: var(--space-3); background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px; padding: var(--space-3) var(--space-4);
+      cursor: pointer; transition: border-color var(--ease), background var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .radio-item:hover { border-color: rgba(108, 99, 255, 0.4); }
+    .radio-item input[type="radio"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+    .radio-item__label { font-size: var(--text-base); color: var(--text); cursor: pointer; }
+    .radio-item:has(input:checked) { border-color: var(--accent); background: rgba(108, 99, 255, 0.08); }
+    .radio-item--flex { flex: 1; min-width: 100px; }
+
+    /* ── Field note ── */
+    .field__note { font-size: var(--text-xs); color: var(--text-muted); display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-1); }
+    .field__note svg { flex-shrink: 0; color: var(--accent-light); }
+    .field__note--warn svg { color: #f59e0b; }
+    .field__note--warn { color: #f59e0b; }
+
+    /* ── OTP ── */
+    .cell-input-row { display: flex; gap: var(--space-2); }
+    .cell-input-row .input { flex: 1; min-width: 0; }
+    .btn--otp {
+      flex-shrink: 0; height: 44px; padding: 0 var(--space-4);
+      background: var(--accent); border: none; border-radius: var(--radius);
+      color: #fff; font-family: var(--font-sans); font-size: var(--text-sm);
+      font-weight: 600; cursor: pointer; transition: opacity var(--ease); white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn--otp:disabled { opacity: 0.4; cursor: not-allowed; }
+    .otp-section {
+      padding: var(--space-4); background: rgba(108, 99, 255, 0.06);
+      border: 1px solid rgba(108, 99, 255, 0.2); border-radius: var(--radius);
+      display: flex; flex-direction: column; gap: var(--space-3);
+    }
+    .otp-status { font-size: var(--text-sm); color: var(--text-muted); }
+    .otp-input { letter-spacing: 8px; font-size: var(--text-lg); text-align: center; font-family: monospace; }
+    .phone-verified {
+      display: flex; align-items: center; gap: var(--space-2);
+      color: var(--green); font-size: var(--text-sm); font-weight: 600;
+      padding: var(--space-3) var(--space-4);
+      background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: var(--radius);
+    }
+
+    /* ── Cell locked ── */
+    .input--locked { background: rgba(255,255,255,0.03); color: var(--text-muted); cursor: not-allowed; }
+
+    /* ── Hours grid ── */
+    .hours-grid { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .hours-row {
+      display: flex; align-items: center; gap: var(--space-2);
+      padding: 9px var(--space-3); border-bottom: 1px solid var(--border); background: var(--bg);
+    }
+    .hours-row:last-child { border-bottom: none; }
+    .hours-row:nth-child(even) { background: rgba(255,255,255,0.015); }
+    .hours-row__day { width: 36px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); flex-shrink: 0; }
+    .hours-row__times { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+    .hours-row__sep { color: var(--text-muted); font-size: var(--text-xs); flex-shrink: 0; }
+    .select--sm {
+      flex: 1; min-width: 0; height: 30px; padding: 0 4px; font-size: 12px; font-family: var(--font-sans);
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: pointer;
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 4px center; padding-right: 18px;
+    }
+    .select--sm:disabled { opacity: 0.3; cursor: not-allowed; }
+    .select--sm:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Qualifications (no year column) ── */
+    .qual-list { display: flex; flex-direction: column; gap: var(--space-2); }
+    .qual-row { display: grid; grid-template-columns: 1fr 1fr 32px; gap: var(--space-2); align-items: start; }
+    @media (max-width: 520px) {
+      .qual-row { grid-template-columns: 1fr 32px; }
+      .qual-row input:nth-child(2) { grid-column: 1; }
+      .qual-row .qual-remove { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+    }
+    .qual-remove {
+      width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg); color: var(--text-muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1;
+      transition: border-color var(--ease), color var(--ease);
+      -webkit-tap-highlight-color: transparent; flex-shrink: 0; align-self: start;
+    }
+    .qual-remove:hover { border-color: #ef4444; color: #ef4444; }
+    .qual-add-btn {
+      display: flex; align-items: center; gap: var(--space-2); background: none;
+      border: 1px dashed var(--border); border-radius: var(--radius);
+      color: var(--text-muted); font-family: var(--font-sans); font-size: var(--text-sm);
+      font-weight: 500; padding: var(--space-3) var(--space-4); cursor: pointer; width: 100%;
+      margin-top: var(--space-2); transition: border-color var(--ease), color var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .qual-add-btn:hover { border-color: var(--accent); color: var(--accent-light); }
+
+    /* ── Photo slots ── */
+    .photo-slots { display: flex; flex-direction: column; gap: var(--space-3); }
+    .photo-slot {
+      border: 1px dashed var(--border); border-radius: var(--radius);
+      padding: var(--space-4); background: var(--bg);
+    }
+    .photo-slot__row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+    .photo-slot__btn {
+      display: inline-flex; align-items: center; gap: var(--space-2); height: 36px;
+      padding: 0 var(--space-4); background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-muted); font-family: var(--font-sans);
+      font-size: var(--text-sm); font-weight: 500; cursor: pointer;
+      transition: border-color var(--ease), color var(--ease); flex-shrink: 0;
+    }
+    .photo-slot__btn:hover { border-color: var(--accent); color: var(--text); }
+    .photo-slot input[type="file"] { display: none; }
+    .photo-slot__filename { font-size: var(--text-sm); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+    .photo-slot__delete {
+      flex-shrink: 0; height: 28px; padding: 0 10px;
+      background: none; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px;
+      color: #ef4444; font-family: var(--font-sans); font-size: var(--text-xs);
+      font-weight: 600; cursor: pointer; transition: background var(--ease), border-color var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .photo-slot__delete:hover { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
+
+    /* ── T&C ── */
+    .tnc-row {
+      display: flex; align-items: flex-start; gap: var(--space-3);
+      background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-4);
+    }
+    .tnc-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; margin-top: 1px; }
+    .tnc-row__text { font-size: var(--text-sm); color: var(--text-muted); line-height: 1.5; }
+    .tnc-row__text a { color: var(--accent-light); text-decoration: underline; text-underline-offset: 2px; }
+
+    /* ── Nav buttons ── */
+    .form-nav { display: flex; gap: var(--space-3); margin-top: var(--space-5); }
+
+    /* ── Error ── */
+    .field--error .input, .field--error .textarea, .field--error .select { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); }
+    .field--error .field__label { color: #ef4444; }
+    .error-msg { font-size: var(--text-xs); color: #ef4444; margin-top: var(--space-1); display: block; }
+    .step-error {
+      padding: var(--space-3) var(--space-4); background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--radius); font-size: var(--text-sm); color: #fca5a5; margin-bottom: var(--space-3);
+    }
+
+    /* ── Success ── */
+    .success-screen {
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: var(--space-8) var(--space-4); min-height: 60vh;
+    }
+    .success-screen__icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(16, 185, 129, 0.12); border: 2px solid rgba(16, 185, 129, 0.3);
+      display: flex; align-items: center; justify-content: center; margin-bottom: var(--space-5); color: var(--green);
+    }
+    .success-screen__title { font-size: var(--text-xl); font-weight: 700; color: var(--text); margin-bottom: var(--space-3); }
+    .success-screen__body { font-size: var(--text-base); color: var(--text-muted); max-width: 300px; line-height: 1.6; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay--open { display: flex; }
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-width: 480px;
+      max-height: 80vh; overflow-y: auto; padding: var(--space-6);
+      box-shadow: var(--shadow-md); animation: slideUp 0.22s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5); }
+    .modal__title { font-size: var(--text-lg); font-weight: 700; color: var(--text); }
+    .modal__close {
+      width: 32px; height: 32px; border: none; border-radius: 50%; background: var(--bg);
+      color: var(--text-muted); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background var(--ease), color var(--ease);
+    }
+    .modal__close:hover { background: var(--bg-card-hover); color: var(--text); }
+    .modal__body p { font-size: var(--text-sm); color: var(--text-muted); line-height: 1.7; margin-bottom: var(--space-4); }
+    @media (min-width: 640px) {
+      .modal { border-radius: var(--radius); margin-bottom: var(--space-8); }
+      .modal-overlay { align-items: center; padding: var(--space-4); }
+    }
+
+    /* ── Misc ── */
+    .select:disabled { opacity: 0.45; cursor: not-allowed; }
+    .hidden { display: none !important; }
+    .conditional-field { margin-top: var(--space-1); }
+    .textarea--sm { min-height: 80px; }
+    .char-count { font-size: var(--text-xs); color: var(--text-muted); text-align: right; }
+    .btn--loading { position: relative; pointer-events: none; opacity: 0.7; }
+    .btn--loading::after {
+      content: ''; position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div id="recaptcha-container"></div>
+
+<div class="reg-layout">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="reg-sidebar">
+    <div class="reg-sidebar__logo">
+      <span class="logo-text">Massage</span><span>Map</span>
+    </div>
+
+    <!-- Registration step indicators (hidden during OTP phase) -->
+    <div class="reg-steps hidden" id="regSideSteps">
+      <div class="reg-step" id="sideStep1">
+        <div class="reg-step__dot" id="sideDot1">1</div>
+        <div class="reg-step__label">Business Info</div>
+      </div>
+      <div class="reg-connector" id="sideConn1"></div>
+      <div class="reg-step" id="sideStep2">
+        <div class="reg-step__dot" id="sideDot2">2</div>
+        <div class="reg-step__label">Location</div>
+      </div>
+      <div class="reg-connector" id="sideConn2"></div>
+      <div class="reg-step" id="sideStep3">
+        <div class="reg-step__dot" id="sideDot3">3</div>
+        <div class="reg-step__label">Services</div>
+      </div>
+      <div class="reg-connector" id="sideConn3"></div>
+      <div class="reg-step" id="sideStep4">
+        <div class="reg-step__dot" id="sideDot4">4</div>
+        <div class="reg-step__label">Photos</div>
+      </div>
+    </div>
+
+    <button type="button" class="reg-sidebar__back hidden" id="sideBackBtn" onclick="goBack()">
+      <span aria-hidden="true">←</span>
+      <span class="reg-back__label">Back</span>
+    </button>
+  </aside>
+
+  <!-- ══ CONTENT ══ -->
+  <div class="reg-content">
+
+    <a href="index.html" class="reg-back-home">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </a>
+
+    <!-- ══════════════════════════════════════════
+         OTP PHASE — phone verification
+    ══════════════════════════════════════════ -->
+    <div id="otpPhase">
+
+      <!-- ── SCREEN 1: Phone entry ── -->
+      <div id="phoneScreen">
+        <div class="form-card">
+          <div class="form-card__title">Get Started</div>
+          <div class="form-card__subtitle">Enter your cell number to continue.</div>
+          <div class="field-stack">
+            <div class="field" id="cellField">
+              <label class="field__label" for="cell">Cell Number</label>
+              <input class="input" id="cell" name="cell" type="tel" placeholder="e.g. 082 123 4567" autocomplete="tel" />
+            </div>
+          </div>
+        </div>
+        <div class="form-nav">
+          <button type="button" class="btn btn--primary btn--full" id="nextBtn" onclick="handleNext()">Next</button>
+        </div>
+      </div>
+
+      <!-- ── SCREEN 2: OTP entry (hidden until OTP sent) ── -->
+      <div id="otpScreen" class="hidden">
+        <div class="form-card">
+          <div class="form-card__title">Verify Your Number</div>
+          <div class="otp-section" style="margin-top:0; border:none; background:none; padding:0;">
+            <div class="otp-status" id="otpStatusMsg">OTP sent — enter the 6-digit code below.</div>
+            <div class="cell-input-row" style="margin-top:var(--space-3);">
+              <input class="input otp-input" id="otpInput" type="tel" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="_ _ _ _ _ _" />
+              <button type="button" class="btn--otp" id="verifyBtn" onclick="verifyOtp()">Verify</button>
+            </div>
+            <span id="otpError" style="font-size:var(--text-xs); color:#ef4444; display:block; margin-top:var(--space-2);"></span>
+          </div>
+        </div>
+        <div class="form-nav">
+          <button type="button" class="btn btn--secondary btn--full" id="resendBtn" onclick="resendOtp()">Resend OTP</button>
+        </div>
+      </div>
+
+      <!-- ── SCREEN 3: Welcome back (returning supplier with valid session) ── -->
+      <div id="welcomeBack" class="hidden">
+        <div class="form-card" style="text-align:center; padding: var(--space-8) var(--space-5);">
+          <div style="width:64px; height:64px; border-radius:50%; background:rgba(108,99,255,0.12); border:2px solid rgba(108,99,255,0.3); display:flex; align-items:center; justify-content:center; margin:0 auto var(--space-5); color:var(--accent-light);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="form-card__title">Welcome back, <span id="welcomeName" style="color:var(--accent-light);"></span>!</div>
+          <div class="form-card__subtitle" style="margin-bottom:0;">Taking you to your dashboard…</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         REGISTRATION PHASE — 4 steps
+    ══════════════════════════════════════════ -->
+    <div id="regPhase" class="hidden">
+
+      <h1 class="reg-main-heading">Register as Spa</h1>
+
+      <!-- Mobile step bar -->
+      <div class="mobile-step-bar" id="mobileStepBar">
+        <div class="mobile-step-bar__top">
+          <span class="mobile-step-bar__num" id="mobileStepNum">Step 1 of 4</span>
+          <span class="mobile-step-bar__name" id="mobileStepName">Personal Details</span>
+        </div>
+        <div class="mobile-step-bar__segs">
+          <div class="mobile-step-seg mobile-step-seg--active" id="mobileSeg1"></div>
+          <div class="mobile-step-seg" id="mobileSeg2"></div>
+          <div class="mobile-step-seg" id="mobileSeg3"></div>
+          <div class="mobile-step-seg" id="mobileSeg4"></div>
+        </div>
+      </div>
+
+      <!-- ── STEP 1: BUSINESS INFO ── -->
+      <div id="regStep1">
+        <div class="form-card">
+          <div class="form-card__title">Business Info</div>
+          <div class="form-card__subtitle">Your spa's trading name, contacts, and preferences.</div>
+
+          <div class="field-stack">
+
+            <div class="field" id="tradingNameField">
+              <label class="field__label" for="tradingName">Spa / Salon Trading Name *</label>
+              <input class="input" id="tradingName" type="text" placeholder="Trading name" />
+            </div>
+
+            <div class="field-row">
+              <div class="field" id="ownerFirstNameField">
+                <label class="field__label" for="ownerFirstName">Owner First Name *</label>
+                <input class="input" id="ownerFirstName" type="text" placeholder="First name" autocomplete="given-name" />
+              </div>
+              <div class="field" id="ownerLastNameField">
+                <label class="field__label" for="ownerLastName">Owner Last Name *</label>
+                <input class="input" id="ownerLastName" type="text" placeholder="Last name" autocomplete="family-name" />
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="field__label" for="managerFirstName">Manager First Name <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+                <input class="input" id="managerFirstName" type="text" placeholder="First name" />
+              </div>
+              <div class="field">
+                <label class="field__label" for="managerLastName">Manager Last Name <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+                <input class="input" id="managerLastName" type="text" placeholder="Last name" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="managerPhone">Manager / Alternative Phone <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="managerPhone" type="tel" placeholder="e.g. 011 123 4567" />
+              <div class="field__note">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                This number is not OTP verified — for admin contact only
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="salonCell">Salon Cell Number</label>
+              <input class="input input--locked" id="salonCell" type="tel" readonly />
+              <div style="display:flex; align-items:center; gap:var(--space-2); margin-top:var(--space-2);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green);"><polyline points="20 6 9 17 4 12"/></svg>
+                <span style="font-size:var(--text-xs); font-weight:600; color:var(--green);">Verified</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="salonLandline">Salon Landline <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="salonLandline" type="tel" placeholder="e.g. 011 123 4567" />
+            </div>
+
+            <div class="field" id="salonEmailField">
+              <label class="field__label" for="salonEmail">Salon Email *</label>
+              <input class="input" id="salonEmail" type="email" placeholder="info@yourspa.co.za" autocomplete="email" />
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="websiteUrl">Website URL <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="websiteUrl" type="url" placeholder="https://www.yourspa.co.za" />
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="companyReg">Company Registration Number <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="companyReg" type="text" placeholder="e.g. 2023/123456/07" />
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="whatsappNumber">WhatsApp Number <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="whatsappNumber" type="tel" placeholder="Leave blank to use your salon cell number" />
+              <div class="field__note">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Leave blank to use your salon cell number
+              </div>
+            </div>
+
+            <div>
+              <div class="form-section-label">Contact Preferences</div>
+              <div class="check-group">
+                <label class="check-item">
+                  <input type="checkbox" name="contactPref" value="sms" checked disabled />
+                  <span class="check-item__label">SMS</span>
+                </label>
+                <label class="check-item">
+                  <input type="checkbox" name="contactPref" value="email" id="contactPrefEmail" />
+                  <span class="check-item__label">Email</span>
+                </label>
+                <label class="check-item">
+                  <input type="checkbox" name="contactPref" value="whatsapp" id="contactPrefWhatsApp" />
+                  <span class="check-item__label">WhatsApp</span>
+                </label>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button type="button" class="btn btn--primary btn--full" onclick="goToRegStep(2)">Next — Location</button>
+        </div>
+      </div>
+
+      <!-- ── STEP 2: LOCATION & PREMISES ── -->
+      <div id="regStep2" class="hidden">
+        <div class="form-card">
+          <div class="form-card__title">Location &amp; Premises</div>
+          <div class="form-card__subtitle">Where you operate and your working environment.</div>
+
+          <div class="field-stack">
+
+            <div class="field" id="provinceField">
+              <label class="field__label" for="province">Province *</label>
+              <select class="select" id="province" name="province" onchange="onProvinceChange()">
+                <option value="">Select province…</option>
+              </select>
+            </div>
+
+            <div class="field" id="areaField">
+              <label class="field__label" for="area">Area *</label>
+              <select class="select" id="area" name="area" disabled onchange="onAreaChange()">
+                <option value="">Select area…</option>
+              </select>
+            </div>
+
+            <div class="field" id="suburbField">
+              <label class="field__label" for="suburb">Suburb *</label>
+              <select class="select" id="suburb" name="suburb" disabled>
+                <option value="">Select suburb…</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="address">Full Street Address <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="address" type="text" placeholder="Your street address" autocomplete="street-address" />
+              <div class="field__note">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Completing your address helps admin verify your listing faster. Your address is never shown publicly — admin only.
+              </div>
+            </div>
+
+            <div class="toggle-wrap">
+              <div>
+                <div class="toggle-wrap__label">Show full address publicly</div>
+                <div style="font-size:var(--text-xs); color:var(--text-muted); margin-top:2px;">Off = suburb only shown (recommended)</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="addressVisible" name="addressVisible" />
+                <span class="toggle__track"></span>
+              </label>
+            </div>
+
+            <div class="field__note">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Premises type: Business
+            </div>
+
+            <div>
+              <div class="form-section-label">Facilities</div>
+              <div class="check-group">
+                <label class="check-item">
+                  <input type="checkbox" id="shower" name="facilities" value="shower" />
+                  <span class="check-item__label">Shower facilities</span>
+                </label>
+                <label class="check-item">
+                  <input type="checkbox" id="parking" name="facilities" value="parking" />
+                  <span class="check-item__label">Off-street parking</span>
+                </label>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button type="button" class="btn btn--secondary" onclick="goToRegStep(1)">Back</button>
+          <button type="button" class="btn btn--primary" style="flex:1;" onclick="goToRegStep(3)">Next — Services</button>
+        </div>
+      </div>
+
+      <!-- ── STEP 3: SERVICES & AVAILABILITY ── -->
+      <div id="regStep3" class="hidden">
+
+        <!-- What you offer -->
+        <div class="form-card">
+          <div class="form-card__title">What You Offer Publicly</div>
+          <div class="form-card__subtitle">Choose the services shown on your listing.</div>
+
+          <div class="field-stack">
+
+            <div id="massageTypesField">
+              <div class="form-section-label">Massage Types * <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(select at least one)</span></div>
+              <div class="check-group check-group--3col">
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Reflexology" /><span class="check-item__label">Reflexology</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Swedish" /><span class="check-item__label">Swedish</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Sports" /><span class="check-item__label">Sports</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Hot Stone" /><span class="check-item__label">Hot Stone</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Aromatherapy" /><span class="check-item__label">Aromatherapy</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Deep Tissue" /><span class="check-item__label">Deep Tissue</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Shiatsu" /><span class="check-item__label">Shiatsu</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Thai" /><span class="check-item__label">Thai</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Pregnancy" /><span class="check-item__label">Pregnancy</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Kahuna" /><span class="check-item__label">Kahuna</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Ayurvedic" /><span class="check-item__label">Ayurvedic</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Tantric" /><span class="check-item__label">Tantric</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Couples" /><span class="check-item__label">Couples</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Lymphatic Drainage" /><span class="check-item__label">Lymphatic Drainage</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Trigger Point" /><span class="check-item__label">Trigger Point</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Lomi Lomi" /><span class="check-item__label">Lomi Lomi</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Craniosacral" /><span class="check-item__label">Craniosacral</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Chair" /><span class="check-item__label">Chair</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Four Hands" /><span class="check-item__label">Four Hands</span></label>
+              </div>
+            </div>
+
+            <div>
+              <div class="form-section-label">Treatments</div>
+              <div class="check-group">
+                <label class="check-item"><input type="checkbox" name="treatments" value="Full Body" /><span class="check-item__label">Full Body</span></label>
+                <label class="check-item"><input type="checkbox" name="treatments" value="Back &amp; Neck" /><span class="check-item__label">Back &amp; Neck</span></label>
+                <label class="check-item"><input type="checkbox" name="treatments" value="Indian Head" /><span class="check-item__label">Indian Head</span></label>
+                <label class="check-item"><input type="checkbox" name="treatments" value="Facial" /><span class="check-item__label">Facial</span></label>
+                <label class="check-item"><input type="checkbox" name="treatments" value="Manicure" /><span class="check-item__label">Manicure</span></label>
+                <label class="check-item"><input type="checkbox" name="treatments" value="Pedicure" /><span class="check-item__label">Pedicure</span></label>
+              </div>
+            </div>
+
+            <div id="classificationField">
+              <div class="form-section-label">Classification</div>
+              <div class="radio-group">
+                <label class="radio-item"><input type="radio" name="classification" value="Massage" /><span class="radio-item__label">Massage</span></label>
+                <label class="radio-item"><input type="radio" name="classification" value="Holistic" /><span class="radio-item__label">Holistic</span></label>
+              </div>
+              <div class="field__note" style="margin-top:var(--space-2);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                This is the badge shown on your listing card — choose what best describes your service
+              </div>
+            </div>
+
+            <div id="gendersServedField">
+              <div class="form-section-label">Genders Served</div>
+              <div class="radio-group">
+                <label class="radio-item"><input type="radio" name="genderServed" value="ladies" /><span class="radio-item__label">Ladies only</span></label>
+                <label class="radio-item"><input type="radio" name="genderServed" value="gents" /><span class="radio-item__label">Gentlemen only</span></label>
+                <label class="radio-item"><input type="radio" name="genderServed" value="both" /><span class="radio-item__label">Both</span></label>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Availability -->
+        <div class="form-card">
+          <div class="form-card__title">Availability</div>
+
+          <div class="field-stack">
+
+            <div>
+              <div class="form-section-label" style="margin-bottom:var(--space-3);">Working Hours</div>
+              <div class="hours-grid" id="weeklyHoursGrid"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button type="button" class="btn btn--secondary" onclick="goToRegStep(2)">Back</button>
+          <button type="button" class="btn btn--primary" style="flex:1;" onclick="goToRegStep(4)">Next — Photos</button>
+        </div>
+      </div>
+
+      <!-- ── STEP 4: PHOTOS, BIO & SPECIALS ── -->
+      <div id="regStep4" class="hidden">
+        <div class="form-card">
+          <div class="form-card__title">Photos, Bio &amp; Specials <span style="font-size:var(--text-sm); font-weight:400; color:var(--text-muted);">(all optional)</span></div>
+
+          <div class="field-stack">
+
+            <!-- Profile photos -->
+            <div>
+              <div class="form-section-label">Photos <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(up to 5)</span></div>
+              <div class="field__note" style="margin-bottom:var(--space-3);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                We recommend including an exterior photo of your spa so clients know what to expect.
+              </div>
+              <div class="photo-slots" id="photoSlots">
+
+                <div class="photo-slot" id="photoSlot1">
+                  <div class="photo-slot__row">
+                    <label class="photo-slot__btn" for="photo1">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      Upload or take photo
+                    </label>
+                    <input type="file" id="photo1" accept="image/*" capture="environment" onchange="onPhotoChange(this, 1)" />
+                    <span class="photo-slot__filename hidden" id="photoName1"></span>
+                    <button type="button" class="photo-slot__delete hidden" id="photoDelete1" onclick="deletePhoto(1)">Remove</button>
+                  </div>
+                </div>
+
+                <button type="button" class="qual-add-btn hidden" id="addPhotoBtn2" onclick="revealPhotoSlot(2)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add another photo
+                </button>
+
+                <div class="photo-slot hidden" id="photoSlot2">
+                  <div class="photo-slot__row">
+                    <label class="photo-slot__btn" for="photo2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      Choose photo
+                    </label>
+                    <input type="file" id="photo2" accept="image/*" onchange="onPhotoChange(this, 2)" />
+                    <span class="photo-slot__filename hidden" id="photoName2"></span>
+                    <button type="button" class="photo-slot__delete hidden" id="photoDelete2" onclick="deletePhoto(2)">Remove</button>
+                  </div>
+                </div>
+
+                <button type="button" class="qual-add-btn hidden" id="addPhotoBtn3" onclick="revealPhotoSlot(3)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add another photo
+                </button>
+
+                <div class="photo-slot hidden" id="photoSlot3">
+                  <div class="photo-slot__row">
+                    <label class="photo-slot__btn" for="photo3">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      Choose photo
+                    </label>
+                    <input type="file" id="photo3" accept="image/*" onchange="onPhotoChange(this, 3)" />
+                    <span class="photo-slot__filename hidden" id="photoName3"></span>
+                    <button type="button" class="photo-slot__delete hidden" id="photoDelete3" onclick="deletePhoto(3)">Remove</button>
+                  </div>
+                </div>
+
+                <button type="button" class="qual-add-btn hidden" id="addPhotoBtn4" onclick="revealPhotoSlot(4)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add another photo
+                </button>
+
+                <div class="photo-slot hidden" id="photoSlot4">
+                  <div class="photo-slot__row">
+                    <label class="photo-slot__btn" for="photo4">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      Choose photo
+                    </label>
+                    <input type="file" id="photo4" accept="image/*" onchange="onPhotoChange(this, 4)" />
+                    <span class="photo-slot__filename hidden" id="photoName4"></span>
+                    <button type="button" class="photo-slot__delete hidden" id="photoDelete4" onclick="deletePhoto(4)">Remove</button>
+                  </div>
+                </div>
+
+                <button type="button" class="qual-add-btn hidden" id="addPhotoBtn5" onclick="revealPhotoSlot(5)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add another photo
+                </button>
+
+                <div class="photo-slot hidden" id="photoSlot5">
+                  <div class="photo-slot__row">
+                    <label class="photo-slot__btn" for="photo5">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      Choose photo
+                    </label>
+                    <input type="file" id="photo5" accept="image/*" onchange="onPhotoChange(this, 5)" />
+                    <span class="photo-slot__filename hidden" id="photoName5"></span>
+                    <button type="button" class="photo-slot__delete hidden" id="photoDelete5" onclick="deletePhoto(5)">Remove</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- ID photo -->
+            <div>
+              <div class="form-section-label">ID / Passport Photo — Owner <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(optional)</span></div>
+              <div class="photo-slot">
+                <div class="photo-slot__row">
+                  <label class="photo-slot__btn" for="idPhoto">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Upload ID photo
+                  </label>
+                  <input type="file" id="idPhoto" accept="image/*" onchange="onIdPhotoChange(this)" />
+                  <span class="photo-slot__filename hidden" id="idPhotoName"></span>
+                  <button type="button" class="photo-slot__delete hidden" id="idPhotoDelete" onclick="deleteIdPhoto()">Remove</button>
+                </div>
+                <div style="display:flex; align-items:flex-start; gap:var(--space-2); margin-top:var(--space-3); padding:var(--space-3); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:8px;">
+                  <svg style="flex-shrink:0; color:#f59e0b; margin-top:1px;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <span style="font-size:var(--text-xs); color:#f59e0b; line-height:1.5;">Optional during registration — will be required before your listing goes live.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bio -->
+            <div class="field">
+              <label class="field__label" for="aboutMe">About the Spa / Bio <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <textarea class="textarea" id="aboutMe" name="aboutMe" maxlength="300" placeholder="What makes your spa special? A short note for potential clients." oninput="updateCharCount(this)" style="min-height:96px;"></textarea>
+              <div class="char-count" id="aboutMeCount">0 / 300</div>
+            </div>
+
+            <!-- Specials -->
+            <div class="field">
+              <label class="field__label" for="specialsText">Specials / Promotions <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <textarea class="textarea textarea--sm" id="specialsText" name="specialsText" maxlength="300" placeholder="Any current deals or promotions…" oninput="updateSpecialsCount(this)"></textarea>
+              <div class="char-count" id="specialsCount">0 / 300</div>
+            </div>
+
+            <!-- T&C -->
+            <div class="tnc-row">
+              <input type="checkbox" id="tncCheck" onchange="onTncChange()" />
+              <div class="tnc-row__text">
+                I agree to the <a href="#" onclick="openModal(event)">Terms &amp; Conditions</a> of MassageMap. I confirm that all information I have provided is accurate and up to date.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div id="submitError" class="step-error hidden"></div>
+
+        <div class="form-nav">
+          <button type="button" class="btn btn--secondary" onclick="goToRegStep(3)">Back</button>
+          <button type="button" class="btn btn--primary btn--lg" style="flex:1; opacity:0.4; pointer-events:none;" id="registerBtn" onclick="submitForm()">Register</button>
+        </div>
+      </div>
+
+      <!-- ── SUCCESS SCREEN ── -->
+      <div class="success-screen" id="successScreen">
+        <div class="success-screen__icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="success-screen__title">Registration received!</div>
+        <div class="success-screen__body">Your listing is under review. We'll be in touch soon. Redirecting…</div>
+      </div>
+
+    </div><!-- /#regPhase -->
+
+  </div><!-- /.reg-content -->
+</div><!-- /.reg-layout -->
+
+<!-- Terms & Conditions Modal -->
+<div class="modal-overlay" id="tncModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal__header">
+      <div class="modal__title" id="modalTitle">Terms &amp; Conditions</div>
+      <button class="modal__close" onclick="closeModal()" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal__body">
+      <p>By registering on MassageMap, you agree to provide accurate, up-to-date information about yourself and your services. Your listing will be reviewed by our team before it goes live. We reserve the right to decline or remove listings that do not meet our community standards.</p>
+      <p>Your street address is collected solely for administrative verification purposes and will never be displayed publicly. Only your suburb and area will appear on your public listing.</p>
+      <p>MassageMap is a directory service. We do not employ therapists, process client payments, or mediate disputes between therapists and clients. By registering, you confirm that you operate lawfully and that your services comply with applicable regulations.</p>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script type="module">
+  import { app, db } from './firebase-config.js';
+  import {
+    getAuth, RecaptchaVerifier, signInWithPhoneNumber
+  } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+  import {
+    getStorage, ref as storageRef, uploadBytes, getDownloadURL
+  } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
+  import {
+    collection, doc, setDoc, serverTimestamp, runTransaction,
+    query, where, getDocs
+  } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+  const auth    = getAuth(app);
+  const storage = getStorage(app);
+
+  // ── State ──
+  let currentRegStep    = 1;
+  let phoneVerified     = false;
+  let confirmationResult = null;
+  let appVerifier       = null;
+  let authUid           = null;
+  let verifiedPhone     = '';
+  let knownSupplierData = null;
+
+  // ════════════════════════════════════════════
+  // LOCATIONS
+  // ════════════════════════════════════════════
+  const LOCATIONS = {"provinces":[{"id":"gauteng","name":"Gauteng","areas":[{"id":"sandton-north-johannesburg","name":"Sandton & North Johannesburg","suburbs":["Sandton","Fourways","Bryanston","Bramley","Melrose Arch","Sunninghill","Benmore Gardens","Morningside","Rivonia","Paulshof","Woodmead","Lonehill","Dainfern","Kyalami","Craighall Park","Rosebank","Houghton","Norwood","Orange Grove","Illovo","Parkhurst","Parktown"]},{"id":"east-rand","name":"East Rand","suburbs":["Edenvale","Benoni","Germiston","Kempton Park","Kensington","Boksburg","Bedfordview","Bonaero Park","Alberton","Bracken Gardens","Eastleigh","Brakpan","Springs","Nigel","Devon","Tembisa"]},{"id":"west-rand-randburg","name":"West Rand & Randburg","suburbs":["Northriding","Blairgowrie","Ferndale","Randburg","Randpark Ridge","Craighall","Parkhurst","Horizon","Fontainebleau","Fairland","Florida","Honeydew","Krugersdorp","Muldersdrift","Roodepoort","Weltevredenpark","Northcliff","Linden","Greenside"]},{"id":"pretoria-east","name":"Pretoria East","suburbs":["Waterkloof Ridge","Garsfontein","Hazelwood","Wingate Park","Constantia Park","Brooklyn","Lynnwood","Lynnwood Manor","Menlyn","Moreleta Park","Faerie Glen","Erasmuskloof","Newlands","Die Wilgers","Willowbridge","Ashlea Gardens","Groenkloof","Hatfield"]},{"id":"pretoria-central","name":"Pretoria Central","suburbs":["Arcadia","Sunnyside","Hatfield","Brooklyn","Capital Park","Doornpoort","Elandspoort","Gezina","Pretoria Central","Muckleneuk"]},{"id":"pretoria-north","name":"Pretoria North","suburbs":["Pretoria North","Florauna","Montana","Akasia","Karenpark","Doornpoort","Wonderboom","The Orchards","Rosslyn","Hercules"]},{"id":"centurion","name":"Centurion","suburbs":["Centurion","Wierda Park","Highveld","Hennopspark","Lyttleton Manor","Clubview","Pierre van Ryneveld","Irene","Eldoraigne","Wierdapark","Doringkloof","Theresapark","Rooihuiskraal"]},{"id":"midrand","name":"Midrand","suburbs":["Midrand","Noordwyk","Vorna Valley","Glen Austin","Halfway House","Olifantsfontein","Waterfall","Kyalami","Dainfern","Crowthorne","Sagewood"]},{"id":"johannesburg-south","name":"Johannesburg South","suburbs":["Meyerton","Vereeniging","Homestead","Kibler Park","Mulbarton","Robertsham","Turffontein","Linmeyer","Ridgeway","Johannesburg South","Heidelberg","Alberton","Vanderbijlpark"]},{"id":"soweto-west","name":"Soweto & West Johannesburg","suburbs":["Soweto","Protea Glen","Dobsonville","Roodepoort","Witpoortjie","Florida","Krugersdorp"]}]},{"id":"western-cape","name":"Western Cape","areas":[{"id":"cape-town-city-bowl","name":"Cape Town City Bowl","suburbs":["City Central","Gardens","Foreshore","Woodstock","Oranjezicht","Maitland","De Waterkant","Bo-Kaap","Salt River","Observatory","V&A Waterfront"]},{"id":"cape-town-green-point","name":"Green Point & Atlantic Seaboard","suburbs":["Green Point","Sea Point","Three Anchor Bay","Camps Bay","Clifton","Bantry Bay","Fresnaye","Mouille Point"]},{"id":"cape-town-southern-suburbs-claremont","name":"Southern Suburbs","suburbs":["Claremont","Kenilworth","Rondebosch","Mowbray","Crawford","Lansdowne","Newlands","Pinelands","Bishopscourt","Wynberg","Observatory"]},{"id":"cape-town-constantia","name":"Constantia & Deep South","suburbs":["Constantia","Bergvliet","Plumstead","Diep River","Muizenberg","Kirstenhof","Heathfield","Tokai","Steenberg","Retreat","Lakeside","Kalk Bay","Fish Hoek","Glencairn","Simon's Town"]},{"id":"bloubergstrand-table-view","name":"Blouberg & Table View","suburbs":["Bloubergstrand","Table View","Milnerton","West Beach","Parklands","Sunset Beach","Big Bay","Sunningdale","Flamingo Vlei","Tableview"]},{"id":"century-city","name":"Century City & Surrounds","suburbs":["Century City","Marconi Beam","Monte Vista","Edgemead","De Tijger"]},{"id":"northern-suburbs-north-n1","name":"Northern Suburbs","suburbs":["Durbanville","Tygervalley","Brackenfell","Kraaifontein","Panorama","Plattekloof","Bothasig","Belville","Parow","Goodwood","Boston","Oakdale","Kuils River","Kuilsriver","Kenridge"]},{"id":"strand-somerset-west","name":"Strand & Somerset West","suburbs":["Somerset West","Strand","Gordon's Bay","Stellenbosch","Macassar","Sir Lowry's Pass"]},{"id":"winelands","name":"Winelands","suburbs":["Stellenbosch","Paarl","Worcester","Franschhoek","Wellington","Grabouw","Ceres"]},{"id":"west-coast","name":"West Coast","suburbs":["Melkbosstrand","Langebaan","St Helena Bay","Porterville","Saldanha","Vredenburg","Darling","Yzerfontein"]},{"id":"garden-route","name":"Garden Route","suburbs":["George","Mossel Bay","Sedgefield","Knysna","Plettenberg Bay","Wilderness","Hartenbos","Great Brak River","Oudtshoorn"]},{"id":"overberg","name":"Overberg","suburbs":["Hermanus","Betty's Bay","Swellendam","Bredasdorp","Caledon","Stanford","Kleinmond"]}]},{"id":"kwazulu-natal","name":"KwaZulu-Natal","areas":[{"id":"durban-central-berea","name":"Durban Central & Berea","suburbs":["Durban Central","Berea","Musgrave","Glenwood","Morningside","Overport","Umbilo","Greyville"]},{"id":"durban-north","name":"Durban North","suburbs":["Durban North","Umhlanga Rocks","La Lucia","Glenashley","Redhill","Mount Edgecombe"]},{"id":"umhlanga-ballito","name":"Umhlanga & Ballito","suburbs":["Umhlanga","Umhlanga Ridge","Ballito","Salt Rock","Dolphin Coast","Sheffield Beach","Stanger","Mandini"]},{"id":"durban-south","name":"Durban South","suburbs":["Amanzimtoti","Illovo Beach","Bluff","Chatsworth","Montclair","Isipingo","Kingsburgh","Warner Beach","Umlazi"]},{"id":"durban-west-hillcrest","name":"Hillcrest & Outer West","suburbs":["Hillcrest","Kloof","Pinetown","New Germany","Westville","Queensburgh","Gillitts","Assagay"]},{"id":"pietermaritzburg","name":"Pietermaritzburg","suburbs":["Pietermaritzburg","Northdale","Scottsville","Hayfields","Wembley","Hilton","Howick"]},{"id":"richards-bay","name":"Richards Bay & North Coast","suburbs":["Richards Bay","Empangeni","Mtubatuba","Eshowe","Ulundi"]},{"id":"south-coast-kzn","name":"South Coast","suburbs":["Port Shepstone","Margate","Uvongo","Shelly Beach","Hibberdene","Scottburgh","Park Rynie"]}]},{"id":"eastern-cape","name":"Eastern Cape","areas":[{"id":"gqeberha","name":"Gqeberha (Port Elizabeth)","suburbs":["Newton Park","Walmer","Gqeberha Central","Summerstrand","Humewood","Greenacres","Charlo","Mill Park","Framesby","Lorraine","Hunters Retreat"]},{"id":"east-london","name":"East London","suburbs":["East London","Cambridge","Nahoon","Vincent","Beacon Bay","Berea","Gonubie","Mdantsane"]},{"id":"garden-route-ec","name":"Garden Route Eastern Cape","suburbs":["Jeffreys Bay","St Francis Bay","Humansdorp","Grahamstown","Port Alfred"]},{"id":"inland-eastern-cape","name":"Inland Eastern Cape","suburbs":["Queenstown","Graaff-Reinet","Aliwal North","Cradock","Bhisho","King William's Town"]}]},{"id":"free-state","name":"Free State","areas":[{"id":"bloemfontein","name":"Bloemfontein","suburbs":["Bloemfontein","Waverley","Westdene","Universitas","Heuwelsig","Bultfontein","Willows","Brandwag","Langenhovenpark","Pentagon Park","Fichardt Park"]},{"id":"free-state-other","name":"Other Free State","suburbs":["Welkom","Sasolburg","Bethlehem","Kroonstad","Parys","Virginia","Phuthaditjhaba"]}]},{"id":"limpopo","name":"Limpopo","areas":[{"id":"polokwane","name":"Polokwane","suburbs":["Polokwane","Seshego","Bendor","Flora Park","Ivypark","Ladanna","Nirvana","Superbia"]},{"id":"tzaneen-phalaborwa","name":"Tzaneen & Phalaborwa","suburbs":["Tzaneen","Phalaborwa","Lephalale","Mokopane","Bela-Bela","Thabazimbi"]},{"id":"limpopo-other","name":"Other Limpopo","suburbs":["Louis Trichardt","Thohoyandou","Giyani","Malamulele","Burgersfort"]}]},{"id":"mpumalanga","name":"Mpumalanga","areas":[{"id":"emalahleni-witbank","name":"Emalahleni (Witbank)","suburbs":["Emalahleni","Witbank","Del Judor","Reyno Ridge","Clewer","Tasbet Park"]},{"id":"nelspruit-mbombela","name":"Nelspruit (Mbombela)","suburbs":["Nelspruit","Mbombela","White River","Hazyview","Barberton","Komatipoort"]},{"id":"middelburg-mpumalanga","name":"Middelburg","suburbs":["Middelburg","Aerorand","Mhluzi","Nasaret","Dennesig"]},{"id":"mpumalanga-other","name":"Other Mpumalanga","suburbs":["Secunda","Ermelo","Standerton","Bethal","Lydenburg","Graskop","Sabie","Pilgrim's Rest"]}]},{"id":"north-west","name":"North West","areas":[{"id":"rustenburg","name":"Rustenburg","suburbs":["Rustenburg","Waterfall East","Proteapark","Cashan","Tlhabane"]},{"id":"mahikeng","name":"Mahikeng (Mafikeng)","suburbs":["Mahikeng","Mafikeng","Mmabatho","Lichtenburg"]},{"id":"klerksdorp-potchefstroom","name":"Klerksdorp & Potchefstroom","suburbs":["Klerksdorp","Potchefstroom","Stilfontein","Orkney","Hartbeespoort","Brits"]}]},{"id":"northern-cape","name":"Northern Cape","areas":[{"id":"kimberley","name":"Kimberley","suburbs":["Kimberley","Galeshewe","Beaconsfield","Herlear","Phutanang"]},{"id":"northern-cape-other","name":"Other Northern Cape","suburbs":["Upington","Springbok","De Aar","Kuruman","Kathu","Douglas"]}]}]};
+
+  function populateProvinces() {
+    const sel = document.getElementById('province');
+    LOCATIONS.provinces.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id; o.textContent = p.name;
+      sel.appendChild(o);
+    });
+  }
+
+  // ════════════════════════════════════════════
+  // LOCATION CASCADES
+  // ════════════════════════════════════════════
+  function onProvinceChange() {
+    const provinceId = document.getElementById('province').value;
+    const areaEl    = document.getElementById('area');
+    const suburbEl  = document.getElementById('suburb');
+    areaEl.innerHTML   = '<option value="">Select area…</option>';
+    suburbEl.innerHTML = '<option value="">Select suburb…</option>';
+    areaEl.disabled = true; suburbEl.disabled = true;
+    if (!provinceId) return;
+    const province = LOCATIONS.provinces.find(p => p.id === provinceId);
+    if (!province) return;
+    province.areas.forEach(a => {
+      const o = document.createElement('option');
+      o.value = a.id; o.textContent = a.name;
+      areaEl.appendChild(o);
+    });
+    areaEl.disabled = false;
+  }
+
+  function onAreaChange() {
+    const provinceId = document.getElementById('province').value;
+    const areaId     = document.getElementById('area').value;
+    const suburbEl   = document.getElementById('suburb');
+    suburbEl.innerHTML = '<option value="">Select suburb…</option>';
+    suburbEl.disabled  = true;
+    if (!areaId) return;
+    const province = LOCATIONS.provinces.find(p => p.id === provinceId);
+    if (!province) return;
+    const area = province.areas.find(a => a.id === areaId);
+    if (!area) return;
+    area.suburbs.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s; o.textContent = s;
+      suburbEl.appendChild(o);
+    });
+    suburbEl.disabled = false;
+  }
+
+  // ════════════════════════════════════════════
+  // PHONE AUTH — OTP
+  // ════════════════════════════════════════════
+  function formatPhoneNumber(raw) {
+    const digits = raw.replace(/\D/g, '');
+    if (digits.startsWith('27') && digits.length === 11) return '+' + digits;
+    if (digits.startsWith('0')  && digits.length === 10) return '+27' + digits.slice(1);
+    return '+' + digits;
+  }
+
+  function initRecaptchaVerifier() {
+    if (appVerifier) { try { appVerifier.clear(); } catch(_) {} }
+    appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+  }
+
+  async function handleNext() {
+    clearErrors();
+    const raw = document.getElementById('cell').value.trim();
+    if (!raw) { markError(document.getElementById('cellField'), 'Please enter your cell number.'); return; }
+
+    const phone = formatPhoneNumber(raw);
+    const btn   = document.getElementById('nextBtn');
+    btn.disabled    = true;
+    btn.textContent = 'Checking…';
+
+    try {
+      // 1. Firestore lookup
+      const snap = await getDocs(query(collection(db, 'suppliers'), where('cellNumber', '==', phone)));
+      knownSupplierData = snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+
+      if (knownSupplierData) {
+        // Returning supplier — check localStorage session first
+        const session = getValidSession(phone);
+        if (session) {
+          // Valid 30-day session — skip OTP entirely
+          showWelcomeBack(session.displayName, session.supplierType);
+          return;
+        }
+        // Session absent or expired — fall through to OTP
+      }
+
+      // 2. Send OTP (new supplier OR returning supplier with no valid session)
+      btn.textContent = 'Sending OTP…';
+      initRecaptchaVerifier();
+      confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
+
+      // Switch to OTP screen
+      document.getElementById('phoneScreen').classList.add('hidden');
+      document.getElementById('otpStatusMsg').textContent = `OTP sent to ${phone}. Enter the 6-digit code below.`;
+      document.getElementById('otpScreen').classList.remove('hidden');
+
+    } catch (err) {
+      console.error('handleNext error:', err);
+      btn.disabled    = false;
+      btn.textContent = 'Next';
+      let msg = 'Could not send OTP. Please check the number and try again.';
+      if (err.code === 'auth/invalid-phone-number') msg = 'Invalid phone number format.';
+      if (err.code === 'auth/too-many-requests')    msg = 'Too many attempts. Please wait a few minutes.';
+      markError(document.getElementById('cellField'), msg);
+      try { if (appVerifier) appVerifier.clear(); } catch(_) {}
+      appVerifier = null;
+    }
+  }
+
+  async function resendOtp() {
+    const raw   = document.getElementById('cell').value.trim();
+    if (!raw) return;
+    const phone = formatPhoneNumber(raw);
+    const btn   = document.getElementById('resendBtn');
+    btn.disabled    = true;
+    btn.textContent = 'Sending…';
+    document.getElementById('otpError').textContent = '';
+    try {
+      initRecaptchaVerifier();
+      confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
+      document.getElementById('otpStatusMsg').textContent = `OTP resent to ${phone}. Enter the 6-digit code below.`;
+      btn.textContent = 'Resend OTP';
+      btn.disabled    = false;
+    } catch (err) {
+      btn.disabled    = false;
+      btn.textContent = 'Resend OTP';
+      let msg = 'Could not resend OTP.';
+      if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please wait a few minutes.';
+      document.getElementById('otpError').textContent = msg;
+      try { if (appVerifier) appVerifier.clear(); } catch(_) {}
+      appVerifier = null;
+    }
+  }
+
+  async function verifyOtp() {
+    const code  = document.getElementById('otpInput').value.trim();
+    const errEl = document.getElementById('otpError');
+    errEl.textContent = '';
+    if (code.length !== 6)    { errEl.textContent = 'Please enter all 6 digits.'; return; }
+    if (!confirmationResult)  { errEl.textContent = 'Please send OTP first.'; return; }
+
+    const verifyBtn = document.getElementById('verifyBtn');
+    verifyBtn.disabled = true; verifyBtn.textContent = 'Verifying…';
+
+    try {
+      const credential = await confirmationResult.confirm(code);
+      authUid       = credential.user.uid;
+      phoneVerified = true;
+      verifiedPhone = formatPhoneNumber(document.getElementById('cell').value.trim());
+
+      document.getElementById('otpScreen').classList.add('hidden');
+
+      if (knownSupplierData) {
+        // Store a fresh 30-day session token then show welcome
+        const displayName  = knownSupplierData.displayName || knownSupplierData.firstName || '';
+        const supplierType = knownSupplierData.supplierType || 'individual';
+        storeSession(verifiedPhone, displayName, supplierType);
+        showWelcomeBack(displayName, supplierType);
+      } else {
+        startRegistration();
+      }
+    } catch (err) {
+      console.error('OTP verify error:', err);
+      verifyBtn.disabled = false; verifyBtn.textContent = 'Verify';
+      let msg = 'Incorrect code. Please try again.';
+      if (err.code === 'auth/code-expired') msg = 'OTP has expired. Please request a new one.';
+      errEl.textContent = msg;
+    }
+  }
+
+  // ════════════════════════════════════════════
+  // SESSION TOKEN HELPERS (30-day localStorage)
+  // ════════════════════════════════════════════
+  function sessionKey(phone) {
+    return 'mm_session_' + phone;
+  }
+
+  function getValidSession(phone) {
+    try {
+      const raw = localStorage.getItem(sessionKey(phone));
+      if (!raw) return null;
+      const session = JSON.parse(raw);
+      if (!session.expiry || Date.now() > session.expiry) {
+        localStorage.removeItem(sessionKey(phone));
+        return null;
+      }
+      return session;
+    } catch (_) { return null; }
+  }
+
+  function storeSession(phone, displayName, supplierType) {
+    const session = {
+      displayName,
+      supplierType,
+      expiry: Date.now() + 30 * 24 * 60 * 60 * 1000
+    };
+    localStorage.setItem(sessionKey(phone), JSON.stringify(session));
+  }
+
+  // ════════════════════════════════════════════
+  // WELCOME BACK (returning supplier)
+  // ════════════════════════════════════════════
+  function showWelcomeBack(displayName, supplierType) {
+    document.getElementById('phoneScreen').classList.add('hidden');
+    document.getElementById('otpScreen').classList.add('hidden');
+    document.getElementById('welcomeName').textContent = displayName || 'there';
+    document.getElementById('welcomeBack').classList.remove('hidden');
+    setTimeout(() => {
+      window.location.href = 'dashboard.html?type=spa';
+    }, 2000);
+  }
+
+  // ════════════════════════════════════════════
+  // START REGISTRATION (after OTP verified)
+  // ════════════════════════════════════════════
+  function startRegistration() {
+    document.getElementById('otpPhase').classList.add('hidden');
+    document.getElementById('regPhase').classList.remove('hidden');
+    document.getElementById('regSideSteps').classList.remove('hidden');
+    document.getElementById('salonCell').value = verifiedPhone;
+    updateRegProgress(1);
+  }
+
+  // ════════════════════════════════════════════
+  // REGISTRATION STEP NAVIGATION
+  // ════════════════════════════════════════════
+  const STEP_LABELS = ['Business Info', 'Location & Premises', 'Services & Availability', 'Photos & Bio'];
+
+  function goToRegStep(n) {
+    if (n > currentRegStep) {
+      if (currentRegStep === 1 && !validateStep1()) return;
+      if (currentRegStep === 2 && !validateStep2()) return;
+      if (currentRegStep === 3 && !validateStep3()) return;
+    }
+    document.getElementById('regStep' + currentRegStep).classList.add('hidden');
+    clearErrors();
+    currentRegStep = n;
+    document.getElementById('regStep' + currentRegStep).classList.remove('hidden');
+    updateRegProgress(n);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goBack() {
+    if (currentRegStep > 1) goToRegStep(currentRegStep - 1);
+  }
+
+  function updateRegProgress(n) {
+    for (let i = 1; i <= 4; i++) {
+      const step = document.getElementById('sideStep' + i);
+      const dot  = document.getElementById('sideDot' + i);
+      step.classList.remove('reg-step--active', 'reg-step--done');
+      if (i < n) {
+        step.classList.add('reg-step--done');
+        dot.textContent = '✓';
+      } else {
+        dot.textContent = String(i);
+        if (i === n) step.classList.add('reg-step--active');
+      }
+    }
+    for (let i = 1; i <= 3; i++) {
+      document.getElementById('sideConn' + i).classList.toggle('reg-connector--done', i < n);
+    }
+    document.getElementById('sideBackBtn').classList.toggle('hidden', n < 2);
+
+    // Mobile step bar
+    document.getElementById('mobileStepNum').textContent  = `Step ${n} of 4`;
+    document.getElementById('mobileStepName').textContent = STEP_LABELS[n - 1];
+    for (let i = 1; i <= 4; i++) {
+      const seg = document.getElementById('mobileSeg' + i);
+      seg.classList.remove('mobile-step-seg--active', 'mobile-step-seg--done');
+      if (i < n)      seg.classList.add('mobile-step-seg--done');
+      else if (i === n) seg.classList.add('mobile-step-seg--active');
+    }
+  }
+
+  // ════════════════════════════════════════════
+  // VALIDATION
+  // ════════════════════════════════════════════
+  function clearErrors() {
+    document.querySelectorAll('.field--error').forEach(f => f.classList.remove('field--error'));
+    document.querySelectorAll('.error-msg').forEach(m => m.remove());
+  }
+
+  function markError(fieldEl, msg) {
+    fieldEl.classList.add('field--error');
+    if (!fieldEl.querySelector('.error-msg')) {
+      const span = document.createElement('span');
+      span.className   = 'error-msg';
+      span.textContent = msg;
+      fieldEl.appendChild(span);
+    }
+  }
+
+  function validateStep1() {
+    clearErrors();
+    let ok = true;
+    if (!v('tradingName'))    { markError(document.getElementById('tradingNameField'),    'Trading name is required.');     ok = false; }
+    if (!v('ownerFirstName')) { markError(document.getElementById('ownerFirstNameField'), 'Owner first name is required.'); ok = false; }
+    if (!v('ownerLastName'))  { markError(document.getElementById('ownerLastNameField'),  'Owner last name is required.');  ok = false; }
+    const emailVal = v('salonEmail');
+    if (!emailVal) {
+      markError(document.getElementById('salonEmailField'), 'Salon email is required.');
+      ok = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+      markError(document.getElementById('salonEmailField'), 'Please enter a valid email address.');
+      ok = false;
+    }
+    return ok;
+  }
+
+  function validateStep2() {
+    clearErrors();
+    let ok = true;
+    if (!document.getElementById('province').value) { markError(document.getElementById('provinceField'), 'Please select a province.'); ok = false; }
+    if (!document.getElementById('area').value)     { markError(document.getElementById('areaField'),    'Please select an area.');     ok = false; }
+    if (!document.getElementById('suburb').value)   { markError(document.getElementById('suburbField'),  'Please select a suburb.');    ok = false; }
+    return ok;
+  }
+
+  function validateStep3() {
+    clearErrors();
+    const massageTypes = Array.from(document.querySelectorAll('input[name="massageTypes"]:checked'));
+    if (massageTypes.length === 0) {
+      markError(document.getElementById('massageTypesField'), 'Please select at least one massage type.');
+      return false;
+    }
+    return true;
+  }
+
+  function validateStep4() {
+    return true;
+  }
+
+  // ════════════════════════════════════════════
+  // T&C
+  // ════════════════════════════════════════════
+  function onTncChange() {
+    const checked = document.getElementById('tncCheck').checked;
+    const btn     = document.getElementById('registerBtn');
+    btn.style.opacity      = checked ? '1' : '0.4';
+    btn.style.pointerEvents = checked ? 'auto' : 'none';
+  }
+
+  // ════════════════════════════════════════════
+  // MODAL
+  // ════════════════════════════════════════════
+  function openModal(e) {
+    e.preventDefault();
+    document.getElementById('tncModal').classList.add('modal-overlay--open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal() {
+    document.getElementById('tncModal').classList.remove('modal-overlay--open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('tncModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+  // ════════════════════════════════════════════
+  // WEEKLY HOURS GRID
+  // ════════════════════════════════════════════
+  const DAYS       = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+  const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  function timeOptions(defaultVal, isTo) {
+    const pad = n => String(n).padStart(2,'0');
+    let out = '';
+    const start = isTo ? 2 : 1;
+    const end   = isTo ? 24 : 23;
+    for (let h = start; h <= end; h++) {
+      const label = h === 24 ? '24:00' : pad(h) + ':00';
+      out += `<option value="${h}"${h === defaultVal ? ' selected' : ''}>${label}</option>`;
+    }
+    return out;
+  }
+
+  function buildWeeklyHoursGrid() {
+    const container = document.getElementById('weeklyHoursGrid');
+    DAYS.forEach((day, i) => {
+      const isWeekday = i < 5;
+      const row = document.createElement('div');
+      row.className = 'hours-row';
+      row.innerHTML = `
+        <span class="hours-row__day">${DAY_LABELS[i]}</span>
+        <label class="toggle" style="width:40px; height:22px; flex-shrink:0;">
+          <input type="checkbox" id="day-${day}" ${isWeekday ? 'checked' : ''}
+            onchange="onDayToggle('${day}')" style="opacity:0; width:0; height:0; position:absolute;" />
+          <span class="toggle__track" style="border-radius:11px;"></span>
+        </label>
+        <div class="hours-row__times" id="dayTimes-${day}" style="${isWeekday ? '' : 'opacity:0.3;'}">
+          <select class="select--sm" id="dayFrom-${day}" ${isWeekday ? '' : 'disabled'}>${timeOptions(9, false)}</select>
+          <span class="hours-row__sep">–</span>
+          <select class="select--sm" id="dayTo-${day}" ${isWeekday ? '' : 'disabled'}>${timeOptions(17, true)}</select>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function onDayToggle(day) {
+    const checked = document.getElementById('day-' + day).checked;
+    const timesEl = document.getElementById('dayTimes-' + day);
+    timesEl.style.opacity = checked ? '1' : '0.3';
+    timesEl.querySelectorAll('select').forEach(s => { s.disabled = !checked; });
+  }
+
+  // ════════════════════════════════════════════
+  // PHOTO HELPERS
+  // ════════════════════════════════════════════
+  function onPhotoChange(input, slotIndex) {
+    if (input.files.length) {
+      document.getElementById('photoName'   + slotIndex).textContent = input.files[0].name;
+      document.getElementById('photoName'   + slotIndex).classList.remove('hidden');
+      document.getElementById('photoDelete' + slotIndex).classList.remove('hidden');
+      if (slotIndex < 5) {
+        document.getElementById('addPhotoBtn' + (slotIndex + 1)).classList.remove('hidden');
+      }
+    }
+  }
+
+  function deletePhoto(slotIndex) {
+    document.getElementById('photo'       + slotIndex).value = '';
+    document.getElementById('photoName'   + slotIndex).textContent = '';
+    document.getElementById('photoName'   + slotIndex).classList.add('hidden');
+    document.getElementById('photoDelete' + slotIndex).classList.add('hidden');
+  }
+
+  function revealPhotoSlot(n) {
+    document.getElementById('addPhotoBtn' + n).classList.add('hidden');
+    document.getElementById('photoSlot'   + n).classList.remove('hidden');
+  }
+
+  function onIdPhotoChange(input) {
+    if (input.files.length) {
+      document.getElementById('idPhotoName').textContent = input.files[0].name;
+      document.getElementById('idPhotoName').classList.remove('hidden');
+      document.getElementById('idPhotoDelete').classList.remove('hidden');
+    }
+  }
+
+  function deleteIdPhoto() {
+    document.getElementById('idPhoto').value = '';
+    document.getElementById('idPhotoName').textContent = '';
+    document.getElementById('idPhotoName').classList.add('hidden');
+    document.getElementById('idPhotoDelete').classList.add('hidden');
+  }
+
+  // ════════════════════════════════════════════
+  // CHAR COUNTERS
+  // ════════════════════════════════════════════
+  function updateCharCount(el) {
+    document.getElementById('aboutMeCount').textContent = el.value.length + ' / 300';
+  }
+
+  function updateSpecialsCount(el) {
+    document.getElementById('specialsCount').textContent = el.value.length + ' / 300';
+  }
+
+  // ════════════════════════════════════════════
+  // FIREBASE STORAGE UPLOAD
+  // ════════════════════════════════════════════
+  async function uploadPhoto(file, path) {
+    const ref = storageRef(storage, path);
+    await uploadBytes(ref, file);
+    return { storagePath: path, url: await getDownloadURL(ref) };
+  }
+
+  // ════════════════════════════════════════════
+  // GEOCODING
+  // ════════════════════════════════════════════
+  async function geocodeAddress(address) {
+    const key = window.GOOGLE_MAPS_API_KEY;
+    if (!key) return null;
+    try {
+      const res  = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${key}`);
+      const json = await res.json();
+      if (json.status === 'OK' && json.results.length) {
+        const { lat, lng } = json.results[0].geometry.location;
+        return { lat, lng };
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // ════════════════════════════════════════════
+  // REFERRAL CODE
+  // ════════════════════════════════════════════
+  function generateReferralCode(firstName) {
+    const prefix = (firstName || '').replace(/\s/g,'').toUpperCase().slice(0,3).padEnd(3,'X');
+    const chars  = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let suffix = '';
+    for (let i = 0; i < 5; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+    return prefix + suffix;
+  }
+
+  // ════════════════════════════════════════════
+  // BUILD FORM DATA
+  // ════════════════════════════════════════════
+  function buildFormData(idResult, profilePhotos) {
+    const getChecked = name =>
+      Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
+
+    const weeklyHours = {};
+    DAYS.forEach(day => {
+      const available = document.getElementById('day-' + day).checked;
+      weeklyHours[day] = {
+        available,
+        from: available ? parseInt(document.getElementById('dayFrom-' + day).value) : null,
+        to:   available ? parseInt(document.getElementById('dayTo-'   + day).value) : null
+      };
+    });
+
+    // Contact preferences (SMS always included)
+    const contactPreferences = ['sms', ...getChecked('contactPref').filter(val => val !== 'sms')];
+
+    return {
+      supplierType: 'spa',
+      uid:          authUid,
+
+      // Business
+      tradingName:      v('tradingName'),
+      displayName:      v('tradingName'),
+      ownerFirstName:   v('ownerFirstName'),
+      ownerLastName:    v('ownerLastName'),
+      managerFirstName: v('managerFirstName') || null,
+      managerLastName:  v('managerLastName') || null,
+      managerPhone:     v('managerPhone') || null,
+      cellNumber:       verifiedPhone,
+      landlineNumber:   v('salonLandline') || null,
+      salonEmail:       v('salonEmail'),
+      websiteUrl:       v('websiteUrl') || null,
+      companyRegNumber: v('companyReg') || null,
+      whatsappNumber:   v('whatsappNumber') || null,
+      contactPreferences,
+
+      // Location
+      province:         document.getElementById('province').value,
+      area:             document.getElementById('area').value,
+      suburb:           document.getElementById('suburb').value,
+      address:          v('address') || null,
+      addressVisible:   document.getElementById('addressVisible').checked,
+      premisesType:     'business',
+      shower:           document.getElementById('shower').checked,
+      parking:          document.getElementById('parking').checked,
+
+      // Services
+      massageTypes:     getChecked('massageTypes'),
+      treatments:       getChecked('treatments'),
+      classification:   document.querySelector('input[name="classification"]:checked')?.value || null,
+      genderServed:     document.querySelector('input[name="genderServed"]:checked')?.value || null,
+      qualifications:   [],
+      affiliations:     [],
+
+      // Availability
+      weeklyHours,
+      availableOutsideHours: false,
+      mobileAvailable:       false,
+      willingToTravelKm:     null,
+
+      // Photos & bio
+      idPhotoUrl:   idResult,
+      photos:       profilePhotos,
+      aboutMe:      v('aboutMe') || null,
+      specialsText: v('specialsText') || null,
+
+      status:       'pending',
+      referralCode: generateReferralCode(v('tradingName')),
+      createdAt:    serverTimestamp()
+    };
+  }
+
+  // ════════════════════════════════════════════
+  // SUBMIT
+  // ════════════════════════════════════════════
+  async function submitForm() {
+    const btn    = document.getElementById('registerBtn');
+    const errDiv = document.getElementById('submitError');
+    errDiv.classList.add('hidden');
+    btn.classList.add('btn--loading');
+    btn.textContent = 'Registering…';
+
+    try {
+      const uid = auth.currentUser?.uid || authUid;
+      if (!uid) throw new Error('Phone verification required. Please refresh and start again.');
+
+      // 1. Upload ID photo (optional)
+      let idResult = null;
+      const idFile = document.getElementById('idPhoto').files[0];
+      if (idFile) {
+        idResult = await uploadPhoto(idFile, `suppliers/${uid}/id/${idFile.name}`);
+      }
+
+      // 2. Upload profile photos
+      const profilePhotos = [];
+      for (let i = 1; i <= 5; i++) {
+        const fileInput = document.getElementById('photo' + i);
+        if (fileInput && fileInput.files[0]) {
+          const file   = fileInput.files[0];
+          const result = await uploadPhoto(file, `suppliers/${uid}/photos/${i}-${file.name}`);
+          profilePhotos.push({ ...result, visibility: 'public' });
+        }
+      }
+
+      // 3. Build Firestore document
+      const data = buildFormData(idResult, profilePhotos);
+
+      // 4. Geocode GPS coordinates
+      const geoQuery = data.address
+        ? `${data.address}, ${data.suburb}, South Africa`
+        : `${data.suburb}, South Africa`;
+      const geo = await geocodeAddress(geoQuery);
+      if (geo) data.geoLocation = geo;
+
+      // 5. Atomic supplier number + Firestore write
+      let supplierNumber;
+      const counterRef  = doc(db, 'settings', 'supplierCounter');
+      const supplierRef = doc(db, 'suppliers', uid);
+      await runTransaction(db, async tx => {
+        const counterSnap = await tx.get(counterRef);
+        const lastNumber  = counterSnap.exists() ? (counterSnap.data().lastNumber || 0) : 0;
+        const next        = lastNumber + 1;
+        const year        = new Date().getFullYear();
+        supplierNumber    = `MM-${year}-${String(next).padStart(5,'0')}-S`;
+        tx.set(counterRef,  { lastNumber: next }, { merge: true });
+        tx.set(supplierRef, { ...data, supplierNumber });
+      });
+
+      storeSession(verifiedPhone, data.displayName, data.supplierType);
+
+      // 6. Telegram notification (non-fatal)
+      {
+        const tgMsg = [
+          '🆕 New MassageMap Registration',
+          `Name: ${data.displayName || data.firstName}`,
+          `Type: Spa`,
+          `Number: ${supplierNumber}`,
+          `Area: ${data.province} — ${data.area}`,
+          `Cell: ${data.cellNumber}`,
+        ].join('\n');
+        fetch(
+          `https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage` +
+          `?chat_id=${CONFIG.TELEGRAM_CHAT_ID}&text=${encodeURIComponent(tgMsg)}`
+        ).catch(() => {});
+      }
+
+      // 7. Admin email notification (non-fatal)
+      fetch('http://localhost:3003/send-admin-notification', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          supplierName:  data.displayName || data.tradingName,
+          supplierType:  'spa',
+          supplierNumber,
+          province:      data.province,
+          area:          data.area,
+          cellNumber:    data.cellNumber,
+          registeredAt:  new Date().toISOString(),
+        }),
+      }).catch(() => {});
+
+      // 8. Success UI
+      document.getElementById('regStep4').classList.add('hidden');
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById('sideStep' + i).classList.remove('reg-step--active');
+        document.getElementById('sideStep' + i).classList.add('reg-step--done');
+        document.getElementById('sideDot' + i).textContent = '✓';
+      }
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById('sideConn' + i).classList.add('reg-connector--done');
+      }
+      document.getElementById('sideBackBtn').classList.add('hidden');
+      document.getElementById('mobileStepBar').classList.add('hidden');
+      const s = document.getElementById('successScreen');
+      s.style.display = 'flex';
+
+      // 9. Redirect
+      setTimeout(() => {
+        window.location.href = `info.html?num=${encodeURIComponent(supplierNumber)}`;
+      }, 3000);
+
+    } catch (err) {
+      console.error('Submit error:', err);
+      btn.classList.remove('btn--loading');
+      btn.textContent = 'Register';
+      errDiv.textContent = 'Registration failed: ' + (err.message || 'please try again.');
+      errDiv.classList.remove('hidden');
+      window.scrollTo({ top: document.getElementById('regStep4').offsetTop, behavior: 'smooth' });
+    }
+  }
+
+  // ════════════════════════════════════════════
+  // VALUE HELPER
+  // ════════════════════════════════════════════
+  function v(id) {
+    return (document.getElementById(id)?.value || '').trim();
+  }
+
+  // ── Init ──
+  populateProvinces();
+  buildWeeklyHoursGrid();
+
+  // ── Expose globals (onclick handlers) ──
+  window.handleNext          = handleNext;
+  window.resendOtp           = resendOtp;
+  window.verifyOtp           = verifyOtp;
+  window.goToRegStep         = goToRegStep;
+  window.goBack              = goBack;
+  window.onProvinceChange    = onProvinceChange;
+  window.onAreaChange        = onAreaChange;
+  window.onDayToggle         = onDayToggle;
+  window.onPhotoChange       = onPhotoChange;
+  window.deletePhoto         = deletePhoto;
+  window.revealPhotoSlot     = revealPhotoSlot;
+  window.onIdPhotoChange     = onIdPhotoChange;
+  window.deleteIdPhoto       = deleteIdPhoto;
+  window.updateCharCount     = updateCharCount;
+  window.updateSpecialsCount = updateSpecialsCount;
+  window.onTncChange         = onTncChange;
+  window.openModal           = openModal;
+  window.closeModal          = closeModal;
+  window.submitForm          = submitForm;
+</script>
+</body>
+</html>
