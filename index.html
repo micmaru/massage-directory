@@ -136,7 +136,7 @@
       padding: var(--space-4);
       max-width: 480px;
       margin-inline: auto;
-      min-height: calc(100dvh - var(--header-h) - var(--nav-h) - env(safe-area-inset-bottom, 0px));
+      min-height: calc(100dvh - var(--header-h) - env(safe-area-inset-bottom, 0px));
     }
 
     /* ── Hero ── */
@@ -358,39 +358,6 @@
     </p>
 
   </main>
-
-
-  <!-- ══════════════════════════════════════
-       Bottom Navigation
-  ══════════════════════════════════════ -->
-  <nav class="bottom-nav" aria-label="Main navigation">
-    <ul class="bottom-nav__list">
-      <li class="bottom-nav__item">
-        <button class="bottom-nav__link bottom-nav__link--active" aria-current="page">
-          <span aria-hidden="true">🏠</span>
-          <span>Home</span>
-        </button>
-      </li>
-      <li class="bottom-nav__item">
-        <button class="bottom-nav__link">
-          <span aria-hidden="true">🗺️</span>
-          <span>Map</span>
-        </button>
-      </li>
-      <li class="bottom-nav__item">
-        <a href="register.html" class="bottom-nav__link">
-          <span aria-hidden="true">✍️</span>
-          <span>Register</span>
-        </a>
-      </li>
-      <li class="bottom-nav__item">
-        <button class="bottom-nav__link">
-          <span aria-hidden="true">⚙️</span>
-          <span>Admin</span>
-        </button>
-      </li>
-    </ul>
-  </nav>
 
 
   <script>

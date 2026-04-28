@@ -1,0 +1,2326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — MassageMap</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { padding-top: 0; }
+
+    /* ── Layout ── */
+    .admin-content { padding-top: 0; }
+    .tab-back-bar { max-width: 1200px; margin: 0 auto; padding: var(--space-3) var(--space-4); }
+    .admin-panel { max-width: 1200px; margin: 0 auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
+
+    /* ── Cards ── */
+    .admin-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-4) var(--space-5); }
+    .admin-card__title { font-size: var(--text-base); font-weight: 700; color: var(--text); margin-bottom: var(--space-4); }
+
+    /* ── Summary grid — always 2 cols ── */
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    .summary-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; text-align: center; }
+    .summary-card__label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: var(--space-2); }
+    .summary-card__count { font-size: 1.8rem; font-weight: 700; color: var(--text); line-height: 1; }
+
+    /* ── Landing screen centred layout ── */
+    .landing-center { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding-top: var(--space-4); }
+    .landing-search-wrap { width: 100%; max-width: 600px; }
+    .landing-sidebar { width: 280px; flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .landing-logo { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: var(--space-4); letter-spacing: -0.5px; }
+    .landing-logo__massage { color: #6c63ff; }
+    .landing-logo__map { color: #e2e8f0; }
+    .nav-menu__header { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+    .nav-menu-item { display: flex; align-items: center; padding: 12px 16px; font-size: var(--text-sm); font-weight: 500; color: var(--text); cursor: pointer; background: none; border: none; border-bottom: 1px solid var(--border); width: 100%; text-align: left; font-family: var(--font-sans); transition: background var(--ease), color var(--ease); -webkit-tap-highlight-color: transparent; }
+    .nav-menu-item:last-child { border-bottom: none; }
+    .nav-menu-item:hover { background: #6c63ff; color: #fff; }
+    .nav-menu-item--active { background: #6c63ff; color: #fff; }
+
+    /* ── Global search ── */
+    .global-search { position: relative; }
+    .global-search__input { width: 100%; box-sizing: border-box; padding: 11px 16px; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--bg); color: var(--text); font-size: var(--text-base); font-family: var(--font-sans); transition: border-color var(--ease); }
+    .global-search__input:focus { outline: none; border-color: #6c63ff; }
+    .search-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); z-index: 300; max-height: 340px; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.45); }
+    .search-result { display: flex; align-items: center; gap: var(--space-3); padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background var(--ease); }
+    .search-result:last-child { border-bottom: none; }
+    .search-result:hover { background: rgba(108,99,255,0.07); }
+    .search-result__info { flex: 1; min-width: 0; }
+    .search-result__name { font-size: var(--text-sm); font-weight: 600; color: var(--text); }
+    .search-result__meta { font-size: var(--text-xs); color: var(--text-muted); margin-top: 2px; }
+    .vet-jump-btn { flex-shrink: 0; height: 28px; padding: 0 12px; border-radius: 999px; border: 1.5px solid #6c63ff; color: #6c63ff; background: none; font-size: 11px; font-weight: 700; cursor: pointer; font-family: var(--font-sans); white-space: nowrap; }
+    .vet-jump-btn:hover { background: rgba(108,99,255,0.12); }
+
+    /* ── Back button ── */
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 16px; border-radius: 999px; border: 1.5px solid #6c63ff; color: #6c63ff; background: none; font-size: var(--text-sm); font-weight: 600; cursor: pointer; font-family: var(--font-sans); transition: opacity var(--ease); -webkit-tap-highlight-color: transparent; }
+    .back-btn:hover { opacity: 0.75; }
+
+    /* ── Filters row ── */
+    .filters-row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-bottom: var(--space-3); }
+    .filters-row .f-search { flex: 1; min-width: 180px; height: 36px; padding: 0 12px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: var(--text-sm); }
+    .filters-row .f-search:focus { outline: none; border-color: #6c63ff; }
+    .filters-row select { height: 36px; font-size: var(--text-sm); }
+
+    /* ── Table ── */
+    .table-scroll { overflow-x: scroll; overflow-y: scroll; max-height: calc(100vh - 280px); border-radius: 8px; border: 1px solid var(--border); }
+    .table-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+    .table-scroll::-webkit-scrollbar-track { background: #1e2433; }
+    .table-scroll::-webkit-scrollbar-thumb { background: #6c63ff; border-radius: 5px; }
+    .table-scroll::-webkit-scrollbar-thumb:hover { background: #8b85ff; }
+    .table-scroll::-webkit-scrollbar-corner { background: #1e2433; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+    .admin-table thead { position: sticky; top: 0; z-index: 2; background-color: #161b27; }
+    .admin-table th { background: #161b27; padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); white-space: nowrap; border-bottom: 1px solid var(--border); }
+    .admin-table td { padding: 10px 12px; color: var(--text); border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
+    .admin-table tbody tr:last-child td { border-bottom: none; }
+    .admin-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+    .admin-table.therapists-tbl { min-width: 1200px; }
+    .admin-table.spas-tbl       { min-width: 1250px; }
+    .admin-table.sub-tbl        { min-width: 900px; }
+    .admin-table th:first-child { position: sticky; left: 0; z-index: 3; background-color: #161b27; }
+    .admin-table td:first-child { position: sticky; left: 0; z-index: 1; background-color: #161b27; }
+
+    /* ── Pending / review row highlight ── */
+    .row--clickable td { background: rgba(245,158,11,0.05); cursor: pointer; }
+    .row--clickable:hover td { background: rgba(245,158,11,0.11) !important; }
+    .row--highlighted td { background: rgba(108,99,255,0.13) !important; transition: background 1.5s; }
+
+    /* ── Status badges ── */
+    .sbadge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .sbadge--pending   { background: rgba(251,191,36,0.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+    .sbadge--active    { background: rgba(52,211,153,0.15);  color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
+    .sbadge--suspended { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+    .sbadge--review    { background: rgba(96,165,250,0.15);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
+    .sbadge--rejected { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+
+    /* ── Type badge ── */
+    .tbadge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .tbadge--therapist { background: rgba(108,99,255,0.15); color: #a5b4fc; border: 1px solid rgba(108,99,255,0.3); }
+    .tbadge--spa       { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+
+    /* ── Action buttons ── */
+    .act-btns { display: flex; gap: 4px; }
+    .act-btn { display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 6px; font-family: var(--font-sans); font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid; transition: opacity var(--ease); white-space: nowrap; -webkit-tap-highlight-color: transparent; background: none; }
+    .act-btn:hover { opacity: 0.75; }
+    .act-btn--approve { color: #34d399; border-color: rgba(52,211,153,0.4); }
+    .act-btn--suspend { color: #fbbf24; border-color: rgba(251,191,36,0.4); }
+    .act-btn--delete  { color: #f87171; border-color: rgba(248,113,113,0.4); }
+    .act-btn--adjust  { color: #a5b4fc; border-color: rgba(108,99,255,0.4); }
+
+    /* ── Days remaining ── */
+    .days--ok   { color: #22c55e; font-weight: 600; }
+    .days--warn { color: #f59e0b; font-weight: 600; }
+    .days--crit { color: #ef4444; font-weight: 600; }
+    .days--none { color: var(--text-muted); }
+
+    /* ── Subscription adjust panel ── */
+    .adj-panel-row td { padding: 0; }
+    .adjust-panel { background: rgba(108,99,255,0.06); border-top: 1px solid rgba(108,99,255,0.2); padding: var(--space-4); }
+    .adjust-panel__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-3); }
+    .adjust-panel__field label { display: block; font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
+    .adjust-panel__field input, .adjust-panel__field select { width: 100%; box-sizing: border-box; }
+    .adjust-panel__actions { display: flex; gap: var(--space-2); align-items: center; }
+    .adj-save-msg { font-size: var(--text-xs); font-weight: 600; }
+    .adj-save-msg--ok  { color: #34d399; }
+    .adj-save-msg--err { color: #f87171; }
+
+    /* ── Settings ── */
+    .settings-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .settings-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .settings-row__label { flex: 1; min-width: 180px; font-size: var(--text-sm); color: var(--text); }
+    .settings-row__input { width: 90px; }
+    .save-msg { font-size: var(--text-xs); font-weight: 600; }
+    .save-msg--ok  { color: #34d399; }
+    .save-msg--err { color: #f87171; }
+
+    /* ── Toggle ── */
+    .toggle { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle__track { position: absolute; inset: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 13px; cursor: pointer; transition: background var(--ease), border-color var(--ease); }
+    .toggle__track::after { content: ''; position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; border-radius: 50%; background: var(--text-muted); transition: transform var(--ease), background var(--ease); }
+    .toggle input:checked + .toggle__track { background: #6c63ff; border-color: #6c63ff; }
+    .toggle input:checked + .toggle__track::after { transform: translateX(22px); background: #fff; }
+
+    /* ── Supplier detail ── */
+    .sup-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-4); margin-bottom: var(--space-3); }
+    .sup-detail-field--wide { grid-column: 1 / -1; }
+    .sup-detail-section-title { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin: var(--space-4) 0 var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border); }
+    .sup-detail-label { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 3px; }
+    .sup-detail-value { font-size: var(--text-sm); color: var(--text); word-break: break-word; }
+
+    /* ── Change log ── */
+    .cl-list { display: flex; flex-direction: column; gap: var(--space-2); max-height: 480px; overflow-y: auto; }
+    .cl-entry { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: var(--space-3) var(--space-4); }
+    .cl-entry__meta { font-size: var(--text-xs); color: var(--text-muted); margin-bottom: 4px; }
+    .cl-entry__body { font-size: var(--text-sm); color: var(--text); }
+    .cl-arrow { color: var(--text-muted); margin: 0 5px; }
+
+    /* ── Vetting cards ── */
+    .vet-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
+    .vet-header { display: flex; align-items: flex-start; gap: var(--space-3); flex-wrap: wrap; }
+    .vet-name { font-size: var(--text-xl); font-weight: 700; color: #6c63ff; flex: 1; min-width: 0; word-break: break-word; }
+    .vet-meta { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin-top: 4px; }
+    .vet-field-label { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; }
+    .vet-field-value { font-size: var(--text-sm); color: var(--text); }
+    .vet-bio-box { background: var(--bg); border: 1px solid rgba(108,99,255,0.3); border-radius: var(--radius); padding: var(--space-4); }
+    .vet-bio-label { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #fbbf24; margin-bottom: var(--space-2); }
+    .vet-bio-text { font-size: var(--text-base); color: var(--text); line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+    .vet-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: var(--space-2); }
+    .vet-photo-thumb { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); display: block; transition: opacity var(--ease); }
+    .vet-photo-thumb:hover { opacity: 0.8; }
+    .vet-id-photo { width: 130px; height: 130px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); display: block; transition: opacity var(--ease); }
+    .vet-id-photo:hover { opacity: 0.8; }
+    .vet-actions { display: flex; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .vet-btn { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 var(--space-5); border-radius: var(--radius); font-family: var(--font-sans); font-size: var(--text-sm); font-weight: 700; cursor: pointer; border: 1px solid; transition: opacity var(--ease); -webkit-tap-highlight-color: transparent; }
+    .vet-btn:hover { opacity: 0.78; }
+    .vet-btn--approve     { background: rgba(52,211,153,0.12);  color: #34d399; border-color: rgba(52,211,153,0.45); }
+    .vet-btn--reject      { background: rgba(248,113,113,0.12); color: #f87171; border-color: rgba(248,113,113,0.45); }
+    .vet-btn--investigate { background: rgba(96,165,250,0.12);  color: #60a5fa; border-color: rgba(96,165,250,0.45); }
+    .vet-type-badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; background: rgba(108,99,255,0.15); color: #a5b4fc; border: 1px solid rgba(108,99,255,0.3); }
+    .vet-mem { font-size: var(--text-xs); color: var(--text-muted); font-weight: 600; }
+
+    /* ── Vetting split layout ── */
+    .vet-split { display: flex; gap: 0; height: calc(100vh - 60px); overflow: hidden; }
+    .vet-left { width: 380px; flex-shrink: 0; overflow-y: auto; border-right: 1px solid var(--border); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
+    .vet-right { flex: 1; overflow-y: auto; padding: var(--space-4); }
+    .vet-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+    .vet-table th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+    .vet-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+    .vet-table tbody tr:last-child td { border-bottom: none; }
+    .vet-table tbody tr { cursor: pointer; transition: background var(--ease); }
+    .vet-table tbody tr:hover td { background: rgba(108,99,255,0.07); }
+    .vet-table tr.vet-row--selected td { background: rgba(108,99,255,0.13); border-left: 3px solid #6c63ff; }
+    .vet-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border); }
+    .vet-detail-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-5); }
+    .vet-field-group { margin-bottom: var(--space-4); }
+    .vet-maps-link { font-size: var(--text-xs); color: #6c63ff; text-decoration: none; margin-left: 8px; }
+    .vet-maps-link:hover { text-decoration: underline; }
+    .vet-contact-link { color: var(--text); text-decoration: none; }
+    .vet-contact-link:hover { color: #6c63ff; }
+    .vet-warning { display: inline-block; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 999px; font-size: 10px; font-weight: 700; padding: 1px 8px; margin-left: 6px; }
+    .vet-helper-note { font-size: var(--text-xs); color: #fbbf24; font-style: italic; margin-top: 3px; }
+
+    /* ── Vetting action confirm ── */
+    .vet-action-confirm { background: var(--bg); border: 1px solid rgba(108,99,255,0.3); border-radius: var(--radius); padding: var(--space-4); margin-top: var(--space-4); }
+    .vet-action-confirm__title { font-size: var(--text-sm); font-weight: 700; color: var(--text); margin-bottom: var(--space-3); line-height: 1.4; }
+    .vet-action-confirm__title span { color: #6c63ff; }
+    .vet-action-confirm textarea { width: 100%; box-sizing: border-box; min-height: 100px; padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-sans); font-size: var(--text-sm); resize: vertical; margin-bottom: var(--space-3); }
+    .vet-action-confirm textarea:focus { outline: none; border-color: #6c63ff; }
+    .vet-action-confirm__btns { display: flex; gap: var(--space-3); align-items: center; }
+    .vet-action-confirm__err { font-size: var(--text-xs); color: #f87171; font-weight: 600; }
+    .vet-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-3); padding: 8px 12px; border-radius: 6px; border-left: 3px solid #6c63ff; background: rgba(108,99,255,0.06); }
+    .vet-section-header span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #a5b4fc; }
+    .maps-btn { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 10px; border-radius: 999px; border: 1px solid rgba(108,99,255,0.4); color: #6c63ff; background: rgba(108,99,255,0.08); font-size: 11px; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap; }
+    .maps-btn:hover { background: rgba(108,99,255,0.15); }
+
+    /* ── Location Manager ── */
+    .lm-step { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-4); }
+    .lm-step:last-child { margin-bottom: 0; }
+    .lm-checklist { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: 4px; }
+    @media (min-width: 560px) { .lm-checklist { grid-template-columns: 1fr 1fr 1fr; } }
+    .lm-check-item { display: flex; align-items: center; gap: var(--space-2); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px var(--space-3); cursor: pointer; font-size: var(--text-sm); color: var(--text); transition: border-color var(--ease), background var(--ease); -webkit-tap-highlight-color: transparent; }
+    .lm-check-item:has(input:checked) { border-color: #6c63ff; background: rgba(108,99,255,0.08); }
+    .lm-check-item input { accent-color: #6c63ff; width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; }
+    .lm-areas-group { margin-bottom: var(--space-4); }
+    .lm-areas-group:last-child { margin-bottom: 0; }
+    .lm-group-title { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border); }
+    .lm-area-row { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: var(--space-2); }
+    .lm-area-row:last-child { margin-bottom: 0; }
+    .lm-area-info { flex: 1; min-width: 0; }
+    .lm-area-name { font-size: var(--text-sm); font-weight: 700; color: var(--text); margin-bottom: 3px; }
+    .lm-area-suburbs { font-size: var(--text-xs); color: var(--text-muted); line-height: 1.5; word-break: break-word; }
+    .lm-no-areas { text-align: center; padding: var(--space-6); color: var(--text-muted); font-size: var(--text-sm); }
+
+    /* ── Utility ── */
+    .placeholder-msg { text-align: center; padding: var(--space-8); color: var(--text-muted); font-size: var(--text-sm); }
+    .table-msg td { text-align: center; color: var(--text-muted); padding: var(--space-5) !important; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="admin-content">
+  <div id="tabBackBar" class="tab-back-bar hidden">
+    <button class="back-btn" onclick="switchTab('General')">← Back to Admin</button>
+  </div>
+
+    <!-- ══════════════════════════════════
+         GENERAL ADMIN — wrapper
+    ══════════════════════════════════ -->
+    <div id="panelGeneral">
+
+      <!-- ── LANDING SCREEN ── -->
+      <div id="screenLanding" class="admin-panel">
+        <div class="landing-center">
+
+          <!-- Search bar — centred, max-width 600px -->
+          <div class="landing-search-wrap">
+            <div class="global-search">
+              <input type="search" id="globalSearch" class="global-search__input"
+                     placeholder="Search by membership number, display name, first name, last name…"
+                     autocomplete="off" />
+              <div id="searchDropdown" class="search-dropdown hidden"></div>
+            </div>
+          </div>
+
+          <!-- Centred nav menu — 280px wide -->
+          <nav class="landing-sidebar">
+            <div class="nav-menu__header">Menu</div>
+            <button class="nav-menu-item" id="navTherapists"    onclick="goToScreen('Therapists')">General — Therapists</button>
+            <button class="nav-menu-item" id="navSpas"          onclick="goToScreen('Spas')">General — Spas</button>
+            <button class="nav-menu-item" id="navVetting"       onclick="switchTab('Vetting')">Vetting</button>
+            <button class="nav-menu-item" id="navInvestigation" onclick="switchTab('Investigation')">Investigation</button>
+            <button class="nav-menu-item" id="navRejected"      onclick="switchTab('Rejected')">Rejected</button>
+            <button class="nav-menu-item" id="navSubscriptions" onclick="goToScreen('Subscriptions')">Subscriptions</button>
+            <button class="nav-menu-item" id="navLocation"      onclick="switchTab('Location')">Location Manager</button>
+            <button class="nav-menu-item" id="navDbSummary"     onclick="goToScreen('DbSummary')">Database Summary</button>
+            <button class="nav-menu-item" id="navSettings"      onclick="goToScreen('Settings')">Settings</button>
+            <button class="nav-menu-item" id="navChangeLog"     onclick="goToScreen('ChangeLog')">Change Log</button>
+          </nav>
+
+        </div>
+      </div><!-- /screenLanding -->
+
+      <!-- ── THERAPISTS SUB-SCREEN ── -->
+      <div id="screenTherapists" class="admin-panel hidden">
+        <div>
+          <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card__title">Therapists</div>
+          <div class="filters-row">
+            <input type="search" id="tSearchInput" class="f-search" placeholder="Search membership no, name, cell…"
+                   oninput="onTherapistFilter()" autocomplete="off" />
+            <select id="tFilterProvince" class="select" onchange="onTherapistProvinceChange()">
+              <option value="">All Provinces</option>
+            </select>
+            <select id="tFilterSuburb" class="select" onchange="onTherapistFilter()">
+              <option value="">All Suburbs</option>
+            </select>
+            <select id="tFilterStatus" class="select" onchange="onTherapistFilter()">
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="review">Review</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="table-scroll">
+            <table class="admin-table therapists-tbl">
+              <thead>
+                <tr>
+                  <th>Membership No</th>
+                  <th>First Name</th>
+                  <th>Last Name</th>
+                  <th>Display Name (changeable)</th>
+                  <th>Gender</th>
+                  <th>Province</th>
+                  <th>Suburb</th>
+                  <th>Cell Number</th>
+                  <th>Status</th>
+                  <th>Registered</th>
+                  <th>Subscription</th>
+                  <th>Expiry</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tTableBody">
+                <tr class="table-msg"><td colspan="13">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /screenTherapists -->
+
+      <!-- ── SPAS SUB-SCREEN ── -->
+      <div id="screenSpas" class="admin-panel hidden">
+        <div>
+          <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card__title">Spas</div>
+          <div class="filters-row">
+            <input type="search" id="sSearchInput" class="f-search" placeholder="Search membership no, name, trading name…"
+                   oninput="onSpaFilter()" autocomplete="off" />
+            <select id="sFilterProvince" class="select" onchange="onSpaProvinceChange()">
+              <option value="">All Provinces</option>
+            </select>
+            <select id="sFilterSuburb" class="select" onchange="onSpaFilter()">
+              <option value="">All Suburbs</option>
+            </select>
+            <select id="sFilterStatus" class="select" onchange="onSpaFilter()">
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="review">Review</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="table-scroll">
+            <table class="admin-table spas-tbl">
+              <thead>
+                <tr>
+                  <th>Membership No</th>
+                  <th>Trading Name</th>
+                  <th>Owner First Name</th>
+                  <th>Owner Last Name</th>
+                  <th>Display Name (changeable)</th>
+                  <th>Province</th>
+                  <th>Suburb</th>
+                  <th>Cell Number</th>
+                  <th>Status</th>
+                  <th>Registered</th>
+                  <th>Subscription</th>
+                  <th>Expiry</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sTableBody">
+                <tr class="table-msg"><td colspan="13">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /screenSpas -->
+
+      <!-- ── SUBSCRIPTIONS SUB-SCREEN ── -->
+      <div id="screenSubscriptions" class="admin-panel hidden">
+        <div>
+          <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card__title">Subscriptions</div>
+          <div class="filters-row">
+            <input type="search" id="subSearchInput" class="f-search"
+                   placeholder="Search membership no, name, trading name…"
+                   oninput="onSubFilter()" autocomplete="off" />
+          </div>
+          <div class="table-scroll">
+            <table class="admin-table sub-tbl">
+              <thead>
+                <tr>
+                  <th>Membership No</th>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Subscription Status</th>
+                  <th>Plan</th>
+                  <th>Start Date</th>
+                  <th>Expiry Date</th>
+                  <th>Days Remaining</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="subTableBody">
+                <tr class="table-msg"><td colspan="9">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /screenSubscriptions -->
+
+      <!-- ── SETTINGS SUB-SCREEN ── -->
+      <div id="screenSettings" class="admin-panel hidden">
+        <div>
+          <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card__title">Settings</div>
+
+          <div class="settings-row">
+            <div class="settings-row__label">Price — Individual Therapist (R per month)</div>
+            <input type="number" id="settingPriceIndividual" class="input settings-row__input" placeholder="0" min="0" />
+            <button type="button" class="btn btn--primary btn--sm" onclick="saveSetting('priceIndividual', 'settingPriceIndividual', 'msgPriceIndividual')">Save</button>
+            <span id="msgPriceIndividual" class="save-msg hidden"></span>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row__label">Price — Spa (R per month)</div>
+            <input type="number" id="settingPriceSpa" class="input settings-row__input" placeholder="0" min="0" />
+            <button type="button" class="btn btn--primary btn--sm" onclick="saveSetting('priceSpa', 'settingPriceSpa', 'msgPriceSpa')">Save</button>
+            <span id="msgPriceSpa" class="save-msg hidden"></span>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row__label">Auto-approve new registrations</div>
+            <label class="toggle">
+              <input type="checkbox" id="settingAutoApprove" onchange="saveAutoApprove()" />
+              <span class="toggle__track"></span>
+            </label>
+          </div>
+        </div>
+      </div><!-- /screenSettings -->
+
+      <!-- ── CHANGE LOG SUB-SCREEN ── -->
+      <div id="screenChangeLog" class="admin-panel hidden">
+        <div>
+          <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card__title">Change Log</div>
+          <div id="changelogContainer" class="cl-list">
+            <div class="placeholder-msg">Loading change log…</div>
+          </div>
+        </div>
+      </div><!-- /screenChangeLog -->
+
+      <!-- ── DATABASE SUMMARY SUB-SCREEN ── -->
+      <div id="screenDbSummary" class="admin-panel hidden">
+        <div>
+          <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+        <div class="admin-card">
+          <div class="landing-logo" style="margin-bottom:var(--space-4);">
+            <span class="landing-logo__massage">Massage</span><span class="landing-logo__map">Map</span>
+          </div>
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="summary-card__label">Total Suppliers</div>
+              <div class="summary-card__count" id="countTotal">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card__label">Pending</div>
+              <div class="summary-card__count" id="countPending">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card__label">Active</div>
+              <div class="summary-card__count" id="countActive">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card__label">Suspended</div>
+              <div class="summary-card__count" id="countSuspended">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card__label">Therapists</div>
+              <div class="summary-card__count" id="countTherapists">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card__label">Spas</div>
+              <div class="summary-card__count" id="countSpas">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card__label">Review</div>
+              <div class="summary-card__count" id="countReview">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card__label">Expiring Soon</div>
+              <div class="summary-card__count" id="countExpiringSoon">—</div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /screenDbSummary -->
+
+      <!-- ── SUPPLIER DETAIL SUB-SCREEN ── -->
+      <div id="screenSupplierDetail" class="admin-panel hidden">
+        <div>
+          <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+        <div class="admin-card" id="supplierDetailCard">
+          <div class="placeholder-msg">Loading…</div>
+        </div>
+      </div><!-- /screenSupplierDetail -->
+
+    </div><!-- /panelGeneral -->
+
+    <!-- ══════════════════════════════════
+         TAB 2 — VETTING  (unchanged)
+    ══════════════════════════════════ -->
+    <div id="panelVetting" class="hidden">
+      <div class="vet-split">
+
+        <!-- LEFT PANEL — tables -->
+        <div class="vet-left">
+
+          <div>
+            <div class="vet-section-title">Therapists — Pending Vetting</div>
+            <table class="vet-table">
+              <thead>
+                <tr>
+                  <th>MM Number</th>
+                  <th>Name</th>
+                  <th>Suburb</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="vetTherapistsBody">
+                <tr><td colspan="4" style="text-align:center;color:var(--text-muted);
+                padding:var(--space-4);">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="vet-section-title">Spas — Pending Vetting</div>
+            <table class="vet-table">
+              <thead>
+                <tr>
+                  <th>MM Number</th>
+                  <th>Name</th>
+                  <th>Suburb</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="vetSpasBody">
+                <tr><td colspan="4" style="text-align:center;color:var(--text-muted);
+                padding:var(--space-4);">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div><!-- /vet-left -->
+
+        <!-- RIGHT PANEL — detail -->
+        <div class="vet-right">
+          <div id="vetDetailPanel">
+            <div class="placeholder-msg" style="padding-top:var(--space-8);">
+              Select a record to begin vetting.
+            </div>
+          </div>
+        </div><!-- /vet-right -->
+
+      </div>
+    </div>
+
+    <!-- INVESTIGATION PANEL -->
+    <div id="panelInvestigation" class="hidden">
+      <div class="vet-split">
+        <div class="vet-left">
+          <div>
+            <div class="vet-section-title">Therapists — Under Investigation</div>
+            <table class="vet-table">
+              <thead>
+                <tr>
+                  <th>MM Number</th>
+                  <th>Name</th>
+                  <th>Suburb</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="invTherapistsBody">
+                <tr><td colspan="4" style="text-align:center;
+                color:var(--text-muted);padding:var(--space-4);">
+                Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <div class="vet-section-title">Spas — Under Investigation</div>
+            <table class="vet-table">
+              <thead>
+                <tr>
+                  <th>MM Number</th>
+                  <th>Name</th>
+                  <th>Suburb</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="invSpasBody">
+                <tr><td colspan="4" style="text-align:center;
+                color:var(--text-muted);padding:var(--space-4);">
+                Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="vet-right">
+          <div id="invDetailPanel">
+            <div class="placeholder-msg" style="padding-top:var(--space-8);">
+              Select a record to begin investigation review.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REJECTED PANEL -->
+    <div id="panelRejected" class="hidden">
+      <div style="max-width:1200px;margin:0 auto;padding:var(--space-4);
+      display:flex;flex-direction:column;gap:var(--space-4);">
+        <div>
+          <button class="back-btn" onclick="switchTab('General')">
+          ← Back to Admin</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card__title">Rejected Suppliers</div>
+          <div class="table-scroll">
+            <table class="admin-table" style="min-width:900px;">
+              <thead>
+                <tr>
+                  <th>MM Number</th>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Province</th>
+                  <th>Suburb</th>
+                  <th>Cell Number</th>
+                  <th>Registered</th>
+                  <th>Rejected</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody id="rejectedTableBody">
+                <tr class="table-msg">
+                <td colspan="9">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         TAB 3 — LOCATION MANAGER  (unchanged)
+    ══════════════════════════════════ -->
+    <div id="panelLocation" class="admin-panel hidden">
+
+      <!-- Section 1: Create new area -->
+      <div class="admin-card">
+        <div class="admin-card__title">Create New Area</div>
+
+        <div class="lm-step">
+          <label class="field__label" for="lmProvince">Province</label>
+          <select id="lmProvince" class="select" onchange="lmOnProvinceChange()">
+            <option value="">Select province…</option>
+          </select>
+        </div>
+
+        <div class="lm-step hidden" id="lmStep2">
+          <label class="field__label" for="lmTown">Town</label>
+          <select id="lmTown" class="select" onchange="lmOnTownChange()">
+            <option value="">Select town…</option>
+          </select>
+        </div>
+
+        <div class="lm-step hidden" id="lmStep3">
+          <label class="field__label" for="lmAreaName">Area Name</label>
+          <input type="text" id="lmAreaName" class="input" maxlength="50" placeholder="e.g. Northern Suburbs" />
+        </div>
+
+        <div class="lm-step hidden" id="lmStep4">
+          <label class="field__label">Select Suburbs</label>
+          <div id="lmSuburbsChecklist" class="lm-checklist"></div>
+        </div>
+
+        <div class="lm-step hidden" id="lmStep5">
+          <div style="display:flex; align-items:center; gap:var(--space-3);">
+            <button type="button" class="btn btn--primary btn--sm" id="lmSaveBtn" onclick="lmSaveArea()">Save Area</button>
+            <span id="lmSaveMsg" class="save-msg hidden"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Existing areas -->
+      <div class="admin-card">
+        <div class="admin-card__title">Existing Areas</div>
+        <div id="lmAreasList">
+          <div class="lm-no-areas">Loading areas…</div>
+        </div>
+      </div>
+
+    </div><!-- /panelLocation -->
+
+  </div><!-- /admin-content -->
+
+  <script type="module">
+    import { app, db } from './firebase-config.js';
+    import {
+      collection, collectionGroup, getDocs, doc, getDoc, updateDoc,
+      deleteDoc, addDoc, setDoc, serverTimestamp, query, orderBy, limit, where
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+    // ════════════════════════════════════════════
+    // TAB SWITCHING
+    // ════════════════════════════════════════════
+    window.switchTab = function(tab) {
+      ['General','Vetting','Location','Investigation','Rejected'].forEach(t => {
+        document.getElementById('panel' + t).classList.toggle('hidden', t !== tab);
+      });
+      const backBar = document.getElementById('tabBackBar');
+      if (backBar) backBar.classList.toggle('hidden', tab === 'General');
+      if (tab === 'Vetting')       loadVetting();
+      if (tab === 'Investigation') loadInvestigation();
+      if (tab === 'Rejected')      loadRejected();
+    };
+
+    // ════════════════════════════════════════════
+    // SCREEN MANAGEMENT (within General)
+    // ════════════════════════════════════════════
+    const NAV_ITEM_IDS = {
+      Therapists: 'navTherapists', Spas: 'navSpas',
+      Subscriptions: 'navSubscriptions', DbSummary: 'navDbSummary', Settings: 'navSettings', ChangeLog: 'navChangeLog'
+    };
+
+    function setActiveNavItem(name) {
+      Object.values(NAV_ITEM_IDS).forEach(id => {
+        document.getElementById(id)?.classList.remove('nav-menu-item--active');
+      });
+      const activeId = NAV_ITEM_IDS[name];
+      if (activeId) document.getElementById(activeId)?.classList.add('nav-menu-item--active');
+    }
+
+    function showScreen(name) {
+      ['Landing', 'Therapists', 'Spas', 'Subscriptions', 'Settings', 'ChangeLog', 'DbSummary', 'SupplierDetail'].forEach(s => {
+        document.getElementById('screen' + s).classList.toggle('hidden', s !== name);
+      });
+    }
+
+    window.goToScreen = function(name) {
+      showScreen(name);
+      setActiveNavItem(name);
+      if (name === 'Therapists')         { populateTherapistFilters(); renderTherapistsTable(); }
+      else if (name === 'Spas')          { populateSpaFilters();       renderSpasTable(); }
+      else if (name === 'Subscriptions') { renderSubscriptionsTable(); }
+      else if (name === 'DbSummary')     { renderCounts(); }
+      else if (name === 'ChangeLog')     { loadChangeLogs(); }
+    };
+
+    window.goBack = function() { showScreen('Landing'); setActiveNavItem(''); };
+
+    // ════════════════════════════════════════════
+    // DATE HELPERS
+    // ════════════════════════════════════════════
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    function fmtDate(ts) {
+      if (!ts) return '—';
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      if (isNaN(d)) return '—';
+      return `${String(d.getDate()).padStart(2,'0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    function fmtDateTime(ts) {
+      if (!ts) return '—';
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      if (isNaN(d)) return '—';
+      return `${String(d.getDate()).padStart(2,'0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    function escHtml(str) {
+      return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function toDateObj(ts) {
+      if (!ts) return null;
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return isNaN(d) ? null : d;
+    }
+
+    function daysRemaining(ts) {
+      const exp = toDateObj(ts);
+      if (!exp) return null;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const e2    = new Date(exp); e2.setHours(0,0,0,0);
+      return Math.round((e2 - today) / 86400000);
+    }
+
+    function renderDays(ts) {
+      const d = daysRemaining(ts);
+      if (d === null) return '<span class="days--none">—</span>';
+      if (d < 0)  return `<span class="days--crit">Expired</span>`;
+      if (d <= 14) return `<span class="days--crit">${d}d</span>`;
+      if (d <= 30) return `<span class="days--warn">${d}d</span>`;
+      return `<span class="days--ok">${d}d</span>`;
+    }
+
+    function toIsoDate(ts) {
+      const d = toDateObj(ts);
+      if (!d) return '';
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    // ════════════════════════════════════════════
+    // STATE
+    // ════════════════════════════════════════════
+    let allSuppliers     = [];
+    let supplierLookup   = {};
+    let subscriptionData = {}; // supplierId -> { ...data, _ref }
+    let allAreas         = [];
+    let LOCATIONS        = null;
+    let adminEmail       = 'hjcilliers@gmail.com';
+
+    // ════════════════════════════════════════════
+    // INIT
+    // ════════════════════════════════════════════
+    async function init() {
+      setupGlobalSearch();
+      await Promise.all([loadLocations(), loadSuppliers(), loadSubscriptions()]);
+      await Promise.all([loadSettings(), loadChangeLogs(), loadVetting(), loadAreasList()]);
+    }
+
+    // ════════════════════════════════════════════
+    // LOAD SUPPLIERS
+    // ════════════════════════════════════════════
+    async function loadSuppliers() {
+      try {
+        const snap = await getDocs(collection(db, 'suppliers'));
+        allSuppliers = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+        allSuppliers.sort((a, b) => (a.data.supplierNumber || '').localeCompare(b.data.supplierNumber || ''));
+        supplierLookup = {};
+        allSuppliers.forEach(({ id, data }) => {
+          supplierLookup[id] = data;
+          if (data.uid) supplierLookup[data.uid] = data;
+        });
+        renderCounts();
+      } catch (err) {
+        console.error('loadSuppliers error:', err);
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // LOAD SUBSCRIPTIONS (collectionGroup)
+    // ════════════════════════════════════════════
+    async function loadSubscriptions() {
+      try {
+        const snap = await getDocs(collectionGroup(db, 'subscriptions'));
+        snap.docs.forEach(d => {
+          const supplierId = d.ref.parent.parent.id;
+          const existing   = subscriptionData[supplierId];
+          const ts         = d.data().createdAt?.seconds || 0;
+          const exTs       = existing?.createdAt?.seconds || 0;
+          if (!existing || ts > exTs) {
+            subscriptionData[supplierId] = { ...d.data(), _id: d.id, _ref: d.ref };
+          }
+        });
+      } catch (err) {
+        console.error('loadSubscriptions error:', err);
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // COUNTS
+    // ════════════════════════════════════════════
+    function renderCounts() {
+      const today    = new Date(); today.setHours(0,0,0,0);
+      const in30     = new Date(today.getTime() + 30 * 86400000);
+      const total      = allSuppliers.length;
+      const pending    = allSuppliers.filter(s => (s.data.status || 'pending') === 'pending').length;
+      const active     = allSuppliers.filter(s => s.data.status === 'active').length;
+      const suspended  = allSuppliers.filter(s => s.data.status === 'suspended').length;
+      const therapists = allSuppliers.filter(s => (s.data.supplierType || 'individual') !== 'spa').length;
+      const spas       = allSuppliers.filter(s => s.data.supplierType === 'spa').length;
+      const review     = allSuppliers.filter(s => s.data.status === 'review').length;
+      const expiring   = allSuppliers.filter(s => {
+        const exp = toDateObj(s.data.subscriptionExpiry);
+        return exp && exp > today && exp <= in30;
+      }).length;
+
+      document.getElementById('countTotal').textContent        = total;
+      document.getElementById('countPending').textContent      = pending;
+      document.getElementById('countActive').textContent       = active;
+      document.getElementById('countSuspended').textContent    = suspended;
+      document.getElementById('countTherapists').textContent   = therapists;
+      document.getElementById('countSpas').textContent         = spas;
+      document.getElementById('countReview').textContent       = review;
+      document.getElementById('countExpiringSoon').textContent = expiring;
+    }
+
+    // ════════════════════════════════════════════
+    // STATUS / TYPE BADGE HELPERS
+    // ════════════════════════════════════════════
+    function statusBadge(status) {
+      const s   = (status || 'pending').toLowerCase();
+      const cls = { pending: 'sbadge--pending', active: 'sbadge--active', suspended: 'sbadge--suspended', review: 'sbadge--review', rejected: 'sbadge--rejected' }[s] || 'sbadge--pending';
+      return `<span class="sbadge ${cls}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
+    }
+
+    function typeBadge(supplierType) {
+      return supplierType === 'spa'
+        ? '<span class="tbadge tbadge--spa">Spa</span>'
+        : '<span class="tbadge tbadge--therapist">Therapist</span>';
+    }
+
+    // renderTable() shim — called by vetting actions to refresh visible table
+    function renderTable() {
+      renderCounts();
+      if (!document.getElementById('screenTherapists').classList.contains('hidden')) renderTherapistsTable();
+      else if (!document.getElementById('screenSpas').classList.contains('hidden'))  renderSpasTable();
+    }
+
+    // ════════════════════════════════════════════
+    // GLOBAL SEARCH
+    // ════════════════════════════════════════════
+    function setupGlobalSearch() {
+      const input    = document.getElementById('globalSearch');
+      const dropdown = document.getElementById('searchDropdown');
+
+      input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        if (q.length < 2) { dropdown.classList.add('hidden'); return; }
+
+        const results = allSuppliers.filter(({ data: d }) =>
+          (d.supplierNumber || '').toLowerCase().includes(q) ||
+          (d.displayName    || '').toLowerCase().includes(q) ||
+          (d.firstName      || '').toLowerCase().includes(q) ||
+          (d.lastName       || '').toLowerCase().includes(q)
+        ).slice(0, 10);
+
+        if (!results.length) {
+          dropdown.innerHTML = '<div style="padding:12px 14px;color:var(--text-muted);font-size:var(--text-sm);">No results found.</div>';
+          dropdown.classList.remove('hidden');
+          return;
+        }
+
+        dropdown.innerHTML = results.map(({ id, data: d }) => {
+          const status     = (d.status || 'pending').toLowerCase();
+          const type       = d.supplierType === 'spa' ? 'Spa' : 'Therapist';
+          const isVettable = status === 'pending' || status === 'review';
+          const name       = escHtml(d.displayName || [d.firstName, d.lastName].filter(Boolean).join(' ') || '—');
+          const sub        = `${escHtml(d.supplierNumber || '—')} · ${type} · ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+          const nameRow    = d.supplierType !== 'spa'
+            ? `<div class="search-result__meta">${escHtml(d.firstName || '')} ${escHtml(d.lastName || '')}</div>`
+            : '';
+          return `<div class="search-result" onclick="searchGoToRow('${id}')">
+            <div class="search-result__info">
+              <div class="search-result__name">${name}</div>
+              <div class="search-result__meta">${sub}</div>
+              ${nameRow}
+            </div>
+            ${statusBadge(status)}
+            ${isVettable ? `<button class="vet-jump-btn" onclick="event.stopPropagation();searchGoToVetting('${id}')">Go to Vetting</button>` : ''}
+          </div>`;
+        }).join('');
+
+        dropdown.classList.remove('hidden');
+      });
+
+      document.addEventListener('click', e => {
+        if (!e.target.closest('.global-search')) dropdown.classList.add('hidden');
+      });
+    }
+
+    window.searchGoToRow = function(id) {
+      const s = allSuppliers.find(s => s.id === id);
+      if (!s) return;
+      closeSearch();
+      openSupplierDetail(id);
+    };
+
+    window.searchGoToVetting = function(id) {
+      closeSearch();
+      switchTab('Vetting');
+      setTimeout(() => {
+        const card = document.getElementById('vet-' + id);
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
+    };
+
+    function closeSearch() {
+      document.getElementById('globalSearch').value = '';
+      document.getElementById('searchDropdown').classList.add('hidden');
+    }
+
+    function highlightRow(id, screenName) {
+      const prefix = screenName === 'Spas' ? 'srow-' : 'trow-';
+      const row = document.getElementById(prefix + id);
+      if (!row) return;
+      row.classList.add('row--highlighted');
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => row.classList.remove('row--highlighted'), 3000);
+    }
+
+    // ════════════════════════════════════════════
+    // SUPPLIER DETAIL
+    // ════════════════════════════════════════════
+    function openSupplierDetail(id) {
+      const s = allSuppliers.find(s => s.id === id);
+      if (!s) return;
+      showScreen('SupplierDetail');
+      setActiveNavItem('');
+      document.getElementById('supplierDetailCard').innerHTML = buildSupplierDetailHTML(id, s.data);
+    }
+
+    function buildSupplierDetailHTML(id, d) {
+      const isSpa  = d.supplierType === 'spa';
+      const status = (d.status || 'pending').toLowerCase();
+
+      function fld(label, value, wide = false) {
+        const v = (value !== null && value !== undefined && value !== '')
+          ? escHtml(String(value))
+          : '<span style="color:var(--text-muted)">—</span>';
+        return `<div${wide ? ' class="sup-detail-field--wide"' : ''}>
+          <div class="sup-detail-label">${label}</div>
+          <div class="sup-detail-value">${v}</div>
+        </div>`;
+      }
+
+      function arrFld(label, arr, wide = false) {
+        const v = Array.isArray(arr) && arr.length
+          ? escHtml(arr.join(', '))
+          : '<span style="color:var(--text-muted)">—</span>';
+        return `<div${wide ? ' class="sup-detail-field--wide"' : ''}>
+          <div class="sup-detail-label">${label}</div>
+          <div class="sup-detail-value">${v}</div>
+        </div>`;
+      }
+
+      const photos = (Array.isArray(d.photos) ? d.photos : [])
+        .map(p => typeof p === 'string' ? { url: p } : p).filter(p => p?.url);
+      const photosHtml = photos.length
+        ? photos.map(p => `<a href="${escHtml(p.url)}" target="_blank" rel="noopener"><img class="vet-photo-thumb" src="${escHtml(p.url)}" alt="Photo" loading="lazy" /></a>`).join('')
+        : '<span style="color:var(--text-muted);font-size:var(--text-sm);">No photos uploaded.</span>';
+      const idPhotoHtml = d.idPhotoUrl
+        ? `<a href="${escHtml(d.idPhotoUrl)}" target="_blank" rel="noopener"><img class="vet-id-photo" src="${escHtml(d.idPhotoUrl)}" alt="ID photo" loading="lazy" /></a>`
+        : '<span style="color:var(--text-muted);font-size:var(--text-sm);">No ID photo.</span>';
+
+      const approveBtn = (status === 'pending' || status === 'suspended')
+        ? `<button class="vet-btn vet-btn--approve" onclick="detailApprove('${id}')">Approve</button>` : '';
+      const suspendBtn = status === 'active'
+        ? `<button class="vet-btn" style="background:rgba(251,191,36,0.12);color:#fbbf24;border:1px solid rgba(251,191,36,0.45);" onclick="detailSuspend('${id}')">Suspend</button>` : '';
+      const deleteBtn = `<button class="vet-btn vet-btn--reject" onclick="detailDelete('${id}')">Delete</button>`;
+
+      const title = escHtml(isSpa
+        ? (d.tradingName || d.displayName || '—')
+        : (d.displayName || [d.firstName, d.lastName].filter(Boolean).join(' ') || '—'));
+
+      const identityFields = isSpa ? `
+        ${fld('Membership No', d.supplierNumber)}
+        ${fld('Trading Name', d.tradingName)}
+        ${fld('Owner First Name', d.ownerFirstName)}
+        ${fld('Owner Last Name', d.ownerLastName)}
+        ${fld('Display Name', d.displayName)}
+        ${fld('Cell Number', d.cellNumber)}
+        ${fld('Landline', d.landline || d.phone)}
+        ${fld('Email', d.email)}
+        ${fld('Website', d.website)}
+      ` : `
+        ${fld('Membership No', d.supplierNumber)}
+        ${fld('First Name', d.firstName)}
+        ${fld('Last Name', d.lastName)}
+        ${fld('Display Name', d.displayName)}
+        ${fld('Gender', d.gender)}
+        ${fld('Cell Number', d.cellNumber)}
+        ${fld('WhatsApp', d.whatsapp || d.whatsApp)}
+        ${fld('Email', d.email)}
+      `;
+
+      const mobileMassageLine = !isSpa
+        ? fld('Mobile Massage', d.mobileMassage !== undefined ? (d.mobileMassage ? 'Yes' : 'No') : '')
+        : '';
+      const experienceLine    = !isSpa ? fld('Experience', d.experience || d.yearsExperience) : '';
+      const qualificationsLine = !isSpa
+        ? fld('Qualifications', Array.isArray(d.qualifications) ? d.qualifications.join(', ') : d.qualifications)
+        : '';
+
+      return `
+        <div class="admin-card__title">
+          ${title}
+          <span style="margin-left:8px;">${typeBadge(d.supplierType)}</span>
+          <span style="margin-left:4px;">${statusBadge(d.status)}</span>
+        </div>
+
+        <div class="sup-detail-section-title">Identity</div>
+        <div class="sup-detail-grid">${identityFields}</div>
+
+        <div class="sup-detail-section-title">Location</div>
+        <div class="sup-detail-grid">
+          ${fld('Province', d.province)}
+          ${fld('Suburb', d.suburb)}
+          ${fld('Address', d.address, true)}
+        </div>
+
+        <div class="sup-detail-section-title">Service Details</div>
+        <div class="sup-detail-grid">
+          ${fld('Classification', d.classification)}
+          ${arrFld('Massage Types', d.massageTypes)}
+          ${arrFld('Treatments', d.treatments, true)}
+          ${fld('Hours', d.hours || d.operatingHours, true)}
+          ${mobileMassageLine}${experienceLine}${qualificationsLine}
+        </div>
+
+        <div class="sup-detail-section-title">Bio &amp; Specials</div>
+        <div class="sup-detail-grid">
+          <div class="sup-detail-field--wide">
+            <div class="sup-detail-label">Bio</div>
+            <div class="sup-detail-value" style="white-space:pre-wrap;">${escHtml(d.aboutMe || '—')}</div>
+          </div>
+          <div class="sup-detail-field--wide">
+            <div class="sup-detail-label">Specials</div>
+            <div class="sup-detail-value" style="white-space:pre-wrap;">${escHtml(d.specials || '—')}</div>
+          </div>
+        </div>
+
+        <div class="sup-detail-section-title">Subscription</div>
+        <div class="sup-detail-grid">
+          ${fld('Status', d.status)}
+          ${fld('Subscription Status', d.subscriptionStatus)}
+          ${fld('Expiry', fmtDate(d.subscriptionExpiry))}
+          ${fld('Registered', fmtDate(d.createdAt))}
+        </div>
+
+        <div class="sup-detail-section-title">Photos</div>
+        <div class="vet-photo-grid" style="margin-bottom:var(--space-3);">${photosHtml}</div>
+        <div class="sup-detail-label">ID Photo</div>
+        <div style="margin-top:6px;margin-bottom:var(--space-4);">${idPhotoHtml}</div>
+
+        <div class="vet-actions">
+          ${approveBtn}${suspendBtn}${deleteBtn}
+        </div>
+      `;
+    }
+
+    window.detailApprove = async function(id) {
+      const s = allSuppliers.find(s => s.id === id);
+      if (!s) return;
+      const oldStatus = s.data.status || 'pending';
+      try {
+        await writeChangeLog(id, s.data, 'status', oldStatus, 'active');
+        await updateDoc(doc(db, 'suppliers', id), { status: 'active', updatedAt: serverTimestamp() });
+        s.data.status = 'active';
+        renderCounts();
+        document.getElementById('supplierDetailCard').innerHTML = buildSupplierDetailHTML(id, s.data);
+      } catch (err) {
+        console.error('detailApprove error:', err);
+        alert('Failed to approve supplier. Please try again.');
+      }
+    };
+
+    window.detailSuspend = async function(id) {
+      const s = allSuppliers.find(s => s.id === id);
+      if (!s) return;
+      const oldStatus = s.data.status || 'active';
+      try {
+        await writeChangeLog(id, s.data, 'status', oldStatus, 'suspended');
+        await updateDoc(doc(db, 'suppliers', id), { status: 'suspended', updatedAt: serverTimestamp() });
+        s.data.status = 'suspended';
+        renderCounts();
+        document.getElementById('supplierDetailCard').innerHTML = buildSupplierDetailHTML(id, s.data);
+      } catch (err) {
+        console.error('detailSuspend error:', err);
+        alert('Failed to suspend supplier. Please try again.');
+      }
+    };
+
+    window.detailDelete = async function(id) {
+      const s = allSuppliers.find(s => s.id === id);
+      if (!s) return;
+      const name = s.data.displayName || s.data.tradingName || id;
+      if (!confirm(`Delete supplier "${name}"? This cannot be undone.`)) return;
+      try {
+        await writeChangeLog(id, s.data, 'status', s.data.status || 'pending', 'deleted');
+        await deleteDoc(doc(db, 'suppliers', id));
+        allSuppliers = allSuppliers.filter(s => s.id !== id);
+        delete supplierLookup[id];
+        if (s.data.uid) delete supplierLookup[s.data.uid];
+        renderCounts();
+        showScreen('Landing');
+        setActiveNavItem('');
+      } catch (err) {
+        console.error('detailDelete error:', err);
+        alert('Failed to delete supplier. Please try again.');
+      }
+    };
+
+    // ════════════════════════════════════════════
+    // THERAPISTS TABLE
+    // ════════════════════════════════════════════
+    let therapistFilters = { text: '', province: '', suburb: '', status: '' };
+
+    function populateTherapistFilters() {
+      const rows = allSuppliers.filter(s => (s.data.supplierType || 'individual') !== 'spa');
+      const provinces = [...new Set(rows.map(s => s.data.province).filter(Boolean))].sort();
+      const provSel   = document.getElementById('tFilterProvince');
+      const curProv   = provSel.value;
+      provSel.innerHTML = '<option value="">All Provinces</option>' +
+        provinces.map(p => `<option value="${escHtml(p)}"${p === curProv ? ' selected' : ''}>${escHtml(p)}</option>`).join('');
+      refreshTherapistSuburbFilter(curProv);
+    }
+
+    function refreshTherapistSuburbFilter(province) {
+      const rows    = allSuppliers.filter(s => (s.data.supplierType || 'individual') !== 'spa');
+      const scoped  = province ? rows.filter(s => s.data.province === province) : rows;
+      const suburbs = [...new Set(scoped.map(s => s.data.suburb).filter(Boolean))].sort();
+      const subSel  = document.getElementById('tFilterSuburb');
+      const curSub  = subSel.value;
+      subSel.innerHTML = '<option value="">All Suburbs</option>' +
+        suburbs.map(s => `<option value="${escHtml(s)}"${s === curSub ? ' selected' : ''}>${escHtml(s)}</option>`).join('');
+    }
+
+    window.onTherapistProvinceChange = function() {
+      therapistFilters.province = document.getElementById('tFilterProvince').value;
+      refreshTherapistSuburbFilter(therapistFilters.province);
+      therapistFilters.suburb = '';
+      document.getElementById('tFilterSuburb').value = '';
+      renderTherapistsTable();
+    };
+
+    window.onTherapistFilter = function() {
+      therapistFilters.text    = document.getElementById('tSearchInput').value.trim().toLowerCase();
+      therapistFilters.province = document.getElementById('tFilterProvince').value;
+      therapistFilters.suburb  = document.getElementById('tFilterSuburb').value;
+      therapistFilters.status  = document.getElementById('tFilterStatus').value;
+      renderTherapistsTable();
+    };
+
+    function renderTherapistsTable() {
+      const tbody = document.getElementById('tTableBody');
+      let rows = allSuppliers.filter(s => (s.data.supplierType || 'individual') !== 'spa');
+
+      if (therapistFilters.text) {
+        const q = therapistFilters.text;
+        rows = rows.filter(({ data: d }) =>
+          (d.supplierNumber || '').toLowerCase().includes(q) ||
+          (d.firstName      || '').toLowerCase().includes(q) ||
+          (d.lastName       || '').toLowerCase().includes(q) ||
+          (d.displayName    || '').toLowerCase().includes(q) ||
+          (d.cellNumber     || '').toLowerCase().includes(q)
+        );
+      }
+      if (therapistFilters.province) rows = rows.filter(s => s.data.province === therapistFilters.province);
+      if (therapistFilters.suburb)   rows = rows.filter(s => s.data.suburb   === therapistFilters.suburb);
+      if (therapistFilters.status)   rows = rows.filter(s => (s.data.status || 'pending').toLowerCase() === therapistFilters.status);
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr class="table-msg"><td colspan="13">No therapists match the current filters.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map(({ id, data: d }) => {
+        const status     = (d.status || 'pending').toLowerCase();
+        const clickable  = status === 'pending' || status === 'review';
+        const rowClass   = clickable ? 'row--clickable' : '';
+        const rowClick   = clickable ? `onclick="rowGoToVetting('${id}')"` : '';
+        const approveBtn = (status === 'pending' || status === 'suspended')
+          ? `<button class="act-btn act-btn--approve" onclick="event.stopPropagation();approveSupplier('${id}')">Approve</button>` : '';
+        const suspendBtn = status === 'active'
+          ? `<button class="act-btn act-btn--suspend" onclick="event.stopPropagation();suspendSupplier('${id}')">Suspend</button>` : '';
+        const deleteBtn  = `<button class="act-btn act-btn--delete" onclick="event.stopPropagation();deleteSupplier('${id}')">Delete</button>`;
+        return `<tr id="trow-${id}" class="${rowClass}" ${rowClick}>
+          <td>${escHtml(d.supplierNumber || '—')}</td>
+          <td>${escHtml(d.firstName      || '—')}</td>
+          <td>${escHtml(d.lastName       || '—')}</td>
+          <td>${escHtml(d.displayName    || '—')}</td>
+          <td>${escHtml(d.gender         || '—')}</td>
+          <td>${escHtml(d.province       || '—')}</td>
+          <td>${escHtml(d.suburb         || '—')}</td>
+          <td>${escHtml(d.cellNumber     || '—')}</td>
+          <td>${statusBadge(d.status)}</td>
+          <td>${fmtDate(d.createdAt)}</td>
+          <td>${escHtml(d.subscriptionStatus || '—')}</td>
+          <td>${fmtDate(d.subscriptionExpiry)}</td>
+          <td><div class="act-btns">${approveBtn}${suspendBtn}${deleteBtn}</div></td>
+        </tr>`;
+      }).join('');
+    }
+
+    window.rowGoToVetting = function(id) {
+      switchTab('Vetting');
+      setTimeout(() => {
+        const card = document.getElementById('vet-' + id);
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
+    };
+
+    // ════════════════════════════════════════════
+    // SPAS TABLE
+    // ════════════════════════════════════════════
+    let spaFilters = { text: '', province: '', suburb: '', status: '' };
+
+    function populateSpaFilters() {
+      const rows      = allSuppliers.filter(s => s.data.supplierType === 'spa');
+      const provinces = [...new Set(rows.map(s => s.data.province).filter(Boolean))].sort();
+      const provSel   = document.getElementById('sFilterProvince');
+      const curProv   = provSel.value;
+      provSel.innerHTML = '<option value="">All Provinces</option>' +
+        provinces.map(p => `<option value="${escHtml(p)}"${p === curProv ? ' selected' : ''}>${escHtml(p)}</option>`).join('');
+      refreshSpaSuburbFilter(curProv);
+    }
+
+    function refreshSpaSuburbFilter(province) {
+      const rows    = allSuppliers.filter(s => s.data.supplierType === 'spa');
+      const scoped  = province ? rows.filter(s => s.data.province === province) : rows;
+      const suburbs = [...new Set(scoped.map(s => s.data.suburb).filter(Boolean))].sort();
+      const subSel  = document.getElementById('sFilterSuburb');
+      const curSub  = subSel.value;
+      subSel.innerHTML = '<option value="">All Suburbs</option>' +
+        suburbs.map(s => `<option value="${escHtml(s)}"${s === curSub ? ' selected' : ''}>${escHtml(s)}</option>`).join('');
+    }
+
+    window.onSpaProvinceChange = function() {
+      spaFilters.province = document.getElementById('sFilterProvince').value;
+      refreshSpaSuburbFilter(spaFilters.province);
+      spaFilters.suburb = '';
+      document.getElementById('sFilterSuburb').value = '';
+      renderSpasTable();
+    };
+
+    window.onSpaFilter = function() {
+      spaFilters.text    = document.getElementById('sSearchInput').value.trim().toLowerCase();
+      spaFilters.province = document.getElementById('sFilterProvince').value;
+      spaFilters.suburb  = document.getElementById('sFilterSuburb').value;
+      spaFilters.status  = document.getElementById('sFilterStatus').value;
+      renderSpasTable();
+    };
+
+    function renderSpasTable() {
+      const tbody = document.getElementById('sTableBody');
+      let rows = allSuppliers.filter(s => s.data.supplierType === 'spa');
+
+      if (spaFilters.text) {
+        const q = spaFilters.text;
+        rows = rows.filter(({ data: d }) =>
+          (d.supplierNumber  || '').toLowerCase().includes(q) ||
+          (d.ownerFirstName  || '').toLowerCase().includes(q) ||
+          (d.ownerLastName   || '').toLowerCase().includes(q) ||
+          (d.displayName     || '').toLowerCase().includes(q) ||
+          (d.tradingName     || '').toLowerCase().includes(q) ||
+          (d.cellNumber      || '').toLowerCase().includes(q)
+        );
+      }
+      if (spaFilters.province) rows = rows.filter(s => s.data.province === spaFilters.province);
+      if (spaFilters.suburb)   rows = rows.filter(s => s.data.suburb   === spaFilters.suburb);
+      if (spaFilters.status)   rows = rows.filter(s => (s.data.status || 'pending').toLowerCase() === spaFilters.status);
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr class="table-msg"><td colspan="13">No spas match the current filters.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map(({ id, data: d }) => {
+        const status     = (d.status || 'pending').toLowerCase();
+        const clickable  = status === 'pending' || status === 'review';
+        const rowClass   = clickable ? 'row--clickable' : '';
+        const rowClick   = clickable ? `onclick="rowGoToVetting('${id}')"` : '';
+        const approveBtn = (status === 'pending' || status === 'suspended')
+          ? `<button class="act-btn act-btn--approve" onclick="event.stopPropagation();approveSupplier('${id}')">Approve</button>` : '';
+        const suspendBtn = status === 'active'
+          ? `<button class="act-btn act-btn--suspend" onclick="event.stopPropagation();suspendSupplier('${id}')">Suspend</button>` : '';
+        const deleteBtn  = `<button class="act-btn act-btn--delete" onclick="event.stopPropagation();deleteSupplier('${id}')">Delete</button>`;
+        return `<tr id="srow-${id}" class="${rowClass}" ${rowClick}>
+          <td>${escHtml(d.supplierNumber  || '—')}</td>
+          <td>${escHtml(d.tradingName     || '—')}</td>
+          <td>${escHtml(d.ownerFirstName  || '—')}</td>
+          <td>${escHtml(d.ownerLastName   || '—')}</td>
+          <td>${escHtml(d.displayName     || '—')}</td>
+          <td>${escHtml(d.province        || '—')}</td>
+          <td>${escHtml(d.suburb          || '—')}</td>
+          <td>${escHtml(d.cellNumber      || '—')}</td>
+          <td>${statusBadge(d.status)}</td>
+          <td>${fmtDate(d.createdAt)}</td>
+          <td>${escHtml(d.subscriptionStatus || '—')}</td>
+          <td>${fmtDate(d.subscriptionExpiry)}</td>
+          <td><div class="act-btns">${approveBtn}${suspendBtn}${deleteBtn}</div></td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ════════════════════════════════════════════
+    // SUBSCRIPTIONS TABLE
+    // ════════════════════════════════════════════
+    let subSearch = '';
+
+    window.onSubFilter = function() {
+      subSearch = document.getElementById('subSearchInput').value.trim().toLowerCase();
+      renderSubscriptionsTable();
+    };
+
+    function fmtTermMonths(months) {
+      if (!months) return '—';
+      return months === 1 ? '1 Month' : `${months} Months`;
+    }
+
+    function renderSubscriptionsTable() {
+      const tbody = document.getElementById('subTableBody');
+      let rows = [...allSuppliers];
+
+      if (subSearch) {
+        const q = subSearch;
+        rows = rows.filter(({ data: d }) =>
+          (d.supplierNumber || '').toLowerCase().includes(q) ||
+          (d.displayName    || '').toLowerCase().includes(q) ||
+          (d.firstName      || '').toLowerCase().includes(q) ||
+          (d.lastName       || '').toLowerCase().includes(q) ||
+          (d.tradingName    || '').toLowerCase().includes(q)
+        );
+      }
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr class="table-msg"><td colspan="9">No suppliers match the search.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map(({ id, data: d }) => {
+        const sub      = subscriptionData[id] || {};
+        const isSpa    = d.supplierType === 'spa';
+        const name     = escHtml(isSpa ? (d.tradingName || d.displayName || '—') : (d.displayName || '—'));
+        const plan     = fmtTermMonths(sub.termMonths);
+        const startDt  = fmtDate(sub.startDate || sub.createdAt);
+        return `<tr id="subrow-${id}">
+          <td>${escHtml(d.supplierNumber || '—')}</td>
+          <td>${name}</td>
+          <td>${typeBadge(d.supplierType)}</td>
+          <td>${statusBadge(d.subscriptionStatus || d.status)}</td>
+          <td>${plan}</td>
+          <td>${startDt}</td>
+          <td>${fmtDate(d.subscriptionExpiry)}</td>
+          <td>${renderDays(d.subscriptionExpiry)}</td>
+          <td><button class="act-btn act-btn--adjust" onclick="toggleAdjustPanel('${id}')">Adjust</button></td>
+        </tr>`;
+      }).join('');
+    }
+
+    window.toggleAdjustPanel = function(supplierId) {
+      const existing   = document.querySelector('.adj-panel-row');
+      const sameId     = existing?.dataset.supplierId;
+      if (existing) existing.remove();
+      if (sameId === supplierId) return;
+
+      const row = document.getElementById('subrow-' + supplierId);
+      if (!row) return;
+      const s           = allSuppliers.find(s => s.id === supplierId);
+      const currentExp  = toIsoDate(s?.data?.subscriptionExpiry);
+
+      const panelRow = document.createElement('tr');
+      panelRow.className = 'adj-panel-row';
+      panelRow.dataset.supplierId = supplierId;
+      panelRow.innerHTML = `<td colspan="9">
+        <div class="adjust-panel">
+          <div class="adjust-panel__grid">
+            <div class="adjust-panel__field">
+              <label>Extend by</label>
+              <select id="adj-extend-${supplierId}" class="select">
+                <option value="">— select —</option>
+                <option value="1">1 Month</option>
+                <option value="2">2 Months</option>
+                <option value="3">3 Months</option>
+                <option value="6">6 Months</option>
+                <option value="12">12 Months</option>
+              </select>
+            </div>
+            <div class="adjust-panel__field">
+              <label>Grant free months</label>
+              <input type="number" id="adj-free-${supplierId}" class="input" min="0" max="24" placeholder="0" />
+            </div>
+            <div class="adjust-panel__field">
+              <label>Set exact expiry date</label>
+              <input type="date" id="adj-exact-${supplierId}" class="input" value="${currentExp}" />
+            </div>
+            <div class="adjust-panel__field">
+              <label>Reason / Note <span style="color:#ef4444">*</span></label>
+              <input type="text" id="adj-reason-${supplierId}" class="input" placeholder="Required" />
+            </div>
+          </div>
+          <div class="adjust-panel__actions">
+            <button type="button" class="btn btn--primary btn--sm" onclick="saveSubscriptionAdjust('${supplierId}')">Save</button>
+            <button type="button" class="btn btn--sm" onclick="closeAdjustPanel()">Cancel</button>
+            <span id="adj-msg-${supplierId}" class="adj-save-msg"></span>
+          </div>
+        </div>
+      </td>`;
+      row.insertAdjacentElement('afterend', panelRow);
+    };
+
+    window.closeAdjustPanel = function() {
+      const existing = document.querySelector('.adj-panel-row');
+      if (existing) existing.remove();
+    };
+
+    window.saveSubscriptionAdjust = async function(supplierId) {
+      const extendBy  = parseInt(document.getElementById(`adj-extend-${supplierId}`).value)  || 0;
+      const freeMonths = parseInt(document.getElementById(`adj-free-${supplierId}`).value)    || 0;
+      const exactDate  = document.getElementById(`adj-exact-${supplierId}`).value;
+      const reason     = document.getElementById(`adj-reason-${supplierId}`).value.trim();
+      const msgEl      = document.getElementById(`adj-msg-${supplierId}`);
+
+      if (!reason) { msgEl.textContent = 'Reason is required.'; msgEl.className = 'adj-save-msg adj-save-msg--err'; return; }
+
+      const supplier = allSuppliers.find(s => s.id === supplierId);
+      if (!supplier) return;
+
+      const curExp = toDateObj(supplier.data.subscriptionExpiry) || new Date();
+      let newExpiry;
+
+      if (exactDate) {
+        newExpiry = new Date(exactDate + 'T00:00:00');
+      } else if (freeMonths > 0) {
+        newExpiry = new Date(curExp);
+        newExpiry.setMonth(newExpiry.getMonth() + freeMonths);
+      } else if (extendBy > 0) {
+        newExpiry = new Date(curExp);
+        newExpiry.setMonth(newExpiry.getMonth() + extendBy);
+      } else {
+        msgEl.textContent = 'Select an adjustment option.'; msgEl.className = 'adj-save-msg adj-save-msg--err'; return;
+      }
+
+      const oldValue = fmtDate(supplier.data.subscriptionExpiry);
+      const newValue = fmtDate(newExpiry);
+
+      try {
+        await updateDoc(doc(db, 'suppliers', supplierId), { subscriptionExpiry: newExpiry, updatedAt: serverTimestamp() });
+
+        const subRef = subscriptionData[supplierId]?._ref;
+        if (subRef) await updateDoc(subRef, { expiryDate: newExpiry });
+
+        await writeChangeLog(supplierId, supplier.data, 'subscriptionExpiry', oldValue, newValue, reason);
+
+        supplier.data.subscriptionExpiry = newExpiry;
+        closeAdjustPanel();
+        renderSubscriptionsTable();
+      } catch (err) {
+        console.error('saveSubscriptionAdjust error:', err);
+        msgEl.textContent = 'Failed to save.'; msgEl.className = 'adj-save-msg adj-save-msg--err';
+      }
+    };
+
+    // ════════════════════════════════════════════
+    // CHANGE LOG WRITER
+    // ════════════════════════════════════════════
+    async function writeChangeLog(supplierDocId, supplierData, field, oldValue, newValue, note = '') {
+      try {
+        const entry = {
+          supplierId: supplierData.uid || supplierDocId,
+          field, oldValue, newValue,
+          changedAt: serverTimestamp(),
+          changedBy: 'admin'
+        };
+        if (note) entry.note = note;
+        await addDoc(collection(db, 'suppliers', supplierDocId, 'changeLogs'), entry);
+      } catch (err) {
+        console.error('changeLog write error:', err);
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // ACTIONS (approve / suspend / delete)
+    // ════════════════════════════════════════════
+    window.approveSupplier = async function(id) {
+      const s = allSuppliers.find(s => s.id === id);
+      if (!s) return;
+      const oldStatus = s.data.status || 'pending';
+      try {
+        await writeChangeLog(id, s.data, 'status', oldStatus, 'active');
+        await updateDoc(doc(db, 'suppliers', id), { status: 'active', updatedAt: serverTimestamp() });
+        s.data.status = 'active';
+        renderTable();
+      } catch (err) {
+        console.error('approveSupplier error:', err);
+        alert('Failed to approve supplier. Please try again.');
+      }
+    };
+
+    window.suspendSupplier = async function(id) {
+      const s = allSuppliers.find(s => s.id === id);
+      if (!s) return;
+      const oldStatus = s.data.status || 'pending';
+      try {
+        await writeChangeLog(id, s.data, 'status', oldStatus, 'suspended');
+        await updateDoc(doc(db, 'suppliers', id), { status: 'suspended', updatedAt: serverTimestamp() });
+        s.data.status = 'suspended';
+        renderTable();
+      } catch (err) {
+        console.error('suspendSupplier error:', err);
+        alert('Failed to suspend supplier. Please try again.');
+      }
+    };
+
+    window.deleteSupplier = async function(id) {
+      const s = allSuppliers.find(s => s.id === id);
+      if (!s) return;
+      const name = s.data.displayName || id;
+      if (!confirm(`Delete supplier "${name}"? This cannot be undone.`)) return;
+      try {
+        await writeChangeLog(id, s.data, 'status', s.data.status || 'pending', 'deleted');
+        await deleteDoc(doc(db, 'suppliers', id));
+        allSuppliers = allSuppliers.filter(s => s.id !== id);
+        delete supplierLookup[id];
+        if (s.data.uid) delete supplierLookup[s.data.uid];
+        renderTable();
+      } catch (err) {
+        console.error('deleteSupplier error:', err);
+        alert('Failed to delete supplier. Please try again.');
+      }
+    };
+
+    // ════════════════════════════════════════════
+    // SETTINGS
+    // ════════════════════════════════════════════
+    async function loadSettings() {
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'config'));
+        if (!snap.exists()) return;
+        const d = snap.data();
+        if (d.priceIndividual !== undefined) document.getElementById('settingPriceIndividual').value = d.priceIndividual;
+        if (d.priceSpa        !== undefined) document.getElementById('settingPriceSpa').value        = d.priceSpa;
+        if (d.autoApprove     !== undefined) document.getElementById('settingAutoApprove').checked   = !!d.autoApprove;
+        if (d.adminEmail)                    adminEmail = d.adminEmail;
+      } catch (err) {
+        console.error('loadSettings error:', err);
+      }
+    }
+
+    window.saveSetting = async function(field, inputId, msgId) {
+      const msgEl = document.getElementById(msgId);
+      const val   = parseFloat(document.getElementById(inputId).value);
+      msgEl.className = 'save-msg hidden';
+      try {
+        await setDoc(doc(db, 'settings', 'config'), { [field]: val }, { merge: true });
+        msgEl.textContent = 'Saved';
+        msgEl.className   = 'save-msg save-msg--ok';
+        setTimeout(() => { msgEl.className = 'save-msg hidden'; }, 2000);
+      } catch (err) {
+        console.error('saveSetting error:', err);
+        msgEl.textContent = 'Failed';
+        msgEl.className   = 'save-msg save-msg--err';
+        setTimeout(() => { msgEl.className = 'save-msg hidden'; }, 2000);
+      }
+    };
+
+    window.saveAutoApprove = async function() {
+      const el  = document.getElementById('settingAutoApprove');
+      const val = el.checked;
+      try {
+        await setDoc(doc(db, 'settings', 'config'), { autoApprove: val }, { merge: true });
+      } catch (err) {
+        console.error('saveAutoApprove error:', err);
+        el.checked = !val;
+      }
+    };
+
+    // ════════════════════════════════════════════
+    // CHANGE LOG VIEW
+    // ════════════════════════════════════════════
+    async function loadChangeLogs() {
+      const container = document.getElementById('changelogContainer');
+      const emptyMsg  = 'No change log entries yet.';
+      try {
+        const q    = query(collectionGroup(db, 'changeLogs'), orderBy('changedAt', 'desc'), limit(100));
+        const snap = await getDocs(q);
+        if (snap.empty) { container.innerHTML = `<div class="placeholder-msg">${emptyMsg}</div>`; return; }
+        container.innerHTML = snap.docs.map(d => {
+          const e   = d.data();
+          const sup = supplierLookup[e.supplierId] || {};
+          const dt  = fmtDateTime(e.changedAt);
+          const note = e.note ? ` <span style="color:var(--text-muted);font-style:italic;">— ${escHtml(e.note)}</span>` : '';
+          return `<div class="cl-entry">
+            <div class="cl-entry__meta">${escHtml(dt)} &middot; ${escHtml(sup.displayName || e.supplierId || '—')} &middot; ${escHtml(sup.supplierNumber || '—')} &middot; ${escHtml(e.changedBy || 'system')}</div>
+            <div class="cl-entry__body"><strong>${escHtml(e.field || '—')}</strong>: ${escHtml(e.oldValue || '—')}<span class="cl-arrow">→</span>${escHtml(e.newValue || '—')}${note}</div>
+          </div>`;
+        }).join('');
+      } catch (err) {
+        console.error('loadChangeLogs error:', err);
+        container.innerHTML = `<div class="placeholder-msg">${emptyMsg}</div>`;
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // VETTING
+    // ════════════════════════════════════════════
+    // NOTE: Requires Firestore composite index: suppliers — status (asc) + createdAt (asc)
+    // If query fails, check browser console for the index creation link and create it.
+    async function loadVetting() {
+      try {
+        const q = query(
+          collection(db, 'suppliers'),
+          where('status', 'in', ['pending', 'review']),
+          orderBy('createdAt', 'asc')
+        );
+        const snap = await getDocs(q);
+        const therapists = [];
+        const spas = [];
+        snap.docs.forEach(d => {
+          const entry = { id: d.id, data: d.data() };
+          if (d.data().supplierType === 'spa') spas.push(entry);
+          else therapists.push(entry);
+        });
+        renderVetTable('vetTherapistsBody', therapists, 4);
+        renderVetTable('vetSpasBody', spas, 4);
+      } catch (err) {
+        console.error('loadVetting error:', err);
+      }
+    }
+
+    function renderVetTable(tbodyId, rows, colspan) {
+      const tbody = document.getElementById(tbodyId);
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="${colspan}"
+          style="text-align:center;color:var(--text-muted);padding:var(--space-4);">
+          No records.</td></tr>`;
+        return;
+      }
+      const isInv = tbodyId.startsWith('inv');
+      tbody.innerHTML = rows.map(({ id, data: d }) => {
+        const status = (d.status || 'pending').toLowerCase();
+        const name = d.supplierType === 'spa'
+          ? escHtml(d.tradingName || d.displayName || '—')
+          : escHtml(d.displayName || [d.firstName, d.lastName].filter(Boolean).join(' ') || '—');
+        const clickFn = isInv ? `openInvDetail('${id}')` : `openVetDetail('${id}')`;
+        return `<tr id="vetrow-${id}" onclick="${clickFn}">
+          <td>${escHtml(d.supplierNumber || '—')}</td>
+          <td>${name}</td>
+          <td>${escHtml(d.suburb || '—')}</td>
+          <td>${statusBadge(status)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    window.openVetDetail = function(id) {
+      document.querySelectorAll('.vet-table tbody tr').forEach(r =>
+        r.classList.remove('vet-row--selected')
+      );
+      const row = document.getElementById('vetrow-' + id);
+      if (row) row.classList.add('vet-row--selected');
+
+      const s = allSuppliers.find(s => s.id === id);
+      if (!s) return;
+      document.getElementById('vetDetailPanel').innerHTML = buildVetDetailCard(id, s.data);
+    };
+
+    function buildVetDetailCard(id, d, mode) {
+      const isSpa = d.supplierType === 'spa';
+      mode = mode || 'vetting';
+
+      const nameLine = isSpa
+        ? escHtml(d.tradingName || d.displayName || '—')
+        : escHtml([d.firstName, d.lastName].filter(Boolean).join(' ') || '—');
+
+      const displayName = escHtml(d.displayName || '—');
+      const memberNo = escHtml(d.supplierNumber || '—');
+
+      const cell = d.cellNumber
+        ? `<a class="vet-contact-link" href="tel:${escHtml(d.cellNumber)}">${escHtml(d.cellNumber)}</a>`
+        : '—';
+
+      const waRaw = d.whatsapp || d.whatsApp || '';
+      const waNum = waRaw.replace(/\D/g,'').replace(/^0/,'27');
+      const whatsapp = waRaw
+        ? `<a class="vet-contact-link" href="https://wa.me/${waNum}" target="_blank" rel="noopener">${escHtml(waRaw)}</a>`
+        : null;
+
+      const suburbMapsUrl = (d.suburb && d.province)
+        ? `https://www.google.com/maps/search/${encodeURIComponent((d.suburb||'') + ' ' + (d.province||'') + ' South Africa')}`
+        : null;
+
+      const addressMapsUrl = d.address
+        ? `https://www.google.com/maps/search/${encodeURIComponent(d.address + ' South Africa')}`
+        : null;
+
+      const classVal = escHtml(d.classification || '—');
+      const classWarn = isSpa && (d.classification||'').toLowerCase().includes('adult')
+        ? '<span class="vet-warning">⚠ Adult present</span>' : '';
+
+      const massageTypes = Array.isArray(d.massageTypes) ? d.massageTypes : [];
+      const massageWarn = isSpa && massageTypes.some(t => t.toLowerCase().includes('adult'))
+        ? '<span class="vet-warning">⚠ Adult type present</span>' : '';
+      const massageVal = massageTypes.length ? escHtml(massageTypes.join(', ')) : '—';
+
+      const treatments = Array.isArray(d.treatments) && d.treatments.length
+        ? escHtml(d.treatments.join(', ')) : '—';
+
+      let qualsHtml = '';
+      if (!isSpa) {
+        const quals = Array.isArray(d.qualifications) ? d.qualifications : [];
+        qualsHtml = `
+          <div class="vet-field-group">
+            <div class="vet-section-header"><span>Qualifications</span></div>
+            <div class="vet-field-label" style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:4px;">Spot check plausibility</div>
+            <div class="vet-field-value">${quals.length ? escHtml(quals.join(' | ')) : '—'}</div>
+          </div>`;
+      }
+
+      const photos = (Array.isArray(d.photos) ? d.photos : [])
+        .map(p => typeof p === 'string' ? {url:p} : p).filter(p => p?.url);
+      const photosHtml = photos.length
+        ? photos.map(p => `<a href="${escHtml(p.url)}" target="_blank" rel="noopener"><img class="vet-photo-thumb" src="${escHtml(p.url)}" alt="Photo" loading="lazy" /></a>`).join('')
+        : '<span style="color:var(--text-muted);font-size:var(--text-sm);">No photos uploaded.</span>';
+
+      const idPhotoHtml = d.idPhotoUrl
+        ? `<a href="${escHtml(d.idPhotoUrl)}" target="_blank" rel="noopener"><img class="vet-id-photo" src="${escHtml(d.idPhotoUrl)}" alt="ID photo" loading="lazy" /></a>`
+        : '<span style="color:var(--text-muted);font-size:var(--text-sm);">No ID photo uploaded.</span>';
+
+      const identityHtml = isSpa ? `
+        <div><div class="vet-field-label">Trading Name</div>
+          <div class="vet-field-value">${nameLine}</div></div>
+        <div><div class="vet-field-label">Owner Name</div>
+          <div class="vet-field-value">${escHtml(d.ownerFirstName||'')} ${escHtml(d.ownerLastName||'')}
+            <div class="vet-helper-note">Verify name matches ID photo</div></div></div>
+        <div><div class="vet-field-label">Display Name</div>
+          <div class="vet-field-value">${displayName}</div></div>
+      ` : `
+        <div><div class="vet-field-label">Full Name</div>
+          <div class="vet-field-value">${nameLine}
+            <div class="vet-helper-note">Verify name matches ID photo</div></div></div>
+        <div><div class="vet-field-label">Display Name / Alias</div>
+          <div class="vet-field-value">${displayName}</div></div>
+      `;
+
+      const actionButtons = mode === 'investigation'
+        ? `<button class="vet-btn vet-btn--approve"
+               onclick="showVetConfirm('${id}','approve','investigation')">Approve</button>
+           <button class="vet-btn vet-btn--reject"
+               onclick="showVetConfirm('${id}','reject','investigation')">Reject</button>
+           <button class="vet-btn" style="background:rgba(251,191,36,0.12);color:#fbbf24;border:1px solid rgba(251,191,36,0.45);"
+               onclick="showVetConfirm('${id}','return','investigation')">Return to Pending</button>`
+        : `<button class="vet-btn vet-btn--approve"
+               onclick="showVetConfirm('${id}','approve','vetting')">Approve</button>
+           <button class="vet-btn vet-btn--reject"
+               onclick="showVetConfirm('${id}','reject','vetting')">Reject</button>
+           <button class="vet-btn vet-btn--investigate"
+               onclick="showVetConfirm('${id}','investigate','vetting')">Investigate</button>`;
+
+      return `
+        <div class="vet-detail-card">
+
+          <div style="margin-bottom:var(--space-4);">
+            <div class="vet-name">${isSpa ? escHtml(d.tradingName||d.displayName||'—') : displayName}</div>
+            <div class="vet-meta" style="margin-top:6px;">
+              ${typeBadge(d.supplierType)}
+              <span style="margin-left:6px;">${statusBadge(d.status)}</span>
+              <span class="vet-mem" style="margin-left:6px;">${memberNo}</span>
+            </div>
+          </div>
+
+          <div class="vet-field-group">
+            <div class="vet-section-header"><span>Identity</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2) var(--space-4);">
+              ${identityHtml}
+              <div><div class="vet-field-label">Cell Number</div>
+                <div class="vet-field-value">${cell}</div></div>
+              ${whatsapp ? `<div><div class="vet-field-label">WhatsApp</div>
+                <div class="vet-field-value">${whatsapp}</div></div>` : ''}
+            </div>
+          </div>
+
+          <div class="vet-field-group">
+            <div class="vet-section-header"><span>Location</span></div>
+            <div style="margin-bottom:var(--space-2);">
+              <div class="vet-field-label">Province / Suburb</div>
+              <div class="vet-field-value" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                ${escHtml(d.province||'—')} | ${escHtml(d.suburb||'—')}
+                ${suburbMapsUrl ? `<a class="maps-btn" href="${suburbMapsUrl}" target="_blank" rel="noopener"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1C3.34 1 2 2.34 2 4c0 2.25 3 6 3 6s3-3.75 3-6c0-1.66-1.34-3-3-3zm0 4.5c-.83 0-1.5-.67-1.5-1.5S4.17 2.5 5 2.5 6.5 3.17 6.5 4 5.83 5.5 5 5.5z" fill="#6c63ff"/></svg>Open in Maps</a>` : ''}
+              </div>
+            </div>
+            ${d.address ? `<div>
+              <div class="vet-field-label">Full Street Address</div>
+              <div class="vet-field-value" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                ${escHtml(d.address)}
+                ${addressMapsUrl ? `<a class="maps-btn" href="${addressMapsUrl}" target="_blank" rel="noopener"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1C3.34 1 2 2.34 2 4c0 2.25 3 6 3 6s3-3.75 3-6c0-1.66-1.34-3-3-3zm0 4.5c-.83 0-1.5-.67-1.5-1.5S4.17 2.5 5 2.5 6.5 3.17 6.5 4 5.83 5.5 5 5.5z" fill="#6c63ff"/></svg>Open in Maps</a>` : ''}
+              </div>
+            </div>` : ''}
+          </div>
+
+          <div class="vet-field-group">
+            <div class="vet-section-header"><span>Classification &amp; Services</span></div>
+            <div style="margin-bottom:var(--space-2);">
+              <div class="vet-field-label">Classification</div>
+              <div class="vet-field-value">${classVal}${classWarn}</div>
+            </div>
+            <div style="margin-bottom:var(--space-2);">
+              <div class="vet-field-label">Massage Types</div>
+              <div class="vet-field-value">${massageVal}${massageWarn}</div>
+            </div>
+            <div>
+              <div class="vet-field-label">Treatments</div>
+              <div class="vet-field-value">${treatments}</div>
+            </div>
+          </div>
+
+          ${qualsHtml}
+
+          <div class="vet-field-group">
+            <div class="vet-section-header"><span>Bio &amp; Content</span></div>
+            <div class="vet-bio-box" style="margin-bottom:var(--space-3);">
+              <div class="vet-bio-label">Bio — Check for inappropriate content</div>
+              <div class="vet-bio-text">${escHtml(d.aboutMe||'No bio provided.')}</div>
+            </div>
+            <div class="vet-bio-box">
+              <div class="vet-bio-label">Specials / Promotions — Check for inappropriate content</div>
+              <div class="vet-bio-text">${escHtml(d.specials||'No specials provided.')}</div>
+            </div>
+          </div>
+
+          <div class="vet-field-group">
+            <div class="vet-section-header"><span>Photos</span></div>
+            <div class="vet-photo-grid" style="margin-bottom:var(--space-3);">${photosHtml}</div>
+            <div class="vet-field-label" style="margin-bottom:6px;">ID Photo</div>
+            ${idPhotoHtml}
+          </div>
+
+          <div class="vet-actions" id="vet-actions-${id}">
+            ${actionButtons}
+          </div>
+
+          <div id="vet-confirm-${id}"></div>
+
+        </div>`;
+    }
+
+    window.showVetConfirm = function(id, action, mode) {
+      const s = allSuppliers.find(s => s.id === id);
+      if (!s) return;
+      const name = s.data.displayName || s.data.tradingName || id;
+      const memberNo = s.data.supplierNumber || id;
+
+      const actionLabels = {
+        approve:     { label: 'APPROVE',           color: '#34d399' },
+        reject:      { label: 'REJECT',            color: '#f87171' },
+        investigate: { label: 'INVESTIGATE',       color: '#60a5fa' },
+        return:      { label: 'RETURN TO PENDING', color: '#fbbf24' }
+      };
+      const al = actionLabels[action];
+
+      const confirmEl = document.getElementById('vet-confirm-' + id);
+      confirmEl.innerHTML = `
+        <div class="vet-action-confirm">
+          <div class="vet-action-confirm__title">
+            You are about to
+            <span style="color:${al.color};">${al.label}</span> —
+            <span>${escHtml(name)}</span> (${escHtml(memberNo)})
+          </div>
+          <textarea id="vet-reason-${id}"
+            placeholder="Enter reason(s) — required before confirming…"
+            rows="4"></textarea>
+          <div class="vet-action-confirm__btns">
+            <button class="vet-btn"
+              style="background:rgba(108,99,255,0.12);color:#a5b4fc;border:1px solid rgba(108,99,255,0.45);"
+              onclick="confirmVetAction('${id}','${action}','${mode}')">
+              Confirm ${al.label}</button>
+            <button class="vet-btn"
+              style="background:none;color:var(--text-muted);border:1px solid var(--border);"
+              onclick="cancelVetConfirm('${id}')">Cancel</button>
+            <span id="vet-confirm-err-${id}" class="vet-action-confirm__err"></span>
+          </div>
+        </div>`;
+
+      confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    window.cancelVetConfirm = function(id) {
+      const confirmEl = document.getElementById('vet-confirm-' + id);
+      if (confirmEl) confirmEl.innerHTML = '';
+    };
+
+    window.confirmVetAction = async function(id, action, mode) {
+      const reason = document.getElementById('vet-reason-' + id)?.value.trim();
+      const errEl  = document.getElementById('vet-confirm-err-' + id);
+
+      if (!reason) {
+        errEl.textContent = 'Reason is required before confirming.';
+        return;
+      }
+
+      const s    = allSuppliers.find(s => s.id === id);
+      const data = s ? s.data : {};
+      const oldStatus = data.status || 'pending';
+
+      const statusMap = {
+        approve:     'active',
+        reject:      'rejected',
+        investigate: 'review',
+        return:      'pending'
+      };
+      const newStatus = statusMap[action];
+
+      try {
+        await writeChangeLog(id, data, 'status', oldStatus, newStatus, reason);
+        await updateDoc(doc(db, 'suppliers', id), { status: newStatus, updatedAt: serverTimestamp() });
+        if (s) s.data.status = newStatus;
+        renderCounts();
+        renderTable();
+        removeVettingCard(id);
+        if (mode === 'investigation') {
+          loadInvestigation();
+        }
+      } catch (err) {
+        console.error('confirmVetAction error:', err);
+        if (errEl) errEl.textContent = 'Failed to save. Please try again.';
+      }
+    };
+
+    async function loadInvestigation() {
+      try {
+        const q = query(
+          collection(db, 'suppliers'),
+          where('status', '==', 'review'),
+          orderBy('createdAt', 'asc')
+        );
+        const snap = await getDocs(q);
+        const therapists = [];
+        const spas = [];
+        snap.docs.forEach(d => {
+          const entry = { id: d.id, data: d.data() };
+          if (d.data().supplierType === 'spa') spas.push(entry);
+          else therapists.push(entry);
+        });
+        renderVetTable('invTherapistsBody', therapists, 4);
+        renderVetTable('invSpasBody', spas, 4);
+        document.getElementById('invDetailPanel').innerHTML =
+          '<div class="placeholder-msg" style="padding-top:var(--space-8);">Select a record to begin investigation review.</div>';
+      } catch (err) {
+        console.error('loadInvestigation error:', err);
+      }
+    }
+
+    window.openInvDetail = function(id) {
+      document.querySelectorAll('.vet-table tbody tr').forEach(r =>
+        r.classList.remove('vet-row--selected')
+      );
+      const row = document.getElementById('vetrow-' + id);
+      if (row) row.classList.add('vet-row--selected');
+      const s = allSuppliers.find(s => s.id === id);
+      if (!s) return;
+      document.getElementById('invDetailPanel').innerHTML =
+        buildVetDetailCard(id, s.data, 'investigation');
+    };
+
+    async function loadRejected() {
+      const tbody = document.getElementById('rejectedTableBody');
+      try {
+        const rows = allSuppliers.filter(s => s.data.status === 'rejected');
+        if (!rows.length) {
+          tbody.innerHTML = '<tr class="table-msg"><td colspan="9">No rejected suppliers.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = rows.map(({ id, data: d }) => {
+          const isSpa = d.supplierType === 'spa';
+          const name = isSpa
+            ? escHtml(d.tradingName || d.displayName || '—')
+            : escHtml(d.displayName || [d.firstName, d.lastName].filter(Boolean).join(' ') || '—');
+          return `<tr>
+            <td>${escHtml(d.supplierNumber || '—')}</td>
+            <td>${name}</td>
+            <td>${typeBadge(d.supplierType)}</td>
+            <td>${escHtml(d.province || '—')}</td>
+            <td>${escHtml(d.suburb || '—')}</td>
+            <td>${escHtml(d.cellNumber || '—')}</td>
+            <td>${fmtDate(d.createdAt)}</td>
+            <td>${fmtDate(d.updatedAt)}</td>
+            <td>${escHtml(d.rejectedReason || '—')}</td>
+          </tr>`;
+        }).join('');
+      } catch (err) {
+        console.error('loadRejected error:', err);
+        tbody.innerHTML = '<tr class="table-msg"><td colspan="9">Failed to load rejected suppliers.</td></tr>';
+      }
+    }
+
+    function buildVettingCard(id, d) {
+      const type   = d.supplierType === 'spa' ? 'Spa' : 'Therapist';
+      const photos = (Array.isArray(d.photos) ? d.photos : [])
+        .map(p => typeof p === 'string' ? { url: p } : p).filter(p => p?.url);
+
+      const photosHtml = photos.length
+        ? photos.map(p => `<a href="${escHtml(p.url)}" target="_blank" rel="noopener"><img class="vet-photo-thumb" src="${escHtml(p.url)}" alt="Photo" loading="lazy" /></a>`).join('')
+        : '<span class="vet-field-value">No photos uploaded.</span>';
+
+      const idPhotoHtml = d.idPhotoUrl
+        ? `<a href="${escHtml(d.idPhotoUrl)}" target="_blank" rel="noopener"><img class="vet-id-photo" src="${escHtml(d.idPhotoUrl)}" alt="ID photo" loading="lazy" /></a>`
+        : '<span class="vet-field-value">No ID photo uploaded.</span>';
+
+      const massageTypes = Array.isArray(d.massageTypes) && d.massageTypes.length ? escHtml(d.massageTypes.join(', ')) : '—';
+      const treatments   = Array.isArray(d.treatments)   && d.treatments.length   ? escHtml(d.treatments.join(', '))   : '—';
+      const location     = [d.province, d.area, d.suburb].filter(Boolean).map(escHtml).join(' | ') || '—';
+
+      const card = document.createElement('div');
+      card.className = 'vet-card';
+      card.id        = 'vet-' + id;
+      card.innerHTML = `
+        <div>
+          <div class="vet-header">
+            <div class="vet-name">${escHtml(d.displayName || '—')}</div>
+          </div>
+          <div class="vet-meta">
+            <span class="vet-type-badge">${escHtml(type)}</span>
+            <span class="sbadge sbadge--pending">Pending</span>
+            <span class="vet-mem">${escHtml(d.supplierNumber || '')}</span>
+          </div>
+        </div>
+        <div>
+          <div class="vet-field-label">Classification &amp; Massage Types</div>
+          <div class="vet-field-value">${escHtml(d.classification || '—')} &mdash; ${massageTypes}</div>
+        </div>
+        <div class="vet-bio-box">
+          <div class="vet-bio-label">Bio — check for inappropriate content</div>
+          <div class="vet-bio-text">${escHtml(d.aboutMe || 'No bio provided.')}</div>
+        </div>
+        <div>
+          <div class="vet-field-label">Treatments</div>
+          <div class="vet-field-value">${treatments}</div>
+        </div>
+        <div>
+          <div class="vet-field-label">Location</div>
+          <div class="vet-field-value">${location}</div>
+        </div>
+        <div>
+          <div class="vet-field-label">Cell Number</div>
+          <div class="vet-field-value">${escHtml(d.cellNumber || '—')}</div>
+        </div>
+        <div>
+          <div class="vet-field-label">Profile Photos</div>
+          <div class="vet-photo-grid">${photosHtml}</div>
+        </div>
+        <div>
+          <div class="vet-field-label">ID Photo</div>
+          ${idPhotoHtml}
+        </div>
+        <div class="vet-actions">
+          <button class="vet-btn vet-btn--approve"     onclick="vetApprove('${id}')">Approve</button>
+          <button class="vet-btn vet-btn--reject"      onclick="vetReject('${id}')">Reject</button>
+          <button class="vet-btn vet-btn--investigate" onclick="vetInvestigate('${id}')">Investigate</button>
+        </div>`;
+      return card;
+    }
+
+    function removeVettingCard(id) {
+      const row = document.getElementById('vetrow-' + id);
+      if (row) row.remove();
+      const vetPanel = document.getElementById('vetDetailPanel');
+      if (vetPanel) vetPanel.innerHTML =
+        '<div class="placeholder-msg" style="padding-top:var(--space-8);">Select a record to begin vetting.</div>';
+      const invPanel = document.getElementById('invDetailPanel');
+      if (invPanel) invPanel.innerHTML =
+        '<div class="placeholder-msg" style="padding-top:var(--space-8);">Select a record to begin investigation review.</div>';
+    }
+
+    // ════════════════════════════════════════════
+    // LOCATION MANAGER  (unchanged logic)
+    // ════════════════════════════════════════════
+
+    async function loadLocations() {
+      try {
+        const res = await fetch('./locations.json');
+        LOCATIONS = await res.json();
+        lmPopulateProvinces();
+      } catch (err) {
+        console.error('loadLocations error:', err);
+      }
+    }
+
+    function lmPopulateProvinces() {
+      if (!LOCATIONS) return;
+      const sel = document.getElementById('lmProvince');
+      sel.innerHTML = '<option value="">Select province…</option>';
+      LOCATIONS.provinces.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.name; o.textContent = p.name;
+        sel.appendChild(o);
+      });
+    }
+
+    window.lmOnProvinceChange = function() {
+      const provinceName = document.getElementById('lmProvince').value;
+      ['lmStep2','lmStep3','lmStep4','lmStep5'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      if (!provinceName || !LOCATIONS) return;
+      const prov = LOCATIONS.provinces.find(p => p.name === provinceName);
+      if (!prov) return;
+      const sel = document.getElementById('lmTown');
+      sel.innerHTML = '<option value="">Select town…</option>';
+      prov.areas.forEach(a => {
+        const o = document.createElement('option');
+        o.value = a.name; o.textContent = a.name;
+        sel.appendChild(o);
+      });
+      document.getElementById('lmStep2').classList.remove('hidden');
+    };
+
+    window.lmOnTownChange = function() {
+      const provinceName = document.getElementById('lmProvince').value;
+      const townName     = document.getElementById('lmTown').value;
+      ['lmStep3','lmStep4','lmStep5'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      if (!townName || !LOCATIONS) return;
+      document.getElementById('lmAreaName').value = '';
+      lmRefreshSuburbChecklist(provinceName, townName);
+      ['lmStep3','lmStep4','lmStep5'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+    };
+
+    function lmRefreshSuburbChecklist(provinceName, townName) {
+      const prov    = LOCATIONS?.provinces.find(p => p.name === provinceName);
+      const town    = prov?.areas.find(a => a.name === townName);
+      const allSubs = town?.suburbs || [];
+      const assigned = new Set();
+      allAreas.filter(a => a.data.province === provinceName && a.data.town === townName)
+              .forEach(a => (a.data.suburbs || []).forEach(s => assigned.add(s)));
+      const available = allSubs.filter(s => !assigned.has(s));
+      const container = document.getElementById('lmSuburbsChecklist');
+      if (!available.length) {
+        container.innerHTML = '<p style="font-size:var(--text-sm);color:var(--text-muted);grid-column:1/-1;">All suburbs in this town are already assigned to existing areas.</p>';
+        return;
+      }
+      container.innerHTML = available.map(s =>
+        `<label class="lm-check-item"><input type="checkbox" name="lmSuburb" value="${escHtml(s)}" />${escHtml(s)}</label>`
+      ).join('');
+    }
+
+    window.lmSaveArea = async function() {
+      const province = document.getElementById('lmProvince').value;
+      const town     = document.getElementById('lmTown').value;
+      const areaName = document.getElementById('lmAreaName').value.trim();
+      const selected = Array.from(document.querySelectorAll('input[name="lmSuburb"]:checked')).map(cb => cb.value);
+      const msgEl    = document.getElementById('lmSaveMsg');
+      const btn      = document.getElementById('lmSaveBtn');
+      msgEl.className = 'save-msg hidden';
+      if (!province || !town) { msgEl.textContent = 'Please select a province and town.'; msgEl.className = 'save-msg save-msg--err'; return; }
+      if (!areaName)          { msgEl.textContent = 'Please enter an area name.';         msgEl.className = 'save-msg save-msg--err'; return; }
+      if (!selected.length)   { msgEl.textContent = 'Please select at least one suburb.'; msgEl.className = 'save-msg save-msg--err'; return; }
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        const ref = await addDoc(collection(db, 'areas'), { province, town, areaName, suburbs: selected, createdAt: serverTimestamp() });
+        allAreas.push({ id: ref.id, data: { province, town, areaName, suburbs: selected } });
+        renderAreasList();
+        document.getElementById('lmAreaName').value = '';
+        lmRefreshSuburbChecklist(province, town);
+        msgEl.textContent = 'Area created successfully.'; msgEl.className = 'save-msg save-msg--ok';
+        setTimeout(() => { msgEl.className = 'save-msg hidden'; }, 3000);
+      } catch (err) {
+        console.error('lmSaveArea error:', err);
+        msgEl.textContent = 'Failed to save area. Please try again.'; msgEl.className = 'save-msg save-msg--err';
+      } finally {
+        btn.disabled = false; btn.textContent = 'Save Area';
+      }
+    };
+
+    async function loadAreasList() {
+      try {
+        const snap = await getDocs(collection(db, 'areas'));
+        allAreas = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+        renderAreasList();
+      } catch (err) {
+        console.error('loadAreasList error:', err);
+        document.getElementById('lmAreasList').innerHTML = '<div class="lm-no-areas">Failed to load areas.</div>';
+      }
+    }
+
+    function renderAreasList() {
+      const container = document.getElementById('lmAreasList');
+      if (!allAreas.length) { container.innerHTML = '<div class="lm-no-areas">No areas created yet.</div>'; return; }
+      const groups = {};
+      allAreas.forEach(({ id, data: d }) => {
+        const key = `${d.province}|||${d.town}`;
+        if (!groups[key]) groups[key] = { province: d.province, town: d.town, areas: [] };
+        groups[key].areas.push({ id, data: d });
+      });
+      container.innerHTML = Object.values(groups).map(g => `
+        <div class="lm-areas-group">
+          <div class="lm-group-title">${escHtml(g.province)} — ${escHtml(g.town)}</div>
+          ${g.areas.map(({ id, data: d }) => `
+            <div class="lm-area-row">
+              <div class="lm-area-info">
+                <div class="lm-area-name">${escHtml(d.areaName)}</div>
+                <div class="lm-area-suburbs">${(d.suburbs || []).map(escHtml).join(', ')}</div>
+              </div>
+              <button class="act-btn act-btn--delete" onclick="lmDeleteArea('${id}')">Delete</button>
+            </div>`).join('')}
+        </div>`).join('');
+    }
+
+    window.lmDeleteArea = async function(id) {
+      const area = allAreas.find(a => a.id === id);
+      if (!area) return;
+      if (!confirm(`Delete area "${area.data.areaName}"? All suburbs will return to the unassigned pool.`)) return;
+      try {
+        await deleteDoc(doc(db, 'areas', id));
+        allAreas = allAreas.filter(a => a.id !== id);
+        renderAreasList();
+        const currentProvince = document.getElementById('lmProvince').value;
+        const currentTown     = document.getElementById('lmTown').value;
+        if (currentProvince === area.data.province && currentTown === area.data.town) {
+          lmRefreshSuburbChecklist(currentProvince, currentTown);
+        }
+      } catch (err) {
+        console.error('lmDeleteArea error:', err);
+        alert('Failed to delete area. Please try again.');
+      }
+    };
+
+    init();
+
+  </script>
+</body>
+</html>

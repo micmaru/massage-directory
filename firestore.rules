@@ -3,10 +3,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Suppliers: public read, authenticated user can create their own document
+    // Suppliers: public read, authenticated user can create/update their own document
     match /suppliers/{supplierId} {
       allow read: if true;
-      allow create, update: if request.auth != null && request.auth.uid == supplierId;
+      allow create: if request.auth != null && request.auth.uid == supplierId;
+      allow update: if (request.auth != null && request.auth.uid == supplierId)
+                    || (request.auth != null && request.auth.token.phone_number == resource.data.cellNumber);
     }
 
     // Enquiries: public read and write (customer contact form submissions)
@@ -34,6 +36,11 @@ service cloud.firestore {
     match /settings/{document=**} {
       allow read: if true;
       allow write: if false;
+    }
+
+    // Areas: admin-only collection (Location Manager in admin.html)
+    match /areas/{areaId} {
+      allow read, write: if true;
     }
 
     // Deny everything else by default

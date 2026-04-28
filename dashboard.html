@@ -136,7 +136,7 @@
         <div id="otpSection" class="hidden" style="margin-top: var(--space-4);">
           <div class="otp-status" id="otpStatusMsg"></div>
           <div class="otp-row">
-            <input type="number" id="loginOtpInput" class="input otp-input" placeholder="000000" maxlength="6" inputmode="numeric" />
+            <input type="text" id="loginOtpInput" class="input otp-input" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*" />
             <button type="button" class="btn btn--primary" id="verifyOtpBtn" onclick="verifyLoginOtp()">Verify</button>
           </div>
           <button type="button" class="btn btn--secondary btn--sm" style="margin-top: var(--space-3);" onclick="sendLoginOtp()">Resend OTP</button>
@@ -278,7 +278,6 @@
           <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Lomi Lomi" /><span class="check-item__label">Lomi Lomi</span></label>
           <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Craniosacral" /><span class="check-item__label">Craniosacral</span></label>
           <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Chair" /><span class="check-item__label">Chair</span></label>
-          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Four Hands" /><span class="check-item__label">Four Hands</span></label>
           <label class="check-item" id="dashMassageTypeAdultItem"><input type="checkbox" name="dashMassageTypes" value="Adult" /><span class="check-item__label">Adult</span></label>
         </div>
 
@@ -392,7 +391,7 @@
       getStorage, ref as storageRef, uploadBytes, getDownloadURL
     } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
     import {
-      collection, query, where, getDocs, doc, updateDoc, serverTimestamp
+      collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
     const auth    = getAuth(app);
@@ -408,6 +407,7 @@
     let dashCurrentIdPhotoUrl  = null;
     let dashNewIdPhotoFile     = null;
     let dashNewIdPhotoLocalUrl = null;
+    let currentUid             = null;
 
     // ════════════════════════════════════════════
     // LOCATIONS
@@ -502,8 +502,6 @@
     // ════════════════════════════════════════════
     // PAGE LOAD
     // ════════════════════════════════════════════
-    signOut(auth).catch(() => {});
-
     (async () => {
       let foundPhone = null;
       for (let i = 0; i < localStorage.length; i++) {
@@ -515,7 +513,13 @@
       }
 
       if (foundPhone) {
-        await loadDashboard(foundPhone);
+        const snap = await getDocs(query(collection(db, 'suppliers'), where('cellNumber', '==', foundPhone)));
+        if (!snap.empty) {
+          await loadDashboard(foundPhone);
+        } else {
+          localStorage.removeItem(sessionKey(foundPhone));
+          document.getElementById('loginScreen').classList.remove('hidden');
+        }
       } else {
         document.getElementById('loginScreen').classList.remove('hidden');
       }
@@ -596,6 +600,7 @@
 
       try {
         await confirmationResult.confirm(code);
+        currentUid = auth.currentUser?.uid || null;
         const phone = formatPhoneNumber(document.getElementById('loginCell').value.trim());
 
         const snap = await getDocs(query(collection(db, 'suppliers'), where('cellNumber', '==', phone)));
@@ -696,9 +701,9 @@
         if (data.area) {
           document.getElementById('editArea').value = data.area;
           onEditAreaChange();
-          if (data.suburb) document.getElementById('editSuburb').value = data.suburb;
         }
       }
+      if (data.suburb) document.getElementById('editSuburb').value = data.suburb;
       document.getElementById('editAddress').value = data.address || '';
 
       // ── Services card ──
@@ -837,6 +842,21 @@
     }
 
     // ════════════════════════════════════════════
+    // CHANGE LOG HELPER
+    // ════════════════════════════════════════════
+    function writeChangeLog(field) {
+      const uid = auth.currentUser?.uid;
+      addDoc(collection(db, 'suppliers', supplierDocId, 'changeLogs'), {
+        supplierId: uid,
+        field,
+        oldValue:  'dashboard update',
+        newValue:  'dashboard update',
+        changedAt: serverTimestamp(),
+        changedBy: 'supplier'
+      }).catch(() => {});
+    }
+
+    // ════════════════════════════════════════════
     // SAVE PROFILE
     // ════════════════════════════════════════════
     window.saveProfile = async function() {
@@ -845,6 +865,19 @@
       const btn = document.getElementById('saveProfileBtn');
       btn.classList.add('btn--loading');
       btn.textContent = 'Saving…';
+
+      if (!auth.currentUser) {
+        btn.classList.remove('btn--loading');
+        btn.textContent = 'Save Profile';
+        msgEl.textContent = 'Session expired, please log in again.';
+        msgEl.style.color = '#f87171';
+        msgEl.classList.remove('hidden');
+        setTimeout(() => {
+          document.getElementById('dashboardScreen').classList.add('hidden');
+          document.getElementById('loginScreen').classList.remove('hidden');
+        }, 2000);
+        return;
+      }
 
       const displayName    = document.getElementById('editDisplayName').value.trim();
       const aboutMe        = document.getElementById('editAboutMe').value.trim();
@@ -888,6 +921,7 @@
           email:          email          || null,
           updatedAt:      serverTimestamp()
         });
+        writeChangeLog('Profile');
 
         const sessionKeyFound = Object.keys(localStorage).find(k => k.startsWith('mm_session_'));
         if (sessionKeyFound) {
@@ -924,6 +958,19 @@
       btn.classList.add('btn--loading');
       btn.textContent = 'Saving…';
 
+      if (!auth.currentUser) {
+        btn.classList.remove('btn--loading');
+        btn.textContent = 'Save Location';
+        msgEl.textContent = 'Session expired, please log in again.';
+        msgEl.style.color = '#f87171';
+        msgEl.classList.remove('hidden');
+        setTimeout(() => {
+          document.getElementById('dashboardScreen').classList.add('hidden');
+          document.getElementById('loginScreen').classList.remove('hidden');
+        }, 2000);
+        return;
+      }
+
       const province = document.getElementById('editProvince').value;
       const area     = document.getElementById('editArea').value;
       const suburb   = document.getElementById('editSuburb').value;
@@ -952,6 +999,7 @@
         if (coords) update.geoLocation = { lat: coords.lat, lng: coords.lng };
 
         await updateDoc(doc(db, 'suppliers', supplierDocId), update);
+        writeChangeLog('Location');
 
         btn.classList.remove('btn--loading');
         btn.textContent = 'Save Location';
@@ -979,6 +1027,19 @@
       btn.classList.add('btn--loading');
       btn.textContent = 'Saving…';
 
+      if (!auth.currentUser) {
+        btn.classList.remove('btn--loading');
+        btn.textContent = 'Save Services';
+        msgEl.textContent = 'Session expired, please log in again.';
+        msgEl.style.color = '#f87171';
+        msgEl.classList.remove('hidden');
+        setTimeout(() => {
+          document.getElementById('dashboardScreen').classList.add('hidden');
+          document.getElementById('loginScreen').classList.remove('hidden');
+        }, 2000);
+        return;
+      }
+
       const massageTypes    = Array.from(document.querySelectorAll('input[name="dashMassageTypes"]:checked')).map(cb => cb.value);
       const treatments      = Array.from(document.querySelectorAll('input[name="dashTreatments"]:checked')).map(cb => cb.value);
       const classification  = document.querySelector('input[name="dashClassification"]:checked')?.value || null;
@@ -1001,6 +1062,7 @@
           genderServed,
           updatedAt: serverTimestamp()
         });
+        writeChangeLog('Services');
 
         btn.classList.remove('btn--loading');
         btn.textContent = 'Save Services';
@@ -1028,6 +1090,19 @@
       btn.classList.add('btn--loading');
       btn.textContent = 'Saving…';
 
+      if (!auth.currentUser) {
+        btn.classList.remove('btn--loading');
+        btn.textContent = 'Save Availability';
+        msgEl.textContent = 'Session expired, please log in again.';
+        msgEl.style.color = '#f87171';
+        msgEl.classList.remove('hidden');
+        setTimeout(() => {
+          document.getElementById('dashboardScreen').classList.add('hidden');
+          document.getElementById('loginScreen').classList.remove('hidden');
+        }, 2000);
+        return;
+      }
+
       const weeklyHours = {};
       DAYS.forEach(day => {
         const available = document.getElementById('dash-day-' + day).checked;
@@ -1052,6 +1127,7 @@
 
       try {
         await updateDoc(doc(db, 'suppliers', supplierDocId), update);
+        writeChangeLog('Availability');
 
         btn.classList.remove('btn--loading');
         btn.textContent = 'Save Availability';
@@ -1085,11 +1161,11 @@
       if (items.length > 0) {
         // Main preview (first item, 100% width)
         const mainWrap = document.createElement('div');
-        mainWrap.style.cssText = 'position:relative; border-radius:var(--radius); overflow:hidden; margin-bottom:var(--space-2);';
+        mainWrap.style.cssText = 'position:relative; border-radius:var(--radius); overflow:hidden; margin-bottom:var(--space-2); aspect-ratio:16/9;';
         const mainImg = document.createElement('img');
         mainImg.src   = items[0].src;
         mainImg.alt   = 'Photo 1';
-        mainImg.style.cssText = 'width:100%; max-height:220px; object-fit:cover; display:block; border-radius:var(--radius);';
+        mainImg.style.cssText = 'width:100%; height:100%; object-fit:cover; display:block;';
         mainWrap.appendChild(mainImg);
         mainWrap.appendChild(makePhotoRemoveBtn(items[0]));
         container.appendChild(mainWrap);
@@ -1128,7 +1204,7 @@
       const btn = document.createElement('button');
       btn.type        = 'button';
       btn.textContent = '✕';
-      btn.style.cssText = 'position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%; background:rgba(239,68,68,0.85); border:none; color:#fff; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; padding:0; font-family:var(--font-sans);';
+      btn.style.cssText = 'position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%; background:transparent; border:none; color:#fff; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; padding:0; font-family:var(--font-sans); text-shadow:0 0 4px rgba(0,0,0,0.9),0 1px 3px rgba(0,0,0,0.7);';
       btn.onclick = () => {
         if (item.isExisting) {
           currentPhotos.splice(item.idx, 1);
@@ -1167,7 +1243,7 @@
         const rem  = document.createElement('button');
         rem.type        = 'button';
         rem.textContent = '✕';
-        rem.style.cssText = 'position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:50%; background:rgba(239,68,68,0.85); border:none; color:#fff; font-size:10px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; font-family:var(--font-sans);';
+        rem.style.cssText = 'position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:50%; background:transparent; border:none; color:#fff; font-size:10px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; font-family:var(--font-sans); text-shadow:0 0 4px rgba(0,0,0,0.9),0 1px 3px rgba(0,0,0,0.7);';
         rem.onclick = () => window.clearDashIdPhoto();
         wrap.appendChild(img);
         wrap.appendChild(rem);
@@ -1213,6 +1289,19 @@
       btn.classList.add('btn--loading');
       btn.textContent = 'Uploading…';
 
+      if (!auth.currentUser) {
+        btn.classList.remove('btn--loading');
+        btn.textContent = 'Save Photos';
+        msgEl.textContent = 'Session expired, please log in again.';
+        msgEl.style.color = '#f87171';
+        msgEl.classList.remove('hidden');
+        setTimeout(() => {
+          document.getElementById('dashboardScreen').classList.add('hidden');
+          document.getElementById('loginScreen').classList.remove('hidden');
+        }, 2000);
+        return;
+      }
+
       const uploadUid = auth.currentUser?.uid || supplierData?.uid || supplierDocId;
 
       try {
@@ -1243,6 +1332,7 @@
         }
 
         await updateDoc(doc(db, 'suppliers', supplierDocId), update);
+        writeChangeLog('Photos');
 
         pendingUploads = [];
         currentPhotos  = photosArray;
@@ -1269,9 +1359,6 @@
     // SIGN OUT
     // ════════════════════════════════════════════
     window.signOutAndRedirect = async function() {
-      Object.keys(localStorage)
-        .filter(k => k.startsWith('mm_session_'))
-        .forEach(k => localStorage.removeItem(k));
       try { await signOut(auth); } catch(_) {}
       window.location.href = 'index.html';
     };
