@@ -1874,11 +1874,11 @@
         : null;
 
       const suburbMapsUrl = (d.suburb && d.province)
-        ? `https://www.google.com/maps/search/${encodeURIComponent((d.suburb||'') + ' ' + (d.province||'') + ' South Africa')}`
+        ? `https://www.google.com/maps/search/${encodeURIComponent((d.suburb||'') + ' ' + (d.province||'') + ' South Africa')}/@?api=1&map_action=map&basemap=roadmap&zoom=14`
         : null;
 
       const addressMapsUrl = d.address
-        ? `https://www.google.com/maps/search/${encodeURIComponent(d.address + ' South Africa')}`
+        ? `https://www.google.com/maps/search/${encodeURIComponent(d.address + ' South Africa')}/@?api=1&map_action=map&basemap=roadmap&zoom=16`
         : null;
 
       const classVal = escHtml(d.classification || '—');
