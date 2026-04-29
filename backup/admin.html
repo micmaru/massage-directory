@@ -325,20 +325,11 @@
                 onclick="goToScreen('Subscriptions')">Subscriptions</button>
             </div>
 
-              <div class="nav-menu-group">
-              <button class="nav-menu-item">Locations <span class="nav-arrow">▶</span></button>
-              <div class="nav-submenu">
-                <button class="nav-submenu-item" onclick="lmOpenProvince('Eastern Cape')">Eastern Cape</button>
-                <button class="nav-submenu-item" onclick="lmOpenProvince('Free State')">Free State</button>
-                <button class="nav-submenu-item" onclick="lmOpenProvince('Gauteng')">Gauteng</button>
-                <button class="nav-submenu-item" onclick="lmOpenProvince('KwaZulu-Natal')">KwaZulu-Natal</button>
-                <button class="nav-submenu-item" onclick="lmOpenProvince('Limpopo')">Limpopo</button>
-                <button class="nav-submenu-item" onclick="lmOpenProvince('Mpumalanga')">Mpumalanga</button>
-                <button class="nav-submenu-item" onclick="lmOpenProvince('Northern Cape')">Northern Cape</button>
-                <button class="nav-submenu-item" onclick="lmOpenProvince('North West')">North West</button>
-                <button class="nav-submenu-item" onclick="lmOpenProvince('Western Cape')">Western Cape</button>
-              </div>
+            <div class="nav-menu-group">
+              <button class="nav-menu-item"
+                onclick="switchTab('Location')">Location Manager</button>
             </div>
+
             <div class="nav-menu-group">
               <button class="nav-menu-item" id="navDbSummary"
                 onclick="goToScreen('DbSummary')">Database Summary</button>
@@ -764,86 +755,53 @@
     <!-- ══════════════════════════════════
          TAB 3 — LOCATION MANAGER  (unchanged)
     ══════════════════════════════════ -->
-    <div id="panelLocation" class="hidden">
+    <div id="panelLocation" class="admin-panel hidden">
 
-  <!-- Province submenu screen -->
-  <div id="lmProvinceScreen" class="admin-panel hidden">
-    <div class="admin-card">
-      <div class="admin-card__title">Select Province</div>
-      <div id="lmProvinceList" style="display:flex;flex-direction:column;gap:8px;"></div>
-    </div>
-  </div>
+      <!-- Section 1: Create new area -->
+      <div class="admin-card">
+        <div class="admin-card__title">Create New Area</div>
 
-  <!-- Three-column location manager screen -->
-  <div id="lmManagerScreen" class="hidden" style="height:calc(100vh - 60px);display:flex;flex-direction:column;">
-
-    <!-- Header bar -->
-    <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <button class="back-btn" onclick="lmBackToAdmin()">← Back</button>
-      <div style="font-size:1.1rem;font-weight:700;color:var(--text);" id="lmProvinceHeading">—</div>
-      <span style="font-size:11px;color:var(--text-muted);background:var(--bg);border:1px solid var(--border);padding:2px 10px;border-radius:999px;">Location Manager</span>
-    </div>
-
-    <!-- Three columns -->
-    <div style="display:grid;grid-template-columns:200px 1fr 1fr;gap:0;flex:1;overflow:hidden;">
-
-      <!-- COL 1: Towns -->
-      <div style="display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">Town / City</div>
-        <div style="padding:8px;border-bottom:1px solid var(--border);flex-shrink:0;">
-          <input type="text" id="lmTownSearch" class="input" placeholder="Search towns…" oninput="lmFilterTowns(this.value)" style="font-size:12px;padding:5px 8px;width:100%;box-sizing:border-box;" />
-        </div>
-        <div id="lmTownList" style="flex:1;overflow-y:auto;padding:4px;"></div>
-      </div>
-
-      <!-- COL 2: Suburbs -->
-      <div style="display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;" id="lmSuburbColHead">Suburbs</div>
-        <div style="padding:8px;border-bottom:1px solid var(--border);flex-shrink:0;">
-          <input type="text" id="lmSuburbSearch" class="input" placeholder="Search suburbs…" oninput="lmFilterSubs(this.value)" style="font-size:12px;padding:5px 8px;width:100%;box-sizing:border-box;" />
-        </div>
-        <div id="lmSuburbList" style="flex:1;overflow-y:auto;padding:4px;">
-          <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">Select a town first</div>
-        </div>
-      </div>
-
-      <!-- COL 3: Areas -->
-      <div style="display:flex;flex-direction:column;overflow:hidden;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">Areas</div>
-
-        <!-- Area pills -->
-        <div id="lmAreaPills" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border);min-height:46px;align-items:center;flex-shrink:0;">
-          <span style="font-size:12px;color:var(--text-muted);font-style:italic;">No areas yet</span>
+        <div class="lm-step">
+          <label class="field__label" for="lmProvince">Province</label>
+          <select id="lmProvince" class="select" onchange="lmOnProvinceChange()">
+            <option value="">Select province…</option>
+          </select>
         </div>
 
-        <!-- New area input -->
-        <div style="display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--border);flex-shrink:0;">
-          <input type="text" id="lmNewAreaInput" class="input" placeholder="New area name…" maxlength="40" onkeydown="if(event.key==='Enter')lmCreateArea()" style="flex:1;font-size:12px;padding:5px 8px;" />
-          <button class="btn btn--primary btn--sm" onclick="lmCreateArea()">+ Create</button>
+        <div class="lm-step hidden" id="lmStep2">
+          <label class="field__label" for="lmTown">Town</label>
+          <select id="lmTown" class="select" onchange="lmOnTownChange()">
+            <option value="">Select town…</option>
+          </select>
         </div>
 
-        <!-- Drop zone -->
-        <div id="lmDropZone" style="flex:1;overflow-y:auto;padding:8px;"
-          ondragover="lmOnDragOver(event)"
-          ondragleave="lmOnDragLeave(event)"
-          ondrop="lmOnDrop(event)">
-          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:12px;text-align:center;gap:8px;padding:16px;">
-            <div style="font-size:28px;opacity:0.2;">+</div>
-            Create or select an area above,<br>then drag suburbs here
+        <div class="lm-step hidden" id="lmStep3">
+          <label class="field__label" for="lmAreaName">Area Name</label>
+          <input type="text" id="lmAreaName" class="input" maxlength="50" placeholder="e.g. Northern Suburbs" />
+        </div>
+
+        <div class="lm-step hidden" id="lmStep4">
+          <label class="field__label">Select Suburbs</label>
+          <div id="lmSuburbsChecklist" class="lm-checklist"></div>
+        </div>
+
+        <div class="lm-step hidden" id="lmStep5">
+          <div style="display:flex; align-items:center; gap:var(--space-3);">
+            <button type="button" class="btn btn--primary btn--sm" id="lmSaveBtn" onclick="lmSaveArea()">Save Area</button>
+            <span id="lmSaveMsg" class="save-msg hidden"></span>
           </div>
         </div>
-
-        <!-- Save button -->
-        <div style="padding:10px;border-top:1px solid var(--border);flex-shrink:0;">
-          <button class="btn btn--primary btn--sm" id="lmSaveBtn" onclick="lmSaveArea()" disabled style="width:100%;">Save area</button>
-          <span id="lmSaveMsg" class="save-msg hidden" style="display:block;margin-top:6px;text-align:center;"></span>
-        </div>
-
       </div>
-    </div>
-  </div>
 
-</div><!-- /panelLocation -->
+      <!-- Section 2: Existing areas -->
+      <div class="admin-card">
+        <div class="admin-card__title">Existing Areas</div>
+        <div id="lmAreasList">
+          <div class="lm-no-areas">Loading areas…</div>
+        </div>
+      </div>
+
+    </div><!-- /panelLocation -->
 
   </div><!-- /admin-content -->
 
@@ -2370,367 +2328,154 @@
     }
 
     // ════════════════════════════════════════════
-    // LOCATION MANAGER
+    // LOCATION MANAGER  (unchanged logic)
     // ════════════════════════════════════════════
-
-    let lmSelectedTown    = null;
-    let lmAreas           = {};   // { townKey: { areaName: [suburbs] } }
-    let lmActiveArea      = null;
-    let lmDraggingSuburb  = null;
 
     async function loadLocations() {
       try {
-        const res  = await fetch('./locations.json');
-        LOCATIONS  = await res.json();
-        lmBuildProvinceMenu();
+        const res = await fetch('./locations.json');
+        LOCATIONS = await res.json();
+        lmPopulateProvinces();
       } catch (err) {
         console.error('loadLocations error:', err);
       }
     }
 
-    function lmBuildProvinceMenu() {
+    function lmPopulateProvinces() {
       if (!LOCATIONS) return;
-      const nav = document.querySelector('.nav-menu-group button[onclick="switchTab(\'Location\')"]');
+      const sel = document.getElementById('lmProvince');
+      sel.innerHTML = '<option value="">Select province…</option>';
+      LOCATIONS.provinces.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.name; o.textContent = p.name;
+        sel.appendChild(o);
+      });
     }
 
-    window.lmOpenProvince = function(provinceName) {
-      switchTab('Location');
-      document.getElementById('lmProvinceScreen').classList.add('hidden');
-      document.getElementById('lmManagerScreen').classList.remove('hidden');
-      document.getElementById('lmProvinceHeading').textContent = provinceName;
-      lmSelectedTown   = null;
-      lmActiveArea     = null;
-      lmAreas[provinceName] = lmAreas[provinceName] || {};
-      lmCurrentProvince = provinceName;
-      lmFilterTowns('');
-      lmRenderSuburbList();
-      lmRenderAreaPills();
-      lmRenderDropZone();
-    };
-
-    let lmCurrentProvince = null;
-
-    window.lmBackToAdmin = function() {
-      switchTab('General');
-    };
-
-    window.lmFilterTowns = function(q) {
-      const list = document.getElementById('lmTownList');
-      if (!LOCATIONS || !lmCurrentProvince) { list.innerHTML = ''; return; }
-      const prov = LOCATIONS.provinces.find(p => p.name === lmCurrentProvince);
+    window.lmOnProvinceChange = function() {
+      const provinceName = document.getElementById('lmProvince').value;
+      ['lmStep2','lmStep3','lmStep4','lmStep5'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      if (!provinceName || !LOCATIONS) return;
+      const prov = LOCATIONS.provinces.find(p => p.name === provinceName);
       if (!prov) return;
-      const towns = (prov.areas || prov.towns || []);
-      const filtered = q
-        ? towns.filter(t => t.name.toLowerCase().includes(q.toLowerCase()))
-        : towns;
-      list.innerHTML = filtered.map(t =>
-        `<div class="lm-town-item${lmSelectedTown === t.name ? ' lm-town-active' : ''}"
-          onclick="lmSelectTown('${escHtml(t.name)}')"
-          style="padding:8px 10px;font-size:13px;color:var(--text);cursor:pointer;border-radius:6px;margin-bottom:2px;${lmSelectedTown === t.name ? 'background:rgba(108,99,255,0.12);color:#6c63ff;font-weight:600;' : ''}"
-          onmouseover="if('${lmSelectedTown}' !== '${escHtml(t.name)}') this.style.background='rgba(108,99,255,0.05)'"
-          onmouseout="if('${lmSelectedTown}' !== '${escHtml(t.name)}') this.style.background=''"
-        >${escHtml(t.name)}</div>`
-      ).join('');
+      const sel = document.getElementById('lmTown');
+      sel.innerHTML = '<option value="">Select town…</option>';
+      prov.areas.forEach(a => {
+        const o = document.createElement('option');
+        o.value = a.name; o.textContent = a.name;
+        sel.appendChild(o);
+      });
+      document.getElementById('lmStep2').classList.remove('hidden');
     };
 
-    window.lmSelectTown = function(townName) {
-      lmSelectedTown = townName;
-      lmActiveArea   = null;
-      if (!lmAreas[lmCurrentProvince]) lmAreas[lmCurrentProvince] = {};
-      if (!lmAreas[lmCurrentProvince][townName]) lmAreas[lmCurrentProvince][townName] = {};
-      document.getElementById('lmSuburbColHead').textContent = townName + ' suburbs';
-      document.getElementById('lmSuburbSearch').value = '';
-      lmFilterTowns(document.getElementById('lmTownSearch').value);
-      lmRenderSuburbList();
-      lmLoadAreasForTown(townName);
+    window.lmOnTownChange = function() {
+      const provinceName = document.getElementById('lmProvince').value;
+      const townName     = document.getElementById('lmTown').value;
+      ['lmStep3','lmStep4','lmStep5'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      if (!townName || !LOCATIONS) return;
+      document.getElementById('lmAreaName').value = '';
+      lmRefreshSuburbChecklist(provinceName, townName);
+      ['lmStep3','lmStep4','lmStep5'].forEach(id => document.getElementById(id).classList.remove('hidden'));
     };
 
-    async function lmLoadAreasForTown(townName) {
-      try {
-        const q    = query(collection(db, 'areas'),
-          where('province', '==', lmCurrentProvince),
-          where('town',     '==', townName));
-        const snap = await getDocs(q);
-        if (!lmAreas[lmCurrentProvince]) lmAreas[lmCurrentProvince] = {};
-        if (!lmAreas[lmCurrentProvince][townName]) lmAreas[lmCurrentProvince][townName] = {};
-        snap.docs.forEach(d => {
-          lmAreas[lmCurrentProvince][townName][d.data().areaName] = {
-            suburbs: d.data().suburbs || [],
-            firestoreId: d.id
-          };
-        });
-        lmActiveArea = null;
-        lmRenderAreaPills();
-        lmRenderDropZone();
-        lmRenderSuburbList();
-      } catch (err) {
-        console.error('lmLoadAreasForTown error:', err);
-      }
-    }
-
-    function lmGetAssignedSuburbs() {
-      if (!lmCurrentProvince || !lmSelectedTown) return new Set();
-      const townAreas = lmAreas[lmCurrentProvince]?.[lmSelectedTown] || {};
-      const assigned  = new Set();
-      Object.values(townAreas).forEach(a => (a.suburbs || []).forEach(s => assigned.add(s)));
-      return assigned;
-    }
-
-    window.lmFilterSubs = function(q) { lmRenderSuburbList(q); };
-
-    function lmRenderSuburbList(q) {
-      const list = document.getElementById('lmSuburbList');
-      if (!lmSelectedTown || !LOCATIONS) {
-        list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">Select a town first</div>';
-        return;
-      }
-      const prov   = LOCATIONS.provinces.find(p => p.name === lmCurrentProvince);
-      const town   = (prov?.areas || prov?.towns || []).find(t => t.name === lmSelectedTown);
+    function lmRefreshSuburbChecklist(provinceName, townName) {
+      const prov    = LOCATIONS?.provinces.find(p => p.name === provinceName);
+      const town    = prov?.areas.find(a => a.name === townName);
       const allSubs = town?.suburbs || [];
-      const assigned = lmGetAssignedSuburbs();
-      const filtered = q
-        ? allSubs.filter(s => s.toLowerCase().includes(q.toLowerCase()))
-        : allSubs;
-
-      list.innerHTML = filtered.map(s => {
-        const isAssigned = assigned.has(s);
-        const areaLabel  = isAssigned ? lmGetAreaForSub(s) : '';
-        return `<div
-          draggable="${!isAssigned}"
-          ondragstart="${isAssigned ? '' : `lmDragStart(event,'${escHtml(s)}')`}"
-          style="padding:6px 10px;font-size:12px;color:${isAssigned ? 'var(--text-muted)' : 'var(--text)'};
-            cursor:${isAssigned ? 'default' : 'grab'};border-radius:6px;margin-bottom:3px;
-            background:${isAssigned ? 'transparent' : 'var(--bg)'};
-            border:1px solid ${isAssigned ? 'transparent' : 'var(--border)'};
-            display:flex;align-items:center;gap:6px;font-style:${isAssigned ? 'italic' : 'normal'};"
-          onmouseover="if(!${isAssigned}) this.style.borderColor='rgba(108,99,255,0.4)'"
-          onmouseout="if(!${isAssigned}) this.style.borderColor='var(--border)'"
-        >
-          ${!isAssigned ? `<div style="display:flex;flex-direction:column;gap:2px;width:10px;flex-shrink:0;">
-            <span style="display:block;height:1.5px;background:var(--border);border-radius:1px;"></span>
-            <span style="display:block;height:1.5px;background:var(--border);border-radius:1px;"></span>
-            <span style="display:block;height:1.5px;background:var(--border);border-radius:1px;"></span>
-          </div>` : `<span style="width:10px;text-align:center;font-size:10px;color:rgba(108,99,255,0.6);">✓</span>`}
-          ${escHtml(s)}
-          ${isAssigned ? `<span style="margin-left:auto;font-size:10px;color:rgba(108,99,255,0.6);">(${escHtml(areaLabel)})</span>` : ''}
-        </div>`;
-      }).join('');
-    }
-
-    function lmGetAreaForSub(s) {
-      const townAreas = lmAreas[lmCurrentProvince]?.[lmSelectedTown] || {};
-      for (const [name, data] of Object.entries(townAreas)) {
-        if ((data.suburbs || []).includes(s)) return name;
-      }
-      return '';
-    }
-
-    window.lmCreateArea = function() {
-      const inp  = document.getElementById('lmNewAreaInput');
-      const name = inp.value.trim();
-      if (!name) { inp.focus(); return; }
-      if (!lmSelectedTown) { lmShowMsg('Select a town first', false); return; }
-      const townAreas = lmAreas[lmCurrentProvince][lmSelectedTown];
-      if (townAreas[name]) { lmShowMsg('Area already exists', false); return; }
-      if (Object.keys(townAreas).length >= 5) { lmShowMsg('Max 5 areas per town', false); return; }
-      townAreas[name] = { suburbs: [], firestoreId: null };
-      lmActiveArea    = name;
-      inp.value       = '';
-      lmRenderAreaPills();
-      lmRenderDropZone();
-      lmUpdateSaveBtn();
-    };
-
-    function lmRenderAreaPills() {
-      const el = document.getElementById('lmAreaPills');
-      if (!lmSelectedTown) {
-        el.innerHTML = '<span style="font-size:12px;color:var(--text-muted);font-style:italic;">Select a town first</span>';
+      const assigned = new Set();
+      allAreas.filter(a => a.data.province === provinceName && a.data.town === townName)
+              .forEach(a => (a.data.suburbs || []).forEach(s => assigned.add(s)));
+      const available = allSubs.filter(s => !assigned.has(s));
+      const container = document.getElementById('lmSuburbsChecklist');
+      if (!available.length) {
+        container.innerHTML = '<p style="font-size:var(--text-sm);color:var(--text-muted);grid-column:1/-1;">All suburbs in this town are already assigned to existing areas.</p>';
         return;
       }
-      const townAreas = lmAreas[lmCurrentProvince]?.[lmSelectedTown] || {};
-      const names     = Object.keys(townAreas);
-      if (!names.length) {
-        el.innerHTML = '<span style="font-size:12px;color:var(--text-muted);font-style:italic;">No areas yet</span>';
-        return;
-      }
-      el.innerHTML = names.map(a => {
-        const count   = (townAreas[a].suburbs || []).length;
-        const isActive = lmActiveArea === a;
-        return `<div onclick="lmSelectArea('${escHtml(a)}')" style="
-          display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;
-          font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;
-          border:1px solid ${isActive ? 'rgba(108,99,255,0.4)' : 'var(--border)'};
-          background:${isActive ? 'rgba(108,99,255,0.12)' : 'var(--bg)'};
-          color:${isActive ? '#6c63ff' : 'var(--text-muted)'};">
-          ${escHtml(a)}
-          <span style="font-size:10px;opacity:0.6;">(${count})</span>
-          <span onclick="event.stopPropagation();lmDeleteArea('${escHtml(a)}')"
-            style="font-size:14px;opacity:0.6;line-height:1;cursor:pointer;"
-            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">×</span>
-        </div>`;
-      }).join('');
-    }
-
-    window.lmSelectArea = function(name) {
-      lmActiveArea = name;
-      lmRenderAreaPills();
-      lmRenderDropZone();
-      lmUpdateSaveBtn();
-    };
-
-    window.lmDeleteArea = async function(name) {
-      if (!confirm(`Delete area "${name}"? Suburbs will return to the pool.`)) return;
-      const townAreas = lmAreas[lmCurrentProvince][lmSelectedTown];
-      const firestoreId = townAreas[name]?.firestoreId;
-      try {
-        if (firestoreId) await deleteDoc(doc(db, 'areas', firestoreId));
-        delete townAreas[name];
-        if (lmActiveArea === name) lmActiveArea = null;
-        lmRenderAreaPills();
-        lmRenderDropZone();
-        lmRenderSuburbList();
-        lmUpdateSaveBtn();
-      } catch (err) {
-        console.error('lmDeleteArea error:', err);
-        alert('Failed to delete area.');
-      }
-    };
-
-    function lmRenderDropZone() {
-      const zone = document.getElementById('lmDropZone');
-      if (!lmActiveArea) {
-        zone.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-          height:100%;color:var(--text-muted);font-size:12px;text-align:center;gap:8px;padding:16px;">
-          <div style="font-size:28px;opacity:0.2;">+</div>
-          Create or select an area above,<br>then drag suburbs here
-        </div>`;
-        return;
-      }
-      const townAreas = lmAreas[lmCurrentProvince]?.[lmSelectedTown] || {};
-      const subs      = townAreas[lmActiveArea]?.suburbs || [];
-      if (!subs.length) {
-        zone.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-          height:100%;color:var(--text-muted);font-size:12px;text-align:center;gap:8px;padding:16px;">
-          <div style="font-size:28px;opacity:0.2;">+</div>
-          Drag suburbs from the middle column into this area
-        </div>`;
-        return;
-      }
-      zone.innerHTML = subs.map(s =>
-        `<div style="padding:5px 10px;font-size:12px;border-radius:6px;margin-bottom:3px;
-          background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.25);
-          color:#e2e8f0;display:flex;align-items:center;justify-content:space-between;">
-          ${escHtml(s)}
-          <span onclick="lmRemoveSub('${escHtml(s)}')"
-            style="cursor:pointer;opacity:0.6;font-size:14px;line-height:1;"
-            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">×</span>
-        </div>`
+      container.innerHTML = available.map(s =>
+        `<label class="lm-check-item"><input type="checkbox" name="lmSuburb" value="${escHtml(s)}" />${escHtml(s)}</label>`
       ).join('');
     }
-
-    window.lmRemoveSub = function(s) {
-      const townAreas = lmAreas[lmCurrentProvince][lmSelectedTown];
-      townAreas[lmActiveArea].suburbs = townAreas[lmActiveArea].suburbs.filter(x => x !== s);
-      lmRenderDropZone();
-      lmRenderSuburbList();
-      lmRenderAreaPills();
-      lmUpdateSaveBtn();
-    };
-
-    window.lmDragStart = function(e, s) {
-      lmDraggingSuburb = s;
-      e.dataTransfer.effectAllowed = 'move';
-    };
-
-    window.lmOnDragOver = function(e) {
-      e.preventDefault();
-      if (lmActiveArea) document.getElementById('lmDropZone').style.outline = '1.5px dashed rgba(108,99,255,0.5)';
-    };
-
-    window.lmOnDragLeave = function(e) {
-      document.getElementById('lmDropZone').style.outline = '';
-    };
-
-    window.lmOnDrop = function(e) {
-      e.preventDefault();
-      document.getElementById('lmDropZone').style.outline = '';
-      if (!lmDraggingSuburb || !lmActiveArea) return;
-      const townAreas = lmAreas[lmCurrentProvince][lmSelectedTown];
-      if (!townAreas[lmActiveArea].suburbs.includes(lmDraggingSuburb)) {
-        townAreas[lmActiveArea].suburbs.push(lmDraggingSuburb);
-        townAreas[lmActiveArea].suburbs.sort();
-      }
-      lmRenderDropZone();
-      lmRenderSuburbList();
-      lmRenderAreaPills();
-      lmUpdateSaveBtn();
-      lmDraggingSuburb = null;
-    };
 
     window.lmSaveArea = async function() {
-      if (!lmActiveArea || !lmSelectedTown) return;
-      const townAreas = lmAreas[lmCurrentProvince][lmSelectedTown];
-      const areaData  = townAreas[lmActiveArea];
-      const btn       = document.getElementById('lmSaveBtn');
-      const msgEl     = document.getElementById('lmSaveMsg');
-      if (!areaData.suburbs.length) { lmShowMsg('Add at least one suburb first', false); return; }
-      btn.disabled    = true;
-      btn.textContent = 'Saving…';
+      const province = document.getElementById('lmProvince').value;
+      const town     = document.getElementById('lmTown').value;
+      const areaName = document.getElementById('lmAreaName').value.trim();
+      const selected = Array.from(document.querySelectorAll('input[name="lmSuburb"]:checked')).map(cb => cb.value);
+      const msgEl    = document.getElementById('lmSaveMsg');
+      const btn      = document.getElementById('lmSaveBtn');
+      msgEl.className = 'save-msg hidden';
+      if (!province || !town) { msgEl.textContent = 'Please select a province and town.'; msgEl.className = 'save-msg save-msg--err'; return; }
+      if (!areaName)          { msgEl.textContent = 'Please enter an area name.';         msgEl.className = 'save-msg save-msg--err'; return; }
+      if (!selected.length)   { msgEl.textContent = 'Please select at least one suburb.'; msgEl.className = 'save-msg save-msg--err'; return; }
+      btn.disabled = true; btn.textContent = 'Saving…';
       try {
-        if (areaData.firestoreId) {
-          await updateDoc(doc(db, 'areas', areaData.firestoreId), {
-            suburbs: areaData.suburbs, updatedAt: serverTimestamp()
-          });
-        } else {
-          const ref = await addDoc(collection(db, 'areas'), {
-            province: lmCurrentProvince, town: lmSelectedTown,
-            areaName: lmActiveArea, suburbs: areaData.suburbs,
-            createdAt: serverTimestamp()
-          });
-          townAreas[lmActiveArea].firestoreId = ref.id;
-        }
-        allAreas = allAreas.filter(a =>
-          !(a.data.province === lmCurrentProvince &&
-            a.data.town     === lmSelectedTown    &&
-            a.data.areaName === lmActiveArea));
-        allAreas.push({ id: townAreas[lmActiveArea].firestoreId, data: {
-          province: lmCurrentProvince, town: lmSelectedTown,
-          areaName: lmActiveArea, suburbs: areaData.suburbs
-        }});
-        lmShowMsg('Saved ✓', true);
+        const ref = await addDoc(collection(db, 'areas'), { province, town, areaName, suburbs: selected, createdAt: serverTimestamp() });
+        allAreas.push({ id: ref.id, data: { province, town, areaName, suburbs: selected } });
+        renderAreasList();
+        document.getElementById('lmAreaName').value = '';
+        lmRefreshSuburbChecklist(province, town);
+        msgEl.textContent = 'Area created successfully.'; msgEl.className = 'save-msg save-msg--ok';
+        setTimeout(() => { msgEl.className = 'save-msg hidden'; }, 3000);
       } catch (err) {
         console.error('lmSaveArea error:', err);
-        lmShowMsg('Failed to save', false);
+        msgEl.textContent = 'Failed to save area. Please try again.'; msgEl.className = 'save-msg save-msg--err';
       } finally {
-        btn.disabled    = false;
-        btn.textContent = 'Save area';
+        btn.disabled = false; btn.textContent = 'Save Area';
       }
     };
-
-    function lmUpdateSaveBtn() {
-      const btn = document.getElementById('lmSaveBtn');
-      if (!btn) return;
-      const townAreas = lmAreas[lmCurrentProvince]?.[lmSelectedTown] || {};
-      const hasData   = lmActiveArea && (townAreas[lmActiveArea]?.suburbs || []).length > 0;
-      btn.disabled    = !hasData;
-    }
-
-    function lmShowMsg(msg, ok) {
-      const el = document.getElementById('lmSaveMsg');
-      if (!el) return;
-      el.textContent = msg;
-      el.className   = ok ? 'save-msg save-msg--ok' : 'save-msg save-msg--err';
-      setTimeout(() => { el.className = 'save-msg hidden'; }, 3000);
-    }
 
     async function loadAreasList() {
       try {
         const snap = await getDocs(collection(db, 'areas'));
-        allAreas   = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+        allAreas = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+        renderAreasList();
       } catch (err) {
         console.error('loadAreasList error:', err);
+        document.getElementById('lmAreasList').innerHTML = '<div class="lm-no-areas">Failed to load areas.</div>';
       }
-     };
+    }
+
+    function renderAreasList() {
+      const container = document.getElementById('lmAreasList');
+      if (!allAreas.length) { container.innerHTML = '<div class="lm-no-areas">No areas created yet.</div>'; return; }
+      const groups = {};
+      allAreas.forEach(({ id, data: d }) => {
+        const key = `${d.province}|||${d.town}`;
+        if (!groups[key]) groups[key] = { province: d.province, town: d.town, areas: [] };
+        groups[key].areas.push({ id, data: d });
+      });
+      container.innerHTML = Object.values(groups).map(g => `
+        <div class="lm-areas-group">
+          <div class="lm-group-title">${escHtml(g.province)} — ${escHtml(g.town)}</div>
+          ${g.areas.map(({ id, data: d }) => `
+            <div class="lm-area-row">
+              <div class="lm-area-info">
+                <div class="lm-area-name">${escHtml(d.areaName)}</div>
+                <div class="lm-area-suburbs">${(d.suburbs || []).map(escHtml).join(', ')}</div>
+              </div>
+              <button class="act-btn act-btn--delete" onclick="lmDeleteArea('${id}')">Delete</button>
+            </div>`).join('')}
+        </div>`).join('');
+    }
+
+    window.lmDeleteArea = async function(id) {
+      const area = allAreas.find(a => a.id === id);
+      if (!area) return;
+      if (!confirm(`Delete area "${area.data.areaName}"? All suburbs will return to the unassigned pool.`)) return;
+      try {
+        await deleteDoc(doc(db, 'areas', id));
+        allAreas = allAreas.filter(a => a.id !== id);
+        renderAreasList();
+        const currentProvince = document.getElementById('lmProvince').value;
+        const currentTown     = document.getElementById('lmTown').value;
+        if (currentProvince === area.data.province && currentTown === area.data.town) {
+          lmRefreshSuburbChecklist(currentProvince, currentTown);
+        }
+      } catch (err) {
+        console.error('lmDeleteArea error:', err);
+        alert('Failed to delete area. Please try again.');
+      }
+    };
 
     init();
 
