@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MassageMap — Map View</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
   <style>
     /* ── Hamburger button ── */
     .header__hamburger {
@@ -205,31 +206,40 @@
     }
     #map { width: 100%; height: 100%; }
 
-    /* ── Pin legend bar (fixed above bottom nav) ── */
+    /* ── Pin legend pill (floating, centered above back button) ── */
     .map-legend {
       position: fixed;
-      bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
-      left: 0;
-      right: 0;
-      height: 40px;
-      z-index: 50;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 110;
       background: rgba(13, 17, 23, 0.88);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      border-top: 1px solid rgba(255, 255, 255, 0.07);
-      display: flex;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 999px;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 36px;
+      gap: 20px;
+      padding: 0 18px;
+      height: 34px;
+      white-space: nowrap;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
     }
     .map-legend__item {
       display: flex;
       align-items: center;
       gap: 7px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
-      color: #94a3b8;
+      color: #e2e8f0;
       user-select: none;
+    }
+    .map-legend__dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
     }
   </style>
 </head>
@@ -312,22 +322,16 @@
 
 
   <!-- ══════════════════════════════════════
-       Pin legend bar
+       Pin legend pill
   ══════════════════════════════════════ -->
   <div class="map-legend" aria-label="Map legend">
     <div class="map-legend__item">
-      <svg width="16" height="21" viewBox="0 0 32 42" fill="none" aria-hidden="true">
-        <path d="M16,42 C10,35 1,27 1,16 A15,15 0 1 1 31,16 C31,27 22,35 16,42Z" fill="#E24B4A" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>
-        <text x="16" y="21" font-family="system-ui,Arial,sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">T</text>
-      </svg>
-      <span>Therapist</span>
+      <span class="map-legend__dot" style="background:#e53e3e;" aria-hidden="true"></span>
+      <span>Therapists</span>
     </div>
     <div class="map-legend__item">
-      <svg width="16" height="21" viewBox="0 0 32 42" fill="none" aria-hidden="true">
-        <path d="M16,42 C10,35 1,27 1,16 A15,15 0 1 1 31,16 C31,27 22,35 16,42Z" fill="#EF9F27" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>
-        <text x="16" y="21" font-family="system-ui,Arial,sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">S</text>
-      </svg>
-      <span>Spa</span>
+      <span class="map-legend__dot" style="background:#d97706;" aria-hidden="true"></span>
+      <span>Spas</span>
     </div>
   </div>
 
@@ -528,11 +532,14 @@
 
       google.maps.event.trigger(map, 'resize');
 
-      /* Load all active suppliers */
+      /* Load all active suppliers and cluster by type */
       try {
         const snap = await getDocs(
           query(collection(db, 'suppliers'), where('status', '==', 'active'))
         );
+
+        const therapistMarkers = [];
+        const spaMarkers       = [];
 
         snap.forEach(docSnap => {
           const d = { id: docSnap.id, ...docSnap.data() };
@@ -544,7 +551,6 @@
           const isSpa  = d.supplierType === 'spa';
           const marker = new google.maps.Marker({
             position: { lat: pinLat, lng: pinLng },
-            map,
             title: d.displayName || '',
             icon:  pinIcon(isSpa ? '#EF9F27' : '#E24B4A', isSpa ? 'S' : 'T'),
           });
@@ -552,7 +558,49 @@
           marker.addListener('click', () => {
             window.location.href = `profile.html?id=${encodeURIComponent(d.id)}&type=${encodeURIComponent(d.supplierType || '')}&source=map`;
           });
+
+          if (isSpa) { spaMarkers.push(marker); }
+          else        { therapistMarkers.push(marker); }
         });
+
+        /* Custom renderer — fixed colour regardless of cluster count */
+        function clusterRenderer(color) {
+          return {
+            render({ count, position }) {
+              return new google.maps.Marker({
+                position,
+                label: {
+                  text:       String(count),
+                  color:      '#fff',
+                  fontSize:   '12px',
+                  fontWeight: '700',
+                },
+                icon: {
+                  path:        google.maps.SymbolPath.CIRCLE,
+                  fillColor:   color,
+                  fillOpacity: 1,
+                  strokeColor: 'rgba(0,0,0,0.3)',
+                  strokeWeight: 1,
+                  scale:       18,
+                },
+                zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+              });
+            },
+          };
+        }
+
+        new markerClusterer.MarkerClusterer({
+          map,
+          markers:  therapistMarkers,
+          renderer: clusterRenderer('#e53e3e'),
+        });
+
+        new markerClusterer.MarkerClusterer({
+          map,
+          markers:  spaMarkers,
+          renderer: clusterRenderer('#d97706'),
+        });
+
       } catch (err) {
         console.error('Firestore error:', err);
       }
