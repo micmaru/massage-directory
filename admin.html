@@ -351,6 +351,8 @@
                   onclick="goToScreen('Settings')">Settings</button>
                 <button class="nav-submenu-item" id="navChangeLog"
                   onclick="goToScreen('ChangeLog')">Change Log</button>
+                <button class="nav-submenu-item" id="navSupplierStatus"
+                  onclick="goToScreen('SupplierStatus')">Supplier Status</button>
               </div>
             </div>
 
@@ -542,6 +544,56 @@
           </div>
         </div>
       </div><!-- /screenChangeLog -->
+
+      <!-- ── SUPPLIER STATUS SUB-SCREEN ── -->
+      <div id="sectionSupplierStatus" class="admin-panel hidden">
+        <div>
+          <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+
+        <!-- Card 1: Bulk Status Update -->
+        <div class="admin-card">
+          <div class="admin-card__title">Bulk Status Update</div>
+          <div class="settings-row">
+            <span class="settings-row__label">From status</span>
+            <select id="bulkFromStatus" class="select">
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row__label">To status</span>
+            <select id="bulkToStatus" class="select">
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="settings-row" style="gap:var(--space-3);flex-wrap:wrap;">
+            <button class="back-btn" id="bulkPreviewBtn">Preview count</button>
+            <span id="bulkPreviewMsg" style="font-size:var(--text-sm);color:var(--text-muted);"></span>
+          </div>
+          <div class="settings-row" style="gap:var(--space-3);flex-wrap:wrap;">
+            <button class="back-btn" id="bulkUpdateBtn" disabled style="opacity:0.45;">Apply bulk update</button>
+            <span id="bulkResultMsg" style="font-size:var(--text-sm);"></span>
+          </div>
+        </div>
+
+        <!-- Card 2: Single Record Status Update -->
+        <div class="admin-card">
+          <div class="admin-card__title">Single Record Status Update</div>
+          <div class="settings-row" style="gap:var(--space-3);flex-wrap:wrap;">
+            <input type="search" id="singleSearchInput" class="f-search"
+              placeholder="Supplier number, display name, first / last name, phone…"
+              autocomplete="off" style="flex:1;min-width:200px;" />
+            <button class="back-btn" id="singleSearchBtn">Search</button>
+          </div>
+          <div id="singleSearchResults" style="margin-top:var(--space-3);display:flex;flex-direction:column;gap:var(--space-2);"></div>
+        </div>
+      </div><!-- /sectionSupplierStatus -->
 
       <!-- ── DATABASE SUMMARY SUB-SCREEN ── -->
       <div id="screenDbSummary" class="admin-panel hidden">
@@ -873,7 +925,8 @@
     // ════════════════════════════════════════════
     const NAV_ITEM_IDS = {
       Therapists: 'navTherapists', Spas: 'navSpas',
-      Subscriptions: 'navSubscriptions', DbSummary: 'navDbSummary', Settings: 'navSettings', ChangeLog: 'navChangeLog'
+      Subscriptions: 'navSubscriptions', DbSummary: 'navDbSummary', Settings: 'navSettings', ChangeLog: 'navChangeLog',
+      SupplierStatus: 'navSupplierStatus'
     };
 
     function setActiveNavItem(name) {
@@ -888,6 +941,7 @@
       ['Landing', 'Therapists', 'Spas', 'Subscriptions', 'Settings', 'ChangeLog', 'DbSummary', 'SupplierDetail'].forEach(s => {
         document.getElementById('screen' + s).classList.toggle('hidden', s !== name);
       });
+      document.getElementById('sectionSupplierStatus').classList.toggle('hidden', name !== 'SupplierStatus');
     }
 
     window.goToScreen = function(name) {
@@ -898,6 +952,7 @@
       else if (name === 'Subscriptions') { renderSubscriptionsTable(); }
       else if (name === 'DbSummary')     { renderCounts(); }
       else if (name === 'ChangeLog')     { loadChangeLogs(); }
+      else if (name === 'SupplierStatus') { /* panel ready on render */ }
     };
 
     window.goBack = function() { showScreen('Landing'); setActiveNavItem(''); };
@@ -2731,6 +2786,138 @@
         console.error('loadAreasList error:', err);
       }
      };
+
+    // ════════════════════════════════════════════
+    // SUPPLIER STATUS — BULK UPDATE
+    // ════════════════════════════════════════════
+    let bulkMatchedIds = [];
+
+    document.getElementById('bulkPreviewBtn').addEventListener('click', async () => {
+      const fromStatus = document.getElementById('bulkFromStatus').value;
+      const previewMsg = document.getElementById('bulkPreviewMsg');
+      const updateBtn  = document.getElementById('bulkUpdateBtn');
+      previewMsg.textContent = 'Searching…';
+      previewMsg.style.color = 'var(--text-muted)';
+      updateBtn.disabled = true;
+      updateBtn.style.opacity = '0.45';
+      bulkMatchedIds = [];
+      try {
+        const q    = query(collection(db, 'suppliers'), where('status', '==', fromStatus));
+        const snap = await getDocs(q);
+        bulkMatchedIds = snap.docs.map(d => d.id);
+        previewMsg.textContent = `${bulkMatchedIds.length} supplier${bulkMatchedIds.length !== 1 ? 's' : ''} with status "${fromStatus}"`;
+        previewMsg.style.color = bulkMatchedIds.length > 0 ? 'var(--text)' : 'var(--text-muted)';
+        if (bulkMatchedIds.length > 0) {
+          updateBtn.disabled = false;
+          updateBtn.style.opacity = '1';
+        }
+      } catch (err) {
+        previewMsg.textContent = 'Error: ' + err.message;
+        previewMsg.style.color = '#f87171';
+      }
+    });
+
+    document.getElementById('bulkUpdateBtn').addEventListener('click', async () => {
+      const toStatus   = document.getElementById('bulkToStatus').value;
+      const fromStatus = document.getElementById('bulkFromStatus').value;
+      const resultMsg  = document.getElementById('bulkResultMsg');
+      const updateBtn  = document.getElementById('bulkUpdateBtn');
+      if (!bulkMatchedIds.length) return;
+      if (!confirm(`Update ${bulkMatchedIds.length} supplier${bulkMatchedIds.length !== 1 ? 's' : ''} from "${fromStatus}" → "${toStatus}"?`)) return;
+      updateBtn.disabled = true;
+      updateBtn.style.opacity = '0.45';
+      resultMsg.textContent = 'Updating…';
+      resultMsg.style.color = 'var(--text-muted)';
+      try {
+        await Promise.all(bulkMatchedIds.map(id =>
+          updateDoc(doc(db, 'suppliers', id), { status: toStatus, updatedAt: serverTimestamp() })
+        ));
+        resultMsg.textContent = `Done — ${bulkMatchedIds.length} record${bulkMatchedIds.length !== 1 ? 's' : ''} updated to "${toStatus}".`;
+        resultMsg.style.color = '#34d399';
+        bulkMatchedIds = [];
+        document.getElementById('bulkPreviewMsg').textContent = '';
+      } catch (err) {
+        resultMsg.textContent = 'Error: ' + err.message;
+        resultMsg.style.color = '#f87171';
+        updateBtn.disabled = false;
+        updateBtn.style.opacity = '1';
+      }
+    });
+
+    // ════════════════════════════════════════════
+    // SUPPLIER STATUS — SINGLE SEARCH
+    // ════════════════════════════════════════════
+    async function runSingleSearch() {
+      const term = document.getElementById('singleSearchInput').value.trim().toLowerCase();
+      const container = document.getElementById('singleSearchResults');
+      if (!term) { container.innerHTML = '<div class="placeholder-msg">Enter a search term.</div>'; return; }
+      container.innerHTML = '<div class="placeholder-msg">Searching…</div>';
+      try {
+        const snap = await getDocs(collection(db, 'suppliers'));
+        const results = snap.docs.filter(d => {
+          const data = d.data();
+          return [
+            data.supplierNumber, data.displayName,
+            data.firstName, data.lastName, data.phone
+          ].some(v => v && String(v).toLowerCase().includes(term));
+        });
+        if (!results.length) {
+          container.innerHTML = '<div class="placeholder-msg">No suppliers found.</div>';
+          return;
+        }
+        container.innerHTML = results.map(d => {
+          const s = d.data();
+          const name = s.displayName || [s.firstName, s.lastName].filter(Boolean).join(' ') || '—';
+          const statusOpts = ['pending','active','suspended','rejected'].map(v =>
+            `<option value="${v}"${s.status === v ? ' selected' : ''}>${v.charAt(0).toUpperCase()+v.slice(1)}</option>`
+          ).join('');
+          return `
+          <div class="admin-card" style="padding:var(--space-3) var(--space-4);" data-docid="${d.id}">
+            <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:var(--text-sm);font-weight:700;color:var(--text);">${name}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:2px;">
+                  ${s.supplierNumber || '—'} &nbsp;·&nbsp; ${s.phone || '—'}
+                </div>
+              </div>
+              <select class="select single-status-select" style="width:130px;">${statusOpts}</select>
+              <button class="back-btn single-save-btn" style="white-space:nowrap;">Save</button>
+              <span class="single-save-msg" style="font-size:var(--text-xs);font-weight:600;"></span>
+            </div>
+          </div>`;
+        }).join('');
+
+        container.querySelectorAll('.single-save-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const card   = btn.closest('[data-docid]');
+            const docId  = card.dataset.docid;
+            const select = card.querySelector('.single-status-select');
+            const msg    = card.querySelector('.single-save-msg');
+            btn.disabled = true;
+            msg.textContent = 'Saving…';
+            msg.style.color = 'var(--text-muted)';
+            try {
+              await updateDoc(doc(db, 'suppliers', docId), { status: select.value, updatedAt: serverTimestamp() });
+              msg.textContent = 'Saved';
+              msg.style.color = '#34d399';
+            } catch (err) {
+              msg.textContent = 'Error';
+              msg.style.color = '#f87171';
+              console.error(err);
+            } finally {
+              btn.disabled = false;
+            }
+          });
+        });
+      } catch (err) {
+        container.innerHTML = `<div class="placeholder-msg" style="color:#f87171;">Error: ${err.message}</div>`;
+      }
+    }
+
+    document.getElementById('singleSearchBtn').addEventListener('click', runSingleSearch);
+    document.getElementById('singleSearchInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') runSingleSearch();
+    });
 
     init();
 
