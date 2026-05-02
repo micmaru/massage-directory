@@ -182,7 +182,6 @@
       border: 1px solid transparent;
     }
     .home-card--filled:hover {
-      opacity: 0.92;
       box-shadow: 0 6px 28px rgba(108,99,255,0.45);
     }
 
@@ -191,9 +190,12 @@
       border: 1px solid var(--accent);
     }
     .home-card--outlined:hover {
-      background: #1c2436;
-      box-shadow: 0 4px 24px rgba(108,99,255,0.18);
+      background: #6c63ff;
+      border-color: transparent;
+      box-shadow: 0 6px 28px rgba(108,99,255,0.45);
     }
+    .home-card--outlined:hover .home-card__title { color: #fff; }
+    .home-card--outlined:hover .home-card__sub   { color: rgba(255,255,255,0.78); }
 
     .home-card__title { font-size: var(--text-lg); font-weight: 700; }
     .home-card--filled  .home-card__title { color: #fff; }
