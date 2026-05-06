@@ -144,9 +144,11 @@
     }
 
     function buildCard(months, discountPct, saveLabel, badge, basePrice) {
-      const discounted = basePrice * (1 - discountPct / 100);
-      const monthly    = Math.round(discounted);
-      const total      = Math.round(discounted * months);
+      const discounted  = basePrice * (1 - discountPct / 100);
+      const monthly     = Math.round(discounted);
+      const total       = Math.round(discounted * months);
+      const fullPrice   = basePrice * months;
+      const randSaving  = fullPrice - total;
 
       const card = document.createElement('div');
       card.className = 'plan-card';
@@ -156,7 +158,7 @@
         <div class="plan-term">${termLabel(months)}</div>
         <div class="plan-monthly">R${monthly}/month</div>
         <div class="plan-total">Total: R${total}</div>
-        <div class="plan-save">${saveLabel ? saveLabel : ''}</div>
+        <div class="plan-save">${randSaving > 0 ? `Save ${discountPct}% — you save R${randSaving}` : ''}</div>
         <button class="plan-btn" data-term="${months}" data-amount="${total}">Pay and Activate My Listing</button>
         <p class="plan-note">Your listing goes live once your ID has been verified and payment is confirmed. Listings update every 8 hours.</p>
       `;

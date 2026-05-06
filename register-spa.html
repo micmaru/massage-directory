@@ -875,22 +875,19 @@
             </div>
 
             <!-- ID photo -->
-            <div>
-              <div class="form-section-label">ID / Passport Photo — Owner <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(optional)</span></div>
+            <div id="idPhotoField">
+              <div class="form-section-label">Identity Photo</div>
               <div class="photo-slot">
                 <div class="photo-slot__row">
                   <label class="photo-slot__btn" for="idPhoto">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    Upload ID photo
+                    Upload photo
                   </label>
                   <input type="file" id="idPhoto" accept="image/*" onchange="onIdPhotoChange(this)" />
                   <span class="photo-slot__filename hidden" id="idPhotoName"></span>
                   <button type="button" class="photo-slot__delete hidden" id="idPhotoDelete" onclick="deleteIdPhoto()">Remove</button>
                 </div>
-                <div style="display:flex; align-items:flex-start; gap:var(--space-2); margin-top:var(--space-3); padding:var(--space-3); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:8px;">
-                  <svg style="flex-shrink:0; color:#f59e0b; margin-top:1px;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                  <span style="font-size:var(--text-xs); color:#f59e0b; line-height:1.5;">Optional during registration — will be required before your listing goes live.</span>
-                </div>
+                <div style="font-size:var(--text-xs); color:var(--text-muted); margin-top:var(--space-2); line-height:1.5;">Upload a clear photo of your face, or a photo of your ID, passport or driver's licence.</div>
               </div>
             </div>
 
@@ -1328,6 +1325,11 @@
   }
 
   function validateStep4() {
+    clearErrors();
+    if (!document.getElementById('idPhoto').files[0]) {
+      markError(document.getElementById('idPhotoField'), 'Identity photo is required.');
+      return false;
+    }
     return true;
   }
 
@@ -1573,6 +1575,8 @@
   // SUBMIT
   // ════════════════════════════════════════════
   async function submitForm() {
+    if (!validateStep4()) return;
+
     const btn    = document.getElementById('registerBtn');
     const errDiv = document.getElementById('submitError');
     errDiv.classList.add('hidden');
@@ -1583,7 +1587,7 @@
       const uid = auth.currentUser?.uid || authUid;
       if (!uid) throw new Error('Phone verification required. Please refresh and start again.');
 
-      // 1. Upload ID photo (optional)
+      // 1. Upload ID photo
       let idResult = null;
       const idFile = document.getElementById('idPhoto').files[0];
       if (idFile) {
