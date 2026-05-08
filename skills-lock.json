@@ -67,6 +67,12 @@
       "skillPath": "skills/brutalist-skill/SKILL.md",
       "computedHash": "8fc355c4aadb7d29c53ca28bc41be3cd6eea765d121e3737c4dc2d0f90a8effa"
     },
+    "llm-council": {
+      "source": "tenfoldmarc/llm-council-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "837197bb11911500aa2ad9ce88e851a966b9d37f62913119a5b9c9d779f7aabb"
+    },
     "minimalist-ui": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",

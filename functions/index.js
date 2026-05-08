@@ -1,5 +1,7 @@
 const functions = require("firebase-functions");
 const crypto = require("crypto");
+const admin = require("firebase-admin");
+if (!admin.apps.length) { admin.initializeApp(); }
 
 exports.helloMassageMap = functions
   .region("us-central1")
@@ -96,4 +98,173 @@ exports.payfastNotify = functions
     await supplierRef.update({ status: "active" });
 
     res.status(200).send("ok");
+  });
+
+exports.onSupplierRegistered = functions
+  .region("us-central1")
+  .firestore
+  .document("suppliers/{supplierId}")
+  .onCreate(async (snap, context) => {
+    const admin = require("firebase-admin");
+    if (!admin.apps.length) { admin.initializeApp(); }
+    const db = admin.firestore();
+
+    const { displayName, type, cellNumber, email, membershipNumber, province, area } = snap.data();
+
+    function formatPhone(phone) {
+      if (!phone) return null;
+      if (phone.startsWith("+27")) return phone;
+      if (phone.startsWith("0")) return "+27" + phone.slice(1);
+      return phone;
+    }
+
+    const { Resend } = require("resend");
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    // Step 1 — Telegram
+    try {
+      await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: process.env.TELEGRAM_CHAT_ID,
+          text: `New MassageMap Registration\nName: ${displayName}\nType: ${type}\nNumber: ${membershipNumber}\nArea: ${province}, ${area}\nCell: ${cellNumber}`,
+        }),
+      });
+    } catch (err) {
+      console.error("Telegram notification failed:", err);
+    }
+
+    // Step 2 — Admin email
+    try {
+      const typeLabel = type === "spa" ? "Spa" : "Individual Therapist";
+      const dateStr = new Date().toLocaleString("en-ZA", { timeZone: "Africa/Johannesburg" });
+      const adminEmailText = [
+        "New MassageMap Registration Received",
+        "",
+        `Supplier Name:   ${displayName}`,
+        `Type:            ${typeLabel}`,
+        `Supplier Number: ${membershipNumber}`,
+        `Province:        ${province}`,
+        `Area:            ${area}`,
+        `Cell Number:     ${cellNumber}`,
+        `Registered:      ${dateStr}`,
+        "",
+        "View admin dashboard:",
+        "  https://massagemap.co.za/admin.html",
+        "",
+        "— MassageMap Automated Notification",
+      ].join("\n");
+      await resend.emails.send({
+        from: "MassageMap <onboarding@resend.dev>",
+        to: "hjcilliers@gmail.com",
+        subject: "New MassageMap Registration Received",
+        text: adminEmailText,
+      });
+    } catch (err) {
+      console.error("Admin email failed:", err);
+    }
+
+    // Step 3 — BulkSMS to therapist
+    if (type === "therapist" && cellNumber) {
+      try {
+        await fetch("https://api.bulksms.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Basic ${process.env.BULKSMS_AUTH}`,
+          },
+          body: JSON.stringify({
+            to: formatPhone(cellNumber),
+            body: "Welcome to MassageMap. Your registration is received. We will contact you shortly.",
+          }),
+        });
+      } catch (err) {
+        console.error("BulkSMS failed:", err);
+      }
+    }
+
+    // Step 4 — Welcome email to therapist
+    if (type === "therapist" && email) {
+      try {
+        const welcomeText = [
+          `Hi ${displayName},`,
+          "",
+          `Welcome to MassageMap! Your therapist registration has been received.`,
+          "",
+          `Your membership number is:`,
+          `  ${membershipNumber}`,
+          "",
+          "Please keep this number for your records — you will need it if you",
+          "contact MassageMap support.",
+          "",
+          "What happens next:",
+          "  1. Our team will review and verify your registration.",
+          "  2. We will contact you to confirm details.",
+          "  3. Once approved, your listing will appear in search results.",
+          "",
+          "Log in to your dashboard at any time to update your profile:",
+          "  https://massagemap.co.za/dashboard.html",
+          "",
+          "— The MassageMap Team",
+        ].join("\n");
+        await resend.emails.send({
+          from: "MassageMap <onboarding@resend.dev>",
+          to: email,
+          subject: `Welcome to MassageMap — your membership number is ${membershipNumber}`,
+          text: welcomeText,
+        });
+      } catch (err) {
+        console.error("Therapist welcome email failed:", err);
+      }
+    }
+
+    // Step 5 — Welcome email to spa
+    if (type === "spa") {
+      try {
+        const welcomeText = [
+          `Hi ${displayName},`,
+          "",
+          `Welcome to MassageMap! Your spa registration has been received.`,
+          "",
+          `Your membership number is:`,
+          `  ${membershipNumber}`,
+          "",
+          "Please keep this number for your records — you will need it if you",
+          "contact MassageMap support.",
+          "",
+          "What happens next:",
+          "  1. Our team will review and verify your registration.",
+          "  2. We will contact you to confirm details.",
+          "  3. Once approved, your listing will appear in search results.",
+          "",
+          "Log in to your dashboard at any time to update your profile:",
+          "  https://massagemap.co.za/dashboard.html",
+          "",
+          "— The MassageMap Team",
+        ].join("\n");
+        await resend.emails.send({
+          from: "MassageMap <onboarding@resend.dev>",
+          to: email,
+          subject: `Welcome to MassageMap — your membership number is ${membershipNumber}`,
+          text: welcomeText,
+        });
+      } catch (err) {
+        console.error("Spa welcome email failed:", err);
+      }
+    }
+
+    // Step 6 — Audit log
+    try {
+      await db.collection("auditLog").add({
+        supplierId: context.params.supplierId,
+        action: "registration_received",
+        actor: "system",
+        supplierName: displayName,
+        supplierType: type,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (err) {
+      console.error("Audit log write failed:", err);
+    }
   });

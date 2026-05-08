@@ -111,3 +111,4 @@ MassageMap is a three-sided massage therapy directory:
 - Never include testing instructions in briefs
 - For complex precise changes: include exact code in the brief
 - For simple structural changes: numbered instructions are sufficient
+- Every brief must clearly state whether each step runs in CLAUDE CODE terminal or ZSH terminal. Never leave this ambiguous.
