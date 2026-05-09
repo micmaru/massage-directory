@@ -109,7 +109,7 @@ exports.onSupplierRegistered = functions
     if (!admin.apps.length) { admin.initializeApp(); }
     const db = admin.firestore();
 
-    const { displayName, type, cellNumber, email, membershipNumber, province, area } = snap.data();
+    const { displayName, supplierType, cellNumber, email, supplierNumber, province, area } = snap.data();
 
     function formatPhone(phone) {
       if (!phone) return null;
@@ -128,7 +128,7 @@ exports.onSupplierRegistered = functions
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: process.env.TELEGRAM_CHAT_ID,
-          text: `New MassageMap Registration\nName: ${displayName}\nType: ${type}\nNumber: ${membershipNumber}\nArea: ${province}, ${area}\nCell: ${cellNumber}`,
+          text: `New MassageMap Registration\nName: ${displayName}\nType: ${supplierType}\nNumber: ${supplierNumber}\nArea: ${province}, ${area}\nCell: ${cellNumber}`,
         }),
       });
     } catch (err) {
@@ -137,14 +137,14 @@ exports.onSupplierRegistered = functions
 
     // Step 2 — Admin email
     try {
-      const typeLabel = type === "spa" ? "Spa" : "Individual Therapist";
+      const typeLabel = supplierType === "spa" ? "Spa" : "Individual Therapist";
       const dateStr = new Date().toLocaleString("en-ZA", { timeZone: "Africa/Johannesburg" });
       const adminEmailText = [
         "New MassageMap Registration Received",
         "",
         `Supplier Name:   ${displayName}`,
         `Type:            ${typeLabel}`,
-        `Supplier Number: ${membershipNumber}`,
+        `Supplier Number: ${supplierNumber}`,
         `Province:        ${province}`,
         `Area:            ${area}`,
         `Cell Number:     ${cellNumber}`,
@@ -166,7 +166,7 @@ exports.onSupplierRegistered = functions
     }
 
     // Step 3 — BulkSMS to therapist
-    if (type === "therapist" && cellNumber) {
+    if (supplierType === "therapist" && cellNumber) {
       try {
         await fetch("https://api.bulksms.com/v1/messages", {
           method: "POST",
@@ -185,7 +185,7 @@ exports.onSupplierRegistered = functions
     }
 
     // Step 4 — Welcome email to therapist
-    if (type === "therapist" && email) {
+    if (supplierType === "therapist" && email) {
       try {
         const welcomeText = [
           `Hi ${displayName},`,
@@ -193,7 +193,7 @@ exports.onSupplierRegistered = functions
           `Welcome to MassageMap! Your therapist registration has been received.`,
           "",
           `Your membership number is:`,
-          `  ${membershipNumber}`,
+          `  ${supplierNumber}`,
           "",
           "Please keep this number for your records — you will need it if you",
           "contact MassageMap support.",
@@ -211,7 +211,7 @@ exports.onSupplierRegistered = functions
         await resend.emails.send({
           from: "MassageMap <onboarding@resend.dev>",
           to: email,
-          subject: `Welcome to MassageMap — your membership number is ${membershipNumber}`,
+          subject: `Welcome to MassageMap — your membership number is ${supplierNumber}`,
           text: welcomeText,
         });
       } catch (err) {
@@ -220,7 +220,7 @@ exports.onSupplierRegistered = functions
     }
 
     // Step 5 — Welcome email to spa
-    if (type === "spa") {
+    if (supplierType === "spa") {
       try {
         const welcomeText = [
           `Hi ${displayName},`,
@@ -228,7 +228,7 @@ exports.onSupplierRegistered = functions
           `Welcome to MassageMap! Your spa registration has been received.`,
           "",
           `Your membership number is:`,
-          `  ${membershipNumber}`,
+          `  ${supplierNumber}`,
           "",
           "Please keep this number for your records — you will need it if you",
           "contact MassageMap support.",
@@ -246,7 +246,7 @@ exports.onSupplierRegistered = functions
         await resend.emails.send({
           from: "MassageMap <onboarding@resend.dev>",
           to: email,
-          subject: `Welcome to MassageMap — your membership number is ${membershipNumber}`,
+          subject: `Welcome to MassageMap — your membership number is ${supplierNumber}`,
           text: welcomeText,
         });
       } catch (err) {
@@ -261,7 +261,7 @@ exports.onSupplierRegistered = functions
         action: "registration_received",
         actor: "system",
         supplierName: displayName,
-        supplierType: type,
+        supplierType: supplierType,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
     } catch (err) {
