@@ -166,19 +166,22 @@ exports.onSupplierRegistered = functions
     }
 
     // Step 3 — BulkSMS to therapist
-    if (supplierType === "therapist" && cellNumber) {
+    if (supplierType === "individual" && cellNumber) {
       try {
-        await fetch("https://api.bulksms.com/v1/messages", {
+        const smsResponse = await fetch("https://api.bulksms.com/v1/messages", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Basic ${process.env.BULKSMS_AUTH}`,
+            "Authorization": "Basic " + Buffer.from(process.env.BULKSMS_TOKEN_ID + ":" + process.env.BULKSMS_TOKEN_SECRET).toString("base64"),
           },
           body: JSON.stringify({
             to: formatPhone(cellNumber),
             body: "Welcome to MassageMap. Your registration is received. We will contact you shortly.",
           }),
         });
+        const smsResult = await smsResponse.text();
+        console.log("BulkSMS response status:", smsResponse.status);
+        console.log("BulkSMS response body:", smsResult);
       } catch (err) {
         console.error("BulkSMS failed:", err);
       }
