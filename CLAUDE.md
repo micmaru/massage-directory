@@ -112,3 +112,13 @@ MassageMap is a three-sided massage therapy directory:
 - For complex precise changes: include exact code in the brief
 - For simple structural changes: numbered instructions are sufficient
 - Every brief must clearly state whether each step runs in CLAUDE CODE terminal or ZSH terminal. Never leave this ambiguous.
+
+## Context File Rules — CRITICAL
+
+- The Master Context .docx file is Johan's tool to keep Claude accountable across sessions
+- Every new version ADDS to the previous version — nothing is dropped, summarised away, or reformatted
+- Build history stays in full — every step, every session
+- ALL parked items from ALL previous sessions carry forward until explicitly closed by Johan
+- New session decisions, bugs, fixes, and parked items are APPENDED at the end
+- Never rewrite the context file in a shorter or cleaner format without explicit permission
+- The context file is a reference doc for Claude — but mainly it is Johan's accountability record which is the first priority.
