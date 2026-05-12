@@ -109,7 +109,7 @@ exports.onSupplierRegistered = functions
     if (!admin.apps.length) { admin.initializeApp(); }
     const db = admin.firestore();
 
-    const { displayName, supplierType, cellNumber, email, supplierNumber, province, area } = snap.data();
+    const { displayName, firstName, lastName, supplierType, cellNumber, email, supplierNumber, province, area } = snap.data();
 
     function formatPhone(phone) {
       if (!phone) return null;
@@ -123,12 +123,13 @@ exports.onSupplierRegistered = functions
 
     // Step 1 — Telegram
     try {
+      const supplierName = supplierType === "individual" ? `${firstName} ${lastName} (${displayName})` : displayName;
       await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: process.env.TELEGRAM_CHAT_ID,
-          text: `New MassageMap Registration\nName: ${displayName}\nType: ${supplierType}\nNumber: ${supplierNumber}\nArea: ${province}, ${area}\nCell: ${cellNumber}`,
+          text: `New MassageMap Registration\nName: ${supplierName}\nType: ${supplierType}\nNumber: ${supplierNumber}\nArea: ${province}, ${area}\nCell: ${cellNumber}`,
         }),
       });
     } catch (err) {
@@ -142,7 +143,7 @@ exports.onSupplierRegistered = functions
       const adminEmailText = [
         "New MassageMap Registration Received",
         "",
-        `Supplier Name:   ${displayName}`,
+        `Supplier Name:   ${supplierName}`,
         `Type:            ${typeLabel}`,
         `Supplier Number: ${supplierNumber}`,
         `Province:        ${province}`,
@@ -188,7 +189,7 @@ exports.onSupplierRegistered = functions
     }
 
     // Step 4 — Welcome email to therapist
-    if (supplierType === "therapist" && email) {
+    if (supplierType === "individual" && email) {
       try {
         const welcomeText = [
           `Hi ${displayName},`,
@@ -223,7 +224,7 @@ exports.onSupplierRegistered = functions
     }
 
     // Step 5 — Welcome email to spa
-    if (supplierType === "spa") {
+    if (supplierType === "spa" && email) {
       try {
         const welcomeText = [
           `Hi ${displayName},`,
