@@ -1702,38 +1702,7 @@
 
       storeSession(verifiedPhone, data.displayName, data.supplierType);
 
-      // 6. Telegram notification (non-fatal)
-      {
-        const tgMsg = [
-          '🆕 New MassageMap Registration',
-          `Name: ${data.displayName || data.firstName}`,
-          `Type: Individual Therapist`,
-          `Number: ${supplierNumber}`,
-          `Area: ${data.province} — ${data.area}`,
-          `Cell: ${data.cellNumber}`,
-        ].join('\n');
-        fetch(
-          `https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage` +
-          `?chat_id=${CONFIG.TELEGRAM_CHAT_ID}&text=${encodeURIComponent(tgMsg)}`
-        ).catch(() => {});
-      }
-
-      // 7. Admin email notification (non-fatal)
-      fetch('http://localhost:3003/send-admin-notification', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          supplierName:  data.displayName || data.firstName,
-          supplierType:  'individual',
-          supplierNumber,
-          province:      data.province,
-          area:          data.area,
-          cellNumber:    data.cellNumber,
-          registeredAt:  new Date().toISOString(),
-        }),
-      }).catch(() => {});
-
-      // 8. Success UI
+      // 7. Success UI
       document.getElementById('regStep4').classList.add('hidden');
       for (let i = 1; i <= 4; i++) {
         document.getElementById('sideStep' + i).classList.remove('reg-step--active');
@@ -1748,7 +1717,7 @@
       const s = document.getElementById('successScreen');
       s.style.display = 'flex';
 
-      // 9. Redirect
+      // 8. Redirect
       setTimeout(() => {
         window.location.href = `info.html?num=${encodeURIComponent(supplierNumber)}`;
       }, 3000);

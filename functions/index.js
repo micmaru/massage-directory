@@ -121,9 +121,10 @@ exports.onSupplierRegistered = functions
     const { Resend } = require("resend");
     const resend = new Resend(process.env.RESEND_API_KEY);
 
+    const supplierName = supplierType === "individual" ? `${firstName} ${lastName} (${displayName})` : displayName;
+
     // Step 1 — Telegram
     try {
-      const supplierName = supplierType === "individual" ? `${firstName} ${lastName} (${displayName})` : displayName;
       await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
