@@ -70,3 +70,5 @@ node_modules/
 .dataconnect
 config.js
 config.js
+service-account.json
+service-account.json

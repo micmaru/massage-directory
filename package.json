@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "email": "node functions/sendEnquiryEmail.js",
-    "sms":   "node functions/sendEnquirySms.js",
+    "sms": "node functions/sendEnquirySms.js",
     "admin": "node functions/sendAdminNotification.js",
     "welcome": "node functions/sendWelcomeEmail.js"
   },
@@ -24,5 +24,8 @@
   "bugs": {
     "url": "https://github.com/micmaru/massage-directory/issues"
   },
-  "homepage": "https://github.com/micmaru/massage-directory#readme"
+  "homepage": "https://github.com/micmaru/massage-directory#readme",
+  "devDependencies": {
+    "firebase-admin": "^13.9.0"
+  }
 }

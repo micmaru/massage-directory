@@ -1016,6 +1016,8 @@
     let subscriptionData = {}; // supplierId -> { ...data, _ref }
     let allAreas         = [];
     let LOCATIONS        = null;
+    let lmTownsCache = {};
+    let lmSuburbsCache = {};
     let adminEmail       = 'hjcilliers@gmail.com';
 
     // ════════════════════════════════════════════
@@ -2434,9 +2436,9 @@
 
     async function loadLocations() {
       try {
-        const res  = await fetch('./locations.json');
-        LOCATIONS  = await res.json();
-        lmBuildProvinceMenu();
+        const snap = await getDocs(collection(db, 'locations_provinces'));
+        LOCATIONS = { provinces: snap.docs.map(d => ({ id: d.id, name: d.data().name })) };
+        LOCATIONS.provinces.sort((a, b) => a.name.localeCompare(b.name));
       } catch (err) {
         console.error('loadLocations error:', err);
       }
@@ -2447,7 +2449,7 @@
       const nav = document.querySelector('.nav-menu-group button[onclick="switchTab(\'Location\')"]');
     }
 
-    window.lmOpenProvince = function(provinceName) {
+    window.lmOpenProvince = async function(provinceName) {
       switchTab('Location');
       document.getElementById('lmProvinceScreen').classList.add('hidden');
       document.getElementById('lmManagerScreen').classList.remove('hidden');
@@ -2456,6 +2458,24 @@
       lmActiveArea     = null;
       lmAreas[provinceName] = lmAreas[provinceName] || {};
       lmCurrentProvince = provinceName;
+
+      // Load towns from Firestore if not cached
+      if (!lmTownsCache[provinceName]) {
+        const prov = LOCATIONS.provinces.find(p => p.name === provinceName);
+        if (prov) {
+          const snap = await getDocs(query(
+            collection(db, 'locations_towns'),
+            where('provinceId', '==', prov.id),
+            orderBy('name', 'asc')
+          ));
+          lmTownsCache[provinceName] = snap.docs.map(d => ({
+            id: d.id,
+            name: d.data().name,
+            townId: d.data().townId
+          }));
+        }
+      }
+
       lmFilterTowns('');
       lmRenderSuburbList();
       lmRenderAreaPills();
@@ -2470,10 +2490,8 @@
 
     window.lmFilterTowns = function(q) {
       const list = document.getElementById('lmTownList');
-      if (!LOCATIONS || !lmCurrentProvince) { list.innerHTML = ''; return; }
-      const prov = LOCATIONS.provinces.find(p => p.name === lmCurrentProvince);
-      if (!prov) return;
-      const towns = (prov.areas || prov.towns || []);
+      if (!lmCurrentProvince) { list.innerHTML = ''; return; }
+      const towns = lmTownsCache[lmCurrentProvince] || [];
       const filtered = q
         ? towns.filter(t => t.name.toLowerCase().includes(q.toLowerCase()))
         : towns;
@@ -2487,7 +2505,7 @@
       ).join('');
     };
 
-    window.lmSelectTown = function(townName) {
+    window.lmSelectTown = async function(townName) {
       lmSelectedTown = townName;
       lmActiveArea   = null;
       if (!lmAreas[lmCurrentProvince]) lmAreas[lmCurrentProvince] = {};
@@ -2495,15 +2513,30 @@
       document.getElementById('lmSuburbColHead').textContent = townName + ' suburbs';
       document.getElementById('lmSuburbSearch').value = '';
       lmFilterTowns(document.getElementById('lmTownSearch').value);
+
+      // Load suburbs from Firestore if not cached
+      const cacheKey = `${lmCurrentProvince}__${townName}`;
+      if (!lmSuburbsCache[cacheKey]) {
+        const town = (lmTownsCache[lmCurrentProvince] || []).find(t => t.name === townName);
+        if (town) {
+          const snap = await getDocs(query(
+            collection(db, 'locations_suburbs'),
+            where('townId', '==', town.id),
+            orderBy('name', 'asc')
+          ));
+          lmSuburbsCache[cacheKey] = snap.docs.map(d => d.data().name);
+        }
+      }
+
       lmRenderSuburbList();
       lmLoadAreasForTown(townName);
     };
 
     async function lmLoadAreasForTown(townName) {
       try {
-        const q    = query(collection(db, 'areas'),
-          where('province', '==', lmCurrentProvince),
-          where('town',     '==', townName));
+        const q    = query(collection(db, 'locations_areas'),
+          where('provinceName', '==', lmCurrentProvince),
+          where('townName',     '==', townName));
         const snap = await getDocs(q);
         if (!lmAreas[lmCurrentProvince]) lmAreas[lmCurrentProvince] = {};
         if (!lmAreas[lmCurrentProvince][townName]) lmAreas[lmCurrentProvince][townName] = {};
@@ -2534,13 +2567,12 @@
 
     function lmRenderSuburbList(q) {
       const list = document.getElementById('lmSuburbList');
-      if (!lmSelectedTown || !LOCATIONS) {
+      if (!lmSelectedTown) {
         list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">Select a town first</div>';
         return;
       }
-      const prov   = LOCATIONS.provinces.find(p => p.name === lmCurrentProvince);
-      const town   = (prov?.areas || prov?.towns || []).find(t => t.name === lmSelectedTown);
-      const allSubs = town?.suburbs || [];
+      const cacheKey = `${lmCurrentProvince}__${lmSelectedTown}`;
+      const allSubs = lmSuburbsCache[cacheKey] || [];
       const assigned = lmGetAssignedSuburbs();
       const filtered = q
         ? allSubs.filter(s => s.toLowerCase().includes(q.toLowerCase()))
@@ -2637,7 +2669,7 @@
       const townAreas = lmAreas[lmCurrentProvince][lmSelectedTown];
       const firestoreId = townAreas[name]?.firestoreId;
       try {
-        if (firestoreId) await deleteDoc(doc(db, 'areas', firestoreId));
+        if (firestoreId) await deleteDoc(doc(db, 'locations_areas', firestoreId));
         delete townAreas[name];
         if (lmActiveArea === name) lmActiveArea = null;
         lmRenderAreaPills();
@@ -2732,13 +2764,18 @@
       btn.textContent = 'Saving…';
       try {
         if (areaData.firestoreId) {
-          await updateDoc(doc(db, 'areas', areaData.firestoreId), {
+          await updateDoc(doc(db, 'locations_areas', areaData.firestoreId), {
             suburbs: areaData.suburbs, updatedAt: serverTimestamp()
           });
         } else {
-          const ref = await addDoc(collection(db, 'areas'), {
-            province: lmCurrentProvince, town: lmSelectedTown,
-            areaName: lmActiveArea, suburbs: areaData.suburbs,
+          const town = (lmTownsCache[lmCurrentProvince] || []).find(t => t.name === lmSelectedTown);
+          const ref = await addDoc(collection(db, 'locations_areas'), {
+            areaName: lmActiveArea,
+            provinceName: lmCurrentProvince,
+            provinceId: LOCATIONS.provinces.find(p => p.name === lmCurrentProvince)?.id || '',
+            townName: lmSelectedTown,
+            townId: town ? town.id : null,
+            suburbs: areaData.suburbs,
             createdAt: serverTimestamp()
           });
           townAreas[lmActiveArea].firestoreId = ref.id;
@@ -2779,7 +2816,7 @@
 
     async function loadAreasList() {
       try {
-        const snap = await getDocs(collection(db, 'areas'));
+        const snap = await getDocs(collection(db, 'locations_areas'));
         allAreas   = snap.docs.map(d => ({ id: d.id, data: d.data() }));
       } catch (err) {
         console.error('loadAreasList error:', err);
