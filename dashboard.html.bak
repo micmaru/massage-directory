@@ -228,18 +228,12 @@
             </select>
           </div>
           <div class="field">
-            <label class="field__label" for="editArea">City / Town</label>
+            <label class="field__label" for="editArea">Area</label>
             <select id="editArea" class="select" onchange="onEditAreaChange()" disabled>
               <option value="">Select city/town…</option>
             </select>
           </div>
-          <div class="field hidden" id="editMassageAreaField">
-            <label class="field__label" for="editMassageArea">Area</label>
-            <select id="editMassageArea" class="select" onchange="onEditMassageAreaChange()" disabled>
-              <option value="">Select area…</option>
-            </select>
-          </div>
-          <div class="field" id="editSuburbField">
+          <div class="field">
             <label class="field__label" for="editSuburb">Suburb</label>
             <select id="editSuburb" class="select" disabled>
               <option value="">Select suburb…</option>
@@ -419,7 +413,6 @@
     let provincesCache = [];
     let townsCache = {};
     let suburbsCache = {};
-    let areasCache = {};
 
     // ════════════════════════════════════════════
     // DAYS / HOURS HELPERS
@@ -649,7 +642,7 @@
       const sdoc    = snap.docs[0];
       supplierDocId = sdoc.id;
       supplierData  = sdoc.data();
-      await populateDashboard(supplierData);
+      populateDashboard(supplierData);
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('dashboardScreen').classList.remove('hidden');
       window.scrollTo({ top: 0, behavior: 'instant' });
@@ -658,7 +651,7 @@
     // ════════════════════════════════════════════
     // POPULATE DASHBOARD
     // ════════════════════════════════════════════
-    async function populateDashboard(data) {
+    function populateDashboard(data) {
       const isSpa = (data.supplierType || 'individual') === 'spa';
 
       // ── Welcome header ──
@@ -701,17 +694,13 @@
       }
 
       // ── Location card ──
-      await populateProvinces();
+      populateProvinces();
       if (data.province) {
         document.getElementById('editProvince').value = data.province;
-        await onEditProvinceChange();
+        onEditProvinceChange();
         if (data.area) {
           document.getElementById('editArea').value = data.area;
-          await onEditAreaChange();
-          if (data.massageArea) {
-            document.getElementById('editMassageArea').value = data.massageArea;
-            await onEditMassageAreaChange();
-          }
+          onEditAreaChange();
         }
       }
       if (data.suburb) document.getElementById('editSuburb').value = data.suburb;
@@ -832,21 +821,11 @@
     };
 
     window.onEditAreaChange = async function() {
-      const tid                = document.getElementById('editArea').value;
-      const suburbEl           = document.getElementById('editSuburb');
-      const massageAreaEl      = document.getElementById('editMassageArea');
-      const massageAreaField   = document.getElementById('editMassageAreaField');
-      const suburbField        = document.getElementById('editSuburbField');
-
-      suburbEl.innerHTML      = '<option value="">Select suburb…</option>';
-      massageAreaEl.innerHTML = '<option value="">Select area…</option>';
-      suburbEl.disabled       = true;
-      massageAreaEl.disabled  = true;
-      massageAreaField.classList.add('hidden');
-      suburbField.classList.remove('hidden');
-
+      const tid      = document.getElementById('editArea').value;
+      const suburbEl = document.getElementById('editSuburb');
+      suburbEl.innerHTML = '<option value="">Select suburb…</option>';
+      suburbEl.disabled = true;
       if (!tid) return;
-
       if (!suburbsCache[tid]) {
         try {
           const snap = await getDocs(query(
@@ -860,61 +839,12 @@
           return;
         }
       }
-
-      if (!areasCache[tid]) {
-        try {
-          const snap = await getDocs(query(
-            collection(db, 'locations_areas'),
-            where('townId', '==', tid)
-          ));
-          areasCache[tid] = snap.docs.map(d => ({ id: d.id, name: d.data().areaName, suburbs: d.data().suburbs || [] }));
-        } catch (err) {
-          console.error('Failed to load areas:', err);
-          areasCache[tid] = [];
-        }
-      }
-
-      if (areasCache[tid].length > 0) {
-        const noneOpt = document.createElement('option');
-        noneOpt.value = 'none'; noneOpt.textContent = 'My suburb is not in these areas';
-        massageAreaEl.appendChild(noneOpt);
-        areasCache[tid].forEach(a => {
-          const o = document.createElement('option');
-          o.value = a.id; o.textContent = a.name;
-          massageAreaEl.appendChild(o);
-        });
-        massageAreaEl.disabled = false;
-        massageAreaField.classList.remove('hidden');
-        suburbField.classList.add('hidden');
-      } else {
-        suburbsCache[tid].forEach(s => {
-          const o = document.createElement('option');
-          o.value = s; o.textContent = s;
-          suburbEl.appendChild(o);
-        });
-        suburbEl.disabled = false;
-      }
-    };
-
-    window.onEditMassageAreaChange = async function() {
-      const areaId      = document.getElementById('editMassageArea').value;
-      const suburbEl    = document.getElementById('editSuburb');
-      const suburbField = document.getElementById('editSuburbField');
-      const tid         = document.getElementById('editArea').value;
-      suburbEl.innerHTML = '<option value="">Select suburb…</option>';
-      suburbEl.disabled  = true;
-      suburbField.classList.add('hidden');
-      if (areaId === 'none') {
-        suburbField.classList.remove('hidden');
-        if (suburbsCache[tid]) {
-          suburbsCache[tid].forEach(s => {
-            const o = document.createElement('option');
-            o.value = s; o.textContent = s;
-            suburbEl.appendChild(o);
-          });
-          suburbEl.disabled = false;
-        }
-      }
+      suburbsCache[tid].forEach(s => {
+        const o = document.createElement('option');
+        o.value = s; o.textContent = s;
+        suburbEl.appendChild(o);
+      });
+      suburbEl.disabled = false;
     };
 
     populateProvinces();
@@ -1066,49 +996,30 @@
         return;
       }
 
-      const province     = document.getElementById('editProvince').value;
-      const area         = document.getElementById('editArea').value;
-      const massageArea  = document.getElementById('editMassageArea')?.value || '';
-      const suburb       = document.getElementById('editSuburb').value;
-      const address      = document.getElementById('editAddress').value.trim();
-      const massageAreaVisible = !document.getElementById('editMassageAreaField')?.classList.contains('hidden');
+      const province = document.getElementById('editProvince').value;
+      const area     = document.getElementById('editArea').value;
+      const suburb   = document.getElementById('editSuburb').value;
+      const address  = document.getElementById('editAddress').value.trim();
 
-      if (!province || !area) {
+      if (!province || !area || !suburb) {
         btn.classList.remove('btn--loading');
         btn.textContent = 'Save Location';
-        msgEl.textContent = 'Province and city/town are required.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        return;
-      }
-      if (massageAreaVisible && !massageArea) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Location';
-        msgEl.textContent = 'Please select an area.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        return;
-      }
-      if (!massageAreaVisible && !suburb) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Location';
-        msgEl.textContent = 'Please select a suburb.';
+        msgEl.textContent = 'Province, area, and suburb are required.';
         msgEl.style.color = '#f87171';
         msgEl.classList.remove('hidden');
         return;
       }
 
       try {
-        const geoQuery = [suburb || massageArea, area, province, 'South Africa'].filter(Boolean).join(', ');
+        const geoQuery = [suburb, area, province, 'South Africa'].filter(Boolean).join(', ');
         const coords   = await geocodeAddress(geoQuery);
 
         const update = {
           province,
           area,
-          massageArea: massageArea && massageArea !== 'none' ? massageArea : null,
-          suburb:      suburb || null,
-          address:     address || null,
-          updatedAt:   serverTimestamp()
+          suburb,
+          address:   address || null,
+          updatedAt: serverTimestamp()
         };
         if (coords) update.geoLocation = { lat: coords.lat, lng: coords.lng };
 
