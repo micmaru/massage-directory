@@ -1154,21 +1154,6 @@
     const suburbEl = document.getElementById('suburb');
     suburbEl.innerHTML = '<option value="">Select suburb… (optional)</option>';
     suburbEl.disabled  = true;
-    if (!areaId) return;
-    const townId = document.getElementById('area').value;
-    const area   = (areasCache[townId] || []).find(a => a.id === areaId);
-    if (!area) return;
-    // Show only unassigned suburbs (not in any area)
-    const allAssigned = new Set((areasCache[townId] || []).flatMap(a => a.suburbs));
-    const unassigned  = (suburbsCache[townId] || []).filter(s => !allAssigned.has(s));
-    if (unassigned.length > 0) {
-      unassigned.forEach(s => {
-        const o = document.createElement('option');
-        o.value = s; o.textContent = s;
-        suburbEl.appendChild(o);
-      });
-      suburbEl.disabled = false;
-    }
   }
 
   // ════════════════════════════════════════════
