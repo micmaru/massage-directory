@@ -1006,7 +1006,7 @@
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
   import {
     collection, doc, setDoc, serverTimestamp, runTransaction,
-    query, where, getDocs
+    query, where, getDocs, orderBy
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
   const auth    = getAuth(app);
@@ -1022,63 +1022,85 @@
   let knownSupplierData = null;
 
   // ════════════════════════════════════════════
-  let LOCATIONS = { provinces: [] };
-  fetch('locations.json')
-    .then(r => r.json())
-    .then(data => {
-      LOCATIONS = data;
-      populateProvinces();
-    })
-    .catch(err => console.error('Failed to load locations:', err));
+  // ════════════════════════════════════════════
+  // LOCATION CASCADE — reads from Firestore
+  // ════════════════════════════════════════════
+  let provincesCache = [];
+  let townsCache = {};
+  let suburbsCache = {};
 
-  function populateProvinces() {
+  async function populateProvinces() {
     const sel = document.getElementById('province');
-    LOCATIONS.provinces.forEach(p => {
-      const o = document.createElement('option');
-      o.value = p.id; o.textContent = p.name;
-      sel.appendChild(o);
-    });
+    try {
+      const snap = await getDocs(query(collection(db, 'locations_provinces'), orderBy('name', 'asc')));
+      provincesCache = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
+      provincesCache.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.id; o.textContent = p.name;
+        sel.appendChild(o);
+      });
+    } catch (err) {
+      console.error('Failed to load provinces:', err);
+    }
   }
 
-  // ════════════════════════════════════════════
-  // LOCATION CASCADES
-  // ════════════════════════════════════════════
-  function onProvinceChange() {
+  async function onProvinceChange() {
     const provinceId = document.getElementById('province').value;
-    const areaEl    = document.getElementById('area');
+    const townEl    = document.getElementById('area');
     const suburbEl  = document.getElementById('suburb');
-    areaEl.innerHTML   = '<option value="">Select city/town…</option>';
+    townEl.innerHTML   = '<option value="">Select city/town…</option>';
     suburbEl.innerHTML = '<option value="">Select suburb…</option>';
-    areaEl.disabled = true; suburbEl.disabled = true;
+    townEl.disabled = true; suburbEl.disabled = true;
     if (!provinceId) return;
-    const province = LOCATIONS.provinces.find(p => p.id === provinceId);
-    if (!province) return;
-    province.towns.forEach(a => {
+    if (!townsCache[provinceId]) {
+      try {
+        const snap = await getDocs(query(
+          collection(db, 'locations_towns'),
+          where('provinceId', '==', provinceId),
+          orderBy('name', 'asc')
+        ));
+        townsCache[provinceId] = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
+      } catch (err) {
+        console.error('Failed to load towns:', err);
+        return;
+      }
+    }
+    townsCache[provinceId].forEach(t => {
       const o = document.createElement('option');
-      o.value = a.id; o.textContent = a.name;
-      areaEl.appendChild(o);
+      o.value = t.id; o.textContent = t.name;
+      townEl.appendChild(o);
     });
-    areaEl.disabled = false;
+    townEl.disabled = false;
   }
 
-  function onAreaChange() {
-    const provinceId = document.getElementById('province').value;
-    const areaId     = document.getElementById('area').value;
-    const suburbEl   = document.getElementById('suburb');
+  async function onAreaChange() {
+    const townId   = document.getElementById('area').value;
+    const suburbEl = document.getElementById('suburb');
     suburbEl.innerHTML = '<option value="">Select suburb…</option>';
     suburbEl.disabled  = true;
-    if (!areaId) return;
-    const province = LOCATIONS.provinces.find(p => p.id === provinceId);
-    if (!province) return;
-    const area = province.towns.find(a => a.id === areaId);
-    if (!area) return;
-    area.suburbs.forEach(s => {
+    if (!townId) return;
+    if (!suburbsCache[townId]) {
+      try {
+        const snap = await getDocs(query(
+          collection(db, 'locations_suburbs'),
+          where('townId', '==', townId),
+          orderBy('name', 'asc')
+        ));
+        suburbsCache[townId] = snap.docs.map(d => d.data().name);
+      } catch (err) {
+        console.error('Failed to load suburbs:', err);
+        return;
+      }
+    }
+    suburbsCache[townId].forEach(s => {
       const o = document.createElement('option');
       o.value = s; o.textContent = s;
       suburbEl.appendChild(o);
     });
     suburbEl.disabled = false;
   }
+
+  populateProvinces();
 
   // ════════════════════════════════════════════
   // PHONE AUTH — OTP
