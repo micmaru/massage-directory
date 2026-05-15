@@ -130,7 +130,7 @@ exports.onSupplierRegistered = functions
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: process.env.TELEGRAM_CHAT_ID,
-          text: `New MassageMap Registration\nName: ${supplierName}\nType: ${supplierType}\nNumber: ${supplierNumber}\nArea: ${province}, ${area}\nCell: ${cellNumber}`,
+          text: `New MassageMap Registration\nName: ${supplierName}\nType: ${supplierType === 'individual' ? 'Individual Therapist' : 'Spa'}\nNumber: ${supplierNumber}\nArea: ${province}, ${area}\nCell: ${cellNumber}`,
         }),
       });
     } catch (err) {
