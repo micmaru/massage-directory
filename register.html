@@ -1140,7 +1140,7 @@
       });
       massageAreaEl.disabled = false;
       massageAreaField.classList.remove('hidden');
-      suburbField.querySelector('label').textContent = 'Suburb (optional)';
+      suburbField.classList.add('hidden');
     } else {
       // No areas — show all suburbs directly
       suburbsCache[townId].forEach(s => {
@@ -1154,6 +1154,11 @@
 
   window.onMassageAreaChange = async function() {
     const areaId   = document.getElementById('massageArea').value;
+    const suburbField = document.getElementById('suburbField');
+    suburbField.classList.add('hidden');
+    if (areaId === 'none') {
+      suburbField.classList.remove('hidden');
+    }
     const suburbEl = document.getElementById('suburb');
     const townId   = document.getElementById('area').value;
     suburbEl.innerHTML = '<option value="">Select suburb… (optional)</option>';
@@ -1431,8 +1436,11 @@
     clearErrors();
     let ok = true;
     if (!document.getElementById('province').value) { markError(document.getElementById('provinceField'), 'Please select a province.'); ok = false; }
-    if (!document.getElementById('area').value)     { markError(document.getElementById('areaField'),    'Please select an area.');     ok = false; }
-    if (!document.getElementById('suburb').value)   { markError(document.getElementById('suburbField'),  'Please select a suburb.');    ok = false; }
+    if (!document.getElementById('area').value)     { markError(document.getElementById('areaField'),    'Please select a city/town.'); ok = false; }
+    const massageAreaVal = document.getElementById('massageArea')?.value;
+    const massageAreaVisible = !document.getElementById('massageAreaField')?.classList.contains('hidden');
+    if (massageAreaVisible && !massageAreaVal) { markError(document.getElementById('massageAreaField'), 'Please select an area.'); ok = false; }
+    if (!massageAreaVisible && !document.getElementById('suburb').value) { markError(document.getElementById('suburbField'), 'Please select a suburb.'); ok = false; }
     return ok;
   }
 
