@@ -1038,6 +1038,7 @@
 
   async function populateProvinces() {
     const sel = document.getElementById('province');
+    sel.innerHTML = '<option value="">Select province…</option>';
     try {
       const snap = await getDocs(query(collection(db, 'locations_provinces'), orderBy('name', 'asc')));
       provincesCache = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
@@ -1169,8 +1170,6 @@
       suburbEl.disabled = false;
     }
   }
-
-  populateProvinces();
 
   // ════════════════════════════════════════════
   // PHONE AUTH — OTP
@@ -1843,7 +1842,8 @@
   window.goToRegStep         = goToRegStep;
   window.goBack              = goBack;
   window.onProvinceChange    = onProvinceChange;
-  window.onAreaChange        = onAreaChange;
+  window.onAreaChange           = onAreaChange;
+  window.onMassageAreaChange    = onMassageAreaChange;
   window.onMobileToggle      = onMobileToggle;
   window.onDayToggle         = onDayToggle;
   window.addQualification    = addQualification;
