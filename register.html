@@ -1148,7 +1148,7 @@
     }
   }
 
-  async function onMassageAreaChange() {
+  window.onMassageAreaChange = async function() {
     const areaId   = document.getElementById('massageArea').value;
     const suburbEl = document.getElementById('suburb');
     suburbEl.innerHTML = '<option value="">Select suburb… (optional)</option>';
