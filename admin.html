@@ -1802,11 +1802,14 @@
         const subRef = subscriptionData[supplierId]?._ref;
         if (subRef) await updateDoc(subRef, { expiryDate: newExpiry });
 
-        await writeChangeLog(supplierId, supplier.data, 'subscriptionExpiry', oldValue, newValue, reason);
-        if (newSubStatus) {
-          await writeChangeLog(supplierId, supplier.data, 'subscriptionStatus', supplier.data.subscriptionStatus || 'not_paid', newSubStatus, reason);
-          supplier.data.subscriptionStatus = newSubStatus;
-        }
+        const changedFields = [];
+        if (newSubStatus) changedFields.push(`status: ${supplier.data.subscriptionStatus || 'not_paid'} → ${newSubStatus}`);
+        if (newExpiry) changedFields.push(`expiry: ${oldValue || '—'} → ${newValue}`);
+        if (extendBy) changedFields.push(`extended by: ${extendBy} month(s)`);
+        if (freeMonths) changedFields.push(`free months: ${freeMonths}`);
+        const summary = changedFields.join(' | ');
+        await writeChangeLog(supplierId, supplier.data, 'subscriptionAdjust', summary, '', reason);
+        if (newSubStatus) supplier.data.subscriptionStatus = newSubStatus;
         if (newExpiry) supplier.data.subscriptionExpiry = newExpiry;
         closeAdjustPanel();
         renderSubscriptionsTable();
