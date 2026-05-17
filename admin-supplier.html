@@ -430,7 +430,12 @@ function getParam(key) {
 }
 
 window.goBack = function() {
-  window.location.href = 'admin.html';
+  const from = getParam('from');
+  if (from === 'therapists') {
+    window.location.href = 'admin.html?screen=Therapists';
+  } else {
+    window.location.href = 'admin.html';
+  }
 }
 
 window.openMap = function() {
@@ -775,7 +780,7 @@ window.onProvinceChange = async function() {
   document.getElementById('area').innerHTML = '<option value="">Select area</option>';
   document.getElementById('suburb').innerHTML = '<option value="">Select suburb</option>';
   if (!province) return;
-  const snap = await getDocs(query(collection(db, 'locations_towns'), where('province','==',province), orderBy('name')));
+  const snap = await getDocs(query(collection(db, 'locations_towns'), where('provinceName','==',province), orderBy('name')));
   snap.forEach(d => {
     const o = document.createElement('option');
     o.value = d.data().name;
@@ -793,13 +798,13 @@ window.onTownChange = async function() {
   suburbEl.innerHTML = '<option value="">Select suburb</option>';
   if (!town) return;
   const [areaSnap, suburbSnap] = await Promise.all([
-    getDocs(query(collection(db, 'locations_areas'), where('town','==',town), orderBy('name'))),
-    getDocs(query(collection(db, 'locations_suburbs'), where('town','==',town), orderBy('name'))),
+    getDocs(query(collection(db, 'locations_areas'), where('townName','==',town), orderBy('areaName'))),
+    getDocs(query(collection(db, 'locations_suburbs'), where('townName','==',town), orderBy('name'))),
   ]);
   areaSnap.forEach(d => {
     const o = document.createElement('option');
-    o.value = d.data().name;
-    o.textContent = d.data().name;
+    o.value = d.data().areaName;
+    o.textContent = d.data().areaName;
     areaEl.appendChild(o);
   });
   suburbSnap.forEach(d => {

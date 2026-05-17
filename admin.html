@@ -61,7 +61,7 @@
     .filters-row select { height: 36px; font-size: var(--text-sm); }
 
     /* ── Table ── */
-    .table-scroll { overflow-x: scroll; overflow-y: scroll; height: calc(100vh - 420px); min-height: 300px; border-radius: 8px; border: 1px solid var(--border); width: 100%; }
+    .table-scroll { overflow-x: hidden; overflow-y: scroll; height: calc(100vh - 420px); min-height: 300px; border-radius: 8px; border: 1px solid var(--border); width: 100%; }
     .table-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
     .table-scroll::-webkit-scrollbar-track { background: #1e2433; }
     .table-scroll::-webkit-scrollbar-thumb { background: #6c63ff; border-radius: 5px; }
@@ -80,8 +80,8 @@
     .admin-table td:first-child { position: sticky; left: 0; z-index: 1; background-color: #161b27; }
 
     /* ── Pending / review row highlight ── */
-    .row--clickable td { background: rgba(245,158,11,0.05); cursor: pointer; }
-    .row--clickable:hover td { background: rgba(245,158,11,0.11) !important; }
+    .row--clickable { cursor: pointer; }
+    .row--clickable:hover { background: rgba(99, 102, 241, 0.35) !important; outline: 1px solid rgba(99, 102, 241, 0.5); }
     .row--highlighted td { background: rgba(108,99,255,0.13) !important; transition: background 1.5s; }
 
     /* ── Status badges ── */
@@ -386,20 +386,13 @@
                 <th>Membership No</th>
                 <th>First Name</th>
                 <th>Last Name</th>
-                <th>Display Name (changeable)</th>
-                <th>Gender</th>
-                <th>Province</th>
-                <th>Suburb</th>
                 <th>Cell Number</th>
-                <th>Status</th>
-                <th>Registered</th>
-                <th>Subscription</th>
-                <th>Expiry</th>
-                <th>Actions</th>
+                <th>Reg Status</th>
+                <th>Sub Status</th>
               </tr>
             </thead>
             <tbody id="tTableBody">
-              <tr class="table-msg"><td colspan="13">Loading…</td></tr>
+              <tr class="table-msg"><td colspan="6">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1227,7 +1220,7 @@
     // SUPPLIER DETAIL
     // ════════════════════════════════════════════
     window.openSupplierDetail = function(id) {
-      window.location.href = 'admin-supplier.html?id=' + id;
+      window.location.href = 'admin-supplier.html?id=' + id + '&from=therapists';
     }
 
     function buildSupplierDetailHTML(id, d) {
@@ -1403,7 +1396,13 @@
         delete supplierLookup[id];
         if (s.data.uid) delete supplierLookup[s.data.uid];
         renderCounts();
-        showScreen('Landing');
+        const returnScreen = sessionStorage.getItem('adminReturnScreen');
+        if (returnScreen) {
+          sessionStorage.removeItem('adminReturnScreen');
+          showScreen(returnScreen);
+        } else {
+          showScreen('Landing');
+        }
         setActiveNavItem('');
       } catch (err) {
         console.error('detailDelete error:', err);
@@ -1471,36 +1470,19 @@
       if (therapistFilters.status)   rows = rows.filter(s => (s.data.status || 'pending').toLowerCase() === therapistFilters.status);
 
       if (!rows.length) {
-        tbody.innerHTML = '<tr class="table-msg"><td colspan="13">No therapists match the current filters.</td></tr>';
+        tbody.innerHTML = '<tr class="table-msg"><td colspan="6">No therapists match the current filters.</td></tr>';
         return;
       }
 
       tbody.innerHTML = rows.map(({ id, data: d }) => {
-        const status     = (d.status || 'pending').toLowerCase();
-        const clickable  = status === 'pending' || status === 'review';
-        const rowClass   = clickable ? 'row--clickable' : '';
-        const rowClick   = `onclick="openSupplierDetail('${id}')"`;
-
-        const approveBtn = (status === 'pending' || status === 'suspended')
-          ? `<button class="act-btn act-btn--approve" onclick="event.stopPropagation();approveSupplier('${id}')">Approve</button>` : '';
-        const suspendBtn = status === 'active'
-          ? `<button class="act-btn act-btn--suspend" onclick="event.stopPropagation();suspendSupplier('${id}')">Suspend</button>` : '';
-        const deleteBtn  = `<button class="act-btn act-btn--delete" onclick="event.stopPropagation();deleteSupplier('${id}')">Delete</button>`;
-        return `<tr id="trow-${id}" class="${rowClass}" ${rowClick}>
-          <td>${escHtml(d.supplierNumber || '—')}</td>
-          <td>${escHtml(d.firstName      || '—')}</td>
-          <td>${escHtml(d.lastName       || '—')}</td>
-          <td>${escHtml(d.displayName    || '—')}</td>
-          <td>${escHtml(d.gender         || '—')}</td>
-          <td>${escHtml(d.province       || '—')}</td>
-          <td>${escHtml(d.suburb         || '—')}</td>
-          <td>${escHtml(d.cellNumber     || '—')}</td>
-          <td>${statusBadge(d.status)}</td>
-          <td>${fmtDate(d.createdAt)}</td>
-          <td>${escHtml(d.subscriptionStatus || '—')}</td>
-          <td>${fmtDate(d.subscriptionExpiry)}</td>
-          <td><div class="act-btns">${approveBtn}${suspendBtn}${deleteBtn}</div></td>
-        </tr>`;
+        return `<tr id="trow-${id}" class="row--clickable" onclick="openSupplierDetail('${id}')">
+  <td>${escHtml(d.supplierNumber || '—')}</td>
+  <td>${escHtml(d.firstName || '—')}</td>
+  <td>${escHtml(d.lastName || '—')}</td>
+  <td>${escHtml(d.cellNumber || '—')}</td>
+  <td>${statusBadge(d.status || 'pending')}</td>
+  <td>${escHtml(d.subscriptionStatus || '—')}</td>
+</tr>`;
       }).join('');
     }
 
