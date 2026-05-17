@@ -1226,12 +1226,8 @@
     // ════════════════════════════════════════════
     // SUPPLIER DETAIL
     // ════════════════════════════════════════════
-    function openSupplierDetail(id) {
-      const s = allSuppliers.find(s => s.id === id);
-      if (!s) return;
-      showScreen('SupplierDetail');
-      setActiveNavItem('');
-      document.getElementById('supplierDetailCard').innerHTML = buildSupplierDetailHTML(id, s.data);
+    window.openSupplierDetail = function(id) {
+      window.location.href = 'admin-supplier.html?id=' + id;
     }
 
     function buildSupplierDetailHTML(id, d) {
@@ -1483,7 +1479,8 @@
         const status     = (d.status || 'pending').toLowerCase();
         const clickable  = status === 'pending' || status === 'review';
         const rowClass   = clickable ? 'row--clickable' : '';
-        const rowClick   = clickable ? `onclick="rowGoToVetting('${id}')"` : '';
+        const rowClick   = `onclick="openSupplierDetail('${id}')"`;
+
         const approveBtn = (status === 'pending' || status === 'suspended')
           ? `<button class="act-btn act-btn--approve" onclick="event.stopPropagation();approveSupplier('${id}')">Approve</button>` : '';
         const suspendBtn = status === 'active'

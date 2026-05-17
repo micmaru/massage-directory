@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Supplier — MassageMap Admin</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+.supplier-header{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;background:var(--color-bg);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;}
+.supplier-avatar{width:48px;height:48px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-weight:500;font-size:15px;color:var(--teal);}
+.supplier-meta{flex:1;}
+.supplier-meta h2{font-size:16px;font-weight:500;margin:0;}
+.supplier-meta p{font-size:13px;color:var(--text-muted);margin:0;}
+.status-badge{font-size:12px;padding:3px 10px;border-radius:6px;font-weight:500;}
+.status-badge.active{background:#d1fae5;color:#065f46;}
+.status-badge.pending{background:#fef9c3;color:#713f12;}
+.status-badge.suspended{background:#fee2e2;color:#991b1b;}
+.acc-list{display:flex;flex-direction:column;gap:8px;}
+.acc-section{background:var(--color-bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.acc-btn{width:100%;display:flex;align-items:center;padding:14px 1.25rem;gap:10px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:500;color:var(--text);text-align:left;}
+.acc-btn:hover{background:var(--bg-hover);}
+.acc-icon{margin-left:auto;font-size:16px;color:var(--text-muted);transition:transform 0.2s;}
+.acc-body{display:none;padding:0 1.25rem 1.25rem;border-top:1px solid var(--border);}
+.acc-body.open{display:block;}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:1rem;}
+.field-grid.full{grid-template-columns:1fr;}
+.field-span{grid-column:1/-1;}
+.field-label{font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;}
+.field-note{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.acc-body input[type=text],
+.acc-body input[type=number],
+.acc-body select,
+.acc-body textarea{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--color-bg);color:var(--text);font-family:inherit;}
+.acc-body textarea{resize:vertical;min-height:80px;}
+.acc-body input[readonly]{color:var(--text-muted);background:var(--bg-secondary);}
+.check-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.check-list label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;}
+.section-label{font-size:12px;color:var(--text-muted);font-weight:500;margin:1rem 0 6px;}
+.tantric-block{margin-top:1.25rem;padding:12px;background:var(--bg-secondary);border-radius:8px;border-left:3px solid var(--gold);}
+.tantric-block p{font-size:12px;color:var(--text-muted);margin:6px 0 0;}
+.save-row{margin-top:1rem;display:flex;justify-content:flex-end;}
+.btn-save{padding:6px 20px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:var(--teal);color:#fff;cursor:pointer;font-family:inherit;}
+.btn-save:hover{background:var(--teal-dark);}
+.btn-suspend{padding:5px 14px;font-size:12px;border-radius:8px;border:1px solid #fca5a5;background:none;color:#dc2626;cursor:pointer;font-family:inherit;}
+.btn-suspend:hover{background:#fee2e2;}
+.btn-back{display:flex;align-items:center;gap:6px;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text);cursor:pointer;font-family:inherit;margin-bottom:1.5rem;}
+.btn-back:hover{background:var(--bg-hover);}
+.photo-grid{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-top:1rem;}
+.photo-slot{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.photo-box{width:80px;height:80px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--text-muted);overflow:hidden;}
+.photo-box img{width:100%;height:100%;object-fit:cover;}
+.photo-box.dashed{border-style:dashed;cursor:pointer;}
+.photo-box.dashed:hover{background:var(--bg-hover);}
+.photo-lbl{font-size:11px;color:var(--text-muted);text-align:center;line-height:1.4;}
+.gps-row{display:flex;gap:6px;align-items:center;}
+.gps-row input{flex:1;}
+.gps-link{font-size:12px;color:var(--teal);white-space:nowrap;text-decoration:none;}
+.acc-icon-wrap{font-size:18px;color:var(--text-muted);}
+.spa-tag{font-size:11px;color:var(--text-muted);margin-left:2px;}
+.saved-msg{font-size:13px;color:#065f46;display:none;margin-right:12px;}
+.saved-msg.show{display:inline;}
+.error-msg{font-size:13px;color:#dc2626;display:none;margin-right:12px;}
+.error-msg.show{display:inline;}
+.audit-note{font-size:11px;color:var(--text-muted);margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="admin-layout" id="adminLayout" style="display:none;">
+  <div class="admin-content" style="max-width:780px;margin:0 auto;padding:1.5rem 1rem;">
+
+    <button class="btn-back" onclick="goBack()">&#8592; Back to therapists</button>
+
+    <div class="supplier-header">
+      <div class="supplier-avatar" id="supplierAvatar">??</div>
+      <div class="supplier-meta">
+        <h2 id="supplierFullName">Loading...</h2>
+        <p id="supplierSubtitle">—</p>
+      </div>
+      <span class="status-badge" id="statusBadge">—</span>
+      <button class="btn-suspend" id="suspendBtn" onclick="suspendSupplier()">Suspend</button>
+    </div>
+
+    <div class="acc-list" id="accList">
+
+      <!-- 1. ACCOUNT -->
+      <div class="acc-section">
+        <button class="acc-btn" onclick="toggleAcc(this)">
+          <span style="font-size:18px;color:var(--text-muted);">&#128737;</span>
+          <span>1. Account</span>
+          <span class="acc-icon">&#8964;</span>
+        </button>
+        <div class="acc-body">
+          <div class="field-grid">
+            <div>
+              <label class="field-label">Membership no.</label>
+              <input type="text" id="supplierNumber" />
+            </div>
+            <div>
+              <label class="field-label">Supplier type</label>
+              <select id="supplierType">
+                <option value="individual">Individual therapist</option>
+                <option value="spa">Spa</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Registration status</label>
+              <select id="regStatus">
+                <option value="pending">Pending</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Subscription status</label>
+              <select id="subStatus">
+                <option value="active">Active</option>
+                <option value="paused">Paused</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Registered</label>
+              <input type="text" id="registeredAt" readonly />
+            </div>
+          </div>
+          <div class="save-row">
+            <span class="saved-msg" id="savedAccount">Saved</span>
+            <span class="error-msg" id="errAccount">Error saving</span>
+            <button class="btn-save" onclick="saveSection('account')">Save account</button>
+          </div>
+          <p class="audit-note">All changes logged to audit record.</p>
+        </div>
+      </div>
+
+      <!-- 2. PERSONAL -->
+      <div class="acc-section">
+        <button class="acc-btn" onclick="toggleAcc(this)">
+          <span style="font-size:18px;color:var(--text-muted);">&#128100;</span>
+          <span>2. Personal</span>
+          <span class="acc-icon">&#8964;</span>
+        </button>
+        <div class="acc-body">
+          <div class="field-grid">
+            <div>
+              <label class="field-label">First name</label>
+              <input type="text" id="firstName" />
+            </div>
+            <div>
+              <label class="field-label">Last name</label>
+              <input type="text" id="lastName" />
+            </div>
+            <div>
+              <label class="field-label">Display name</label>
+              <input type="text" id="displayName" />
+            </div>
+            <div>
+              <label class="field-label">Gender</label>
+              <select id="gender">
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="non-binary">Non-binary</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Cell number</label>
+              <input type="text" id="cellNumber" />
+            </div>
+            <div>
+              <label class="field-label">Email</label>
+              <input type="text" id="email" />
+            </div>
+            <div>
+              <label class="field-label">WhatsApp no. <span class="field-note">(admin only)</span></label>
+              <input type="text" id="whatsappNumber" placeholder="Same as cell if blank" />
+            </div>
+            <div>
+              <label class="field-label">Contact preference</label>
+              <select id="contactPreference">
+                <option value="sms">SMS</option>
+                <option value="email">Email</option>
+                <option value="whatsapp">WhatsApp</option>
+              </select>
+            </div>
+          </div>
+          <div class="save-row">
+            <span class="saved-msg" id="savedPersonal">Saved</span>
+            <span class="error-msg" id="errPersonal">Error saving</span>
+            <button class="btn-save" onclick="saveSection('personal')">Save personal</button>
+          </div>
+          <p class="audit-note">All changes logged to audit record.</p>
+        </div>
+      </div>
+
+      <!-- 3. LOCATION -->
+      <div class="acc-section">
+        <button class="acc-btn" onclick="toggleAcc(this)">
+          <span style="font-size:18px;color:var(--text-muted);">&#128205;</span>
+          <span>3. Location</span>
+          <span class="acc-icon">&#8964;</span>
+        </button>
+        <div class="acc-body">
+          <div class="field-grid">
+            <div>
+              <label class="field-label">Province</label>
+              <select id="province" onchange="onProvinceChange()">
+                <option value="">Select province</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">City / Town</label>
+              <select id="town" onchange="onTownChange()">
+                <option value="">Select city / town</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Area</label>
+              <select id="area">
+                <option value="">Select area</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Suburb</label>
+              <select id="suburb">
+                <option value="">Select suburb</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">GPS latitude</label>
+              <input type="text" id="gpsLat" placeholder="-26.1076" />
+            </div>
+            <div>
+              <label class="field-label">GPS longitude</label>
+              <div class="gps-row">
+                <input type="text" id="gpsLng" placeholder="28.0567" />
+                <a class="gps-link" id="viewMapLink" href="#" target="_blank" onclick="openMap()">&#128506; View</a>
+              </div>
+            </div>
+          </div>
+          <div class="save-row">
+            <span class="saved-msg" id="savedLocation">Saved</span>
+            <span class="error-msg" id="errLocation">Error saving</span>
+            <button class="btn-save" onclick="saveSection('location')">Save location</button>
+          </div>
+          <p class="audit-note">All changes logged to audit record.</p>
+        </div>
+      </div>
+
+      <!-- 4. PREMISES & FACILITIES -->
+      <div class="acc-section">
+        <button class="acc-btn" onclick="toggleAcc(this)">
+          <span style="font-size:18px;color:var(--text-muted);">&#127968;</span>
+          <span>4. Premises &amp; facilities</span>
+          <span class="acc-icon">&#8964;</span>
+        </button>
+        <div class="acc-body">
+          <div class="field-grid">
+            <div class="field-span">
+              <label class="field-label">Street address <span class="field-note">(admin only — never shown publicly)</span></label>
+              <input type="text" id="address" />
+            </div>
+            <div>
+              <label class="field-label">Premises type</label>
+              <select id="premisesType">
+                <option value="home">Home studio</option>
+                <option value="business">Business premises</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding-top:18px;">
+              <input type="checkbox" id="addressVisible" />
+              <label for="addressVisible" style="font-size:13px;">Address visible on listing</label>
+            </div>
+          </div>
+          <p class="section-label">Facilities</p>
+          <div class="check-list" id="facilitiesGroup">
+            <span style="font-size:13px;color:var(--text-muted);">Loading...</span>
+          </div>
+          <div class="save-row">
+            <span class="saved-msg" id="savedPremises">Saved</span>
+            <span class="error-msg" id="errPremises">Error saving</span>
+            <button class="btn-save" onclick="saveSection('premises')">Save premises</button>
+          </div>
+          <p class="audit-note">All changes logged to audit record.</p>
+        </div>
+      </div>
+
+      <!-- 5. ABOUT -->
+      <div class="acc-section">
+        <button class="acc-btn" onclick="toggleAcc(this)">
+          <span style="font-size:18px;color:var(--text-muted);">&#8505;</span>
+          <span>5. About</span>
+          <span class="acc-icon">&#8964;</span>
+        </button>
+        <div class="acc-body">
+          <div class="field-grid">
+            <div class="field-span">
+              <label class="field-label">About me</label>
+              <textarea id="aboutMe"></textarea>
+            </div>
+            <div class="field-span">
+              <label class="field-label">Specials</label>
+              <textarea id="specialsText" style="min-height:60px;"></textarea>
+            </div>
+            <div>
+              <label class="field-label">Experience</label>
+              <select id="experienceYears">
+                <option value="0-1">0–1 years</option>
+                <option value="1-3">1–3 years</option>
+                <option value="3-5">3–5 years</option>
+                <option value="5+">5+ years</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Gender served</label>
+              <select id="genderServed">
+                <option value="ladies">Ladies only</option>
+                <option value="both">Both</option>
+                <option value="gents">Gentlemen only</option>
+              </select>
+            </div>
+          </div>
+          <div class="save-row">
+            <span class="saved-msg" id="savedAbout">Saved</span>
+            <span class="error-msg" id="errAbout">Error saving</span>
+            <button class="btn-save" onclick="saveSection('about')">Save about</button>
+          </div>
+          <p class="audit-note">All changes logged to audit record.</p>
+        </div>
+      </div>
+
+      <!-- 6. AVAILABILITY -->
+      <div class="acc-section">
+        <button class="acc-btn" onclick="toggleAcc(this)">
+          <span style="font-size:18px;color:var(--text-muted);">&#128336;</span>
+          <span>6. Availability</span>
+          <span class="acc-icon">&#8964;</span>
+        </button>
+        <div class="acc-body">
+          <p class="section-label" style="margin-top:1rem;">Weekly hours</p>
+          <div id="weeklyHoursGrid" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:1rem;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
+              <input type="checkbox" id="availableOutsideHours" /> Available outside listed hours
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
+              <input type="checkbox" id="preparedToTravel" /> Prepared to travel
+            </label>
+          </div>
+          <div class="save-row">
+            <span class="saved-msg" id="savedAvailability">Saved</span>
+            <span class="error-msg" id="errAvailability">Error saving</span>
+            <button class="btn-save" onclick="saveSection('availability')">Save availability</button>
+          </div>
+          <p class="audit-note">All changes logged to audit record.</p>
+        </div>
+      </div>
+
+      <!-- 7. SERVICES -->
+      <div class="acc-section">
+        <button class="acc-btn" onclick="toggleAcc(this)">
+          <span style="font-size:18px;color:var(--text-muted);">&#9832;</span>
+          <span>7. Services</span>
+          <span class="acc-icon">&#8964;</span>
+        </button>
+        <div class="acc-body">
+          <p class="section-label" style="margin-top:1rem;">Massage styles</p>
+          <div class="check-list" id="massageStylesGroup"><span style="font-size:13px;color:var(--text-muted);">Loading...</span></div>
+          <p class="section-label">Traditions</p>
+          <div class="check-list" id="traditionsGroup"><span style="font-size:13px;color:var(--text-muted);">Loading...</span></div>
+          <p class="section-label">Treatments</p>
+          <div class="check-list" id="treatmentsGroup"><span style="font-size:13px;color:var(--text-muted);">Loading...</span></div>
+          <p class="section-label">Classification</p>
+          <div class="check-list" id="classificationGroup"><span style="font-size:13px;color:var(--text-muted);">Loading...</span></div>
+          <p class="section-label">Service offerings</p>
+          <div class="check-list" id="serviceOfferingsGroup"><span style="font-size:13px;color:var(--text-muted);">Loading...</span></div>
+          <div class="tantric-block">
+            <p style="font-size:12px;font-weight:500;margin:0 0 6px;">Tantric massage</p>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+              <input type="checkbox" id="tantricMirror" onchange="syncTantric(this)" /> This therapist offers tantric massage
+            </label>
+            <p>Sensual, energy-based practice rooted in ancient traditions. Non-sexual. Sits under Holistic classification. Mirrors the Tantric selection in Massage Styles above.</p>
+          </div>
+          <div class="save-row">
+            <span class="saved-msg" id="savedServices">Saved</span>
+            <span class="error-msg" id="errServices">Error saving</span>
+            <button class="btn-save" onclick="saveSection('services')">Save services</button>
+          </div>
+          <p class="audit-note">All changes logged to audit record.</p>
+        </div>
+      </div>
+
+      <!-- 8. PHOTOS -->
+      <div class="acc-section">
+        <button class="acc-btn" onclick="toggleAcc(this)">
+          <span style="font-size:18px;color:var(--text-muted);">&#128247;</span>
+          <span>8. Photos</span>
+          <span class="acc-icon">&#8964;</span>
+        </button>
+        <div class="acc-body">
+          <div class="photo-grid" id="photoGrid"></div>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:10px;">Photo 1 is always the ID photo — never shown publicly. Photos 2 onwards appear on the listing.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="loginScreen" style="display:none;">
+  <p style="text-align:center;padding:2rem;color:var(--text-muted);">Session expired. <a href="admin.html">Return to admin</a></p>
+</div>
+
+<script src="config.js"></script>
+<script type="module">
+import { app, db } from './firebase-config.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, where, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+const auth = getAuth(app);
+
+const DAYS = ['mon','tue','wed','thu','fri','sat','sun'];
+const DAY_LABELS = {mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
+
+let supplierId = null;
+let supplierData = {};
+let offeringsCache = [];
+let currentSupplierType = 'individual';
+
+function getParam(key) {
+  return new URLSearchParams(window.location.search).get(key);
+}
+
+window.goBack = function() {
+  window.location.href = 'admin.html';
+}
+
+window.openMap = function() {
+  const lat = document.getElementById('gpsLat').value;
+  const lng = document.getElementById('gpsLng').value;
+  if (lat && lng) {
+    window.open('https://www.google.com/maps?q=' + lat + ',' + lng, '_blank');
+  }
+}
+
+window.toggleAcc = function(btn) {
+  const allBodies = document.querySelectorAll('.acc-body');
+  const allIcons = document.querySelectorAll('.acc-icon');
+  const body = btn.nextElementSibling;
+  const icon = btn.querySelector('.acc-icon');
+  const isOpen = body.classList.contains('open');
+  allBodies.forEach(b => b.classList.remove('open'));
+  allIcons.forEach(i => i.style.transform = '');
+  if (!isOpen) {
+    body.classList.add('open');
+    icon.style.transform = 'rotate(180deg)';
+  }
+}
+
+function initWeeklyHoursGrid(data) {
+  const grid = document.getElementById('weeklyHoursGrid');
+  grid.innerHTML = '';
+  DAYS.forEach(day => {
+    const dayData = (data && data[day]) || { available: false, from: '08:00', to: '17:00' };
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;font-size:13px;';
+    row.innerHTML = `
+      <label style="display:flex;align-items:center;gap:6px;min-width:110px;">
+        <input type="checkbox" id="avail_${day}" ${dayData.available ? 'checked' : ''} onchange="toggleDayRow('${day}')" />
+        ${DAY_LABELS[day]}
+      </label>
+      <input type="time" id="from_${day}" value="${dayData.from || '08:00'}" style="width:100px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--color-bg);color:var(--text);" ${!dayData.available ? 'disabled' : ''} />
+      <span style="color:var(--text-muted);">to</span>
+      <input type="time" id="to_${day}" value="${dayData.to || '17:00'}" style="width:100px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--color-bg);color:var(--text);" ${!dayData.available ? 'disabled' : ''} />
+    `;
+    grid.appendChild(row);
+  });
+}
+
+function toggleDayRow(day) {
+  const avail = document.getElementById('avail_' + day).checked;
+  document.getElementById('from_' + day).disabled = !avail;
+  document.getElementById('to_' + day).disabled = !avail;
+}
+
+function getWeeklyHours() {
+  const hours = {};
+  DAYS.forEach(day => {
+    hours[day] = {
+      available: document.getElementById('avail_' + day).checked,
+      from: document.getElementById('from_' + day).value,
+      to: document.getElementById('to_' + day).value,
+    };
+  });
+  return hours;
+}
+
+async function loadOfferings() {
+  const snap = await getDocs(query(collection(db, 'offerings'), where('launchActive','==',true)));
+  offeringsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderOfferingsGroup('massageStyles','massageStylesGroup');
+  renderOfferingsGroup('traditions','traditionsGroup');
+  renderOfferingsGroup('treatments','treatmentsGroup');
+  renderOfferingsGroup('classification','classificationGroup');
+  renderOfferingsGroup('serviceOfferings','serviceOfferingsGroup');
+  renderOfferingsGroup('facilities','facilitiesGroup');
+}
+
+function renderOfferingsGroup(category, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const items = offeringsCache
+    .filter(o => o.category === category && o.visibleTo && o.visibleTo.includes(currentSupplierType === 'spa' ? 'spa' : 'therapist'))
+    .sort((a,b) => (a.sortOrder||0)-(b.sortOrder||0));
+  if (items.length === 0) {
+    container.innerHTML = '<span style="font-size:13px;color:var(--text-muted);">None available.</span>';
+    return;
+  }
+  container.innerHTML = items.map(item => {
+    const isSpaOnly = item.visibleTo && item.visibleTo.includes('spa') && !item.visibleTo.includes('therapist');
+    return `<label style="display:flex;align-items:center;gap:6px;font-size:13px;${isSpaOnly && currentSupplierType !== 'spa' ? 'color:var(--text-muted);' : ''}">
+      <input type="checkbox" name="${category}" value="${item.name}" ${isSpaOnly && currentSupplierType !== 'spa' ? 'disabled' : ''} />
+      ${item.name}${isSpaOnly && currentSupplierType !== 'spa' ? ' <span class="spa-tag">(spa)</span>' : ''}
+    </label>`;
+  }).join('');
+}
+
+function tickSavedValues(category, savedArray) {
+  if (!savedArray || !savedArray.length) return;
+  document.querySelectorAll(`input[name="${category}"]`).forEach(cb => {
+    cb.checked = savedArray.includes(cb.value);
+  });
+  if (category === 'massageStyles') {
+    const hasTantric = savedArray.includes('Tantric');
+    document.getElementById('tantricMirror').checked = hasTantric;
+  }
+}
+
+window.syncTantric = function(mirror) {
+  const stylesCbs = document.querySelectorAll('input[name="massageStyles"]');
+  stylesCbs.forEach(cb => {
+    if (cb.value === 'Tantric') cb.checked = mirror.checked;
+  });
+}
+
+function getChecked(name) {
+  return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
+}
+
+function renderPhotoGrid(photos, idPhotoUrl) {
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+  const slot0 = document.createElement('div');
+  slot0.className = 'photo-slot';
+  slot0.innerHTML = `
+    <div class="photo-box">${idPhotoUrl ? `<img src="${idPhotoUrl}" alt="ID photo" />` : '&#128100;'}</div>
+    <span class="photo-lbl">Photo 1 — ID<br><span style="color:var(--text-muted);">admin only</span></span>
+  `;
+  grid.appendChild(slot0);
+  const list = photos || [];
+  list.forEach((url, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'photo-slot';
+    slot.innerHTML = `
+      <div class="photo-box">${url ? `<img src="${url}" alt="Photo ${i+2}" />` : '&#128247;'}</div>
+      <span class="photo-lbl">Photo ${i+2}</span>
+    `;
+    grid.appendChild(slot);
+  });
+  const addSlot = document.createElement('div');
+  addSlot.className = 'photo-slot';
+  addSlot.innerHTML = `<div class="photo-box dashed" title="Add photo">+</div><span class="photo-lbl">Add photo</span>`;
+  grid.appendChild(addSlot);
+}
+
+function populateForm(data) {
+  supplierData = data;
+  currentSupplierType = data.supplierType || 'individual';
+  const initials = ((data.firstName||'?')[0] + (data.lastName||'?')[0]).toUpperCase();
+  document.getElementById('supplierAvatar').textContent = initials;
+  document.getElementById('supplierFullName').textContent = `${data.firstName||''} ${data.lastName||''}`.trim() || data.displayName || '—';
+  document.getElementById('supplierSubtitle').textContent =
+    `${currentSupplierType === 'spa' ? 'Spa' : 'Individual therapist'} · ${data.supplierNumber||'—'} · ${data.suburb||''}, ${data.province||''}`;
+  const badge = document.getElementById('statusBadge');
+  badge.textContent = data.status || '—';
+  badge.className = 'status-badge ' + (data.status || '');
+  document.getElementById('supplierNumber').value = data.supplierNumber || '';
+  const typeEl = document.getElementById('supplierType');
+  if (typeEl) typeEl.value = data.supplierType || 'individual';
+  document.getElementById('regStatus').value = data.status || 'pending';
+  document.getElementById('subStatus').value = data.subscriptionStatus || 'active';
+  document.getElementById('registeredAt').value = data.createdAt ? new Date(data.createdAt.seconds*1000).toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'}) : '—';
+  document.getElementById('firstName').value = data.firstName || '';
+  document.getElementById('lastName').value = data.lastName || '';
+  document.getElementById('displayName').value = data.displayName || '';
+  document.getElementById('gender').value = data.gender || 'female';
+  document.getElementById('cellNumber').value = data.cellNumber || '';
+  document.getElementById('email').value = data.email || '';
+  document.getElementById('whatsappNumber').value = data.whatsappNumber || '';
+  document.getElementById('contactPreference').value = Array.isArray(data.contactPreferences) ? data.contactPreferences[0] : (data.contactPreferences || 'sms');
+  document.getElementById('gpsLat').value = data.gpsLat || '';
+  document.getElementById('gpsLng').value = data.gpsLng || '';
+  document.getElementById('address').value = data.address || data.addressLine1 || '';
+  document.getElementById('premisesType').value = data.premisesType || 'home';
+  document.getElementById('addressVisible').checked = data.addressVisible || false;
+  document.getElementById('aboutMe').value = data.aboutMe || '';
+  document.getElementById('specialsText').value = data.specialsText || '';
+  document.getElementById('experienceYears').value = data.experienceYears || '0-1';
+  document.getElementById('genderServed').value = data.genderServed || 'both';
+  document.getElementById('availableOutsideHours').checked = data.availableOutsideHours || false;
+  document.getElementById('preparedToTravel').checked = data.mobileAvailable || false;
+  initWeeklyHoursGrid(data.weeklyHours);
+  renderPhotoGrid(data.photos, data.idPhotoUrl);
+  loadOfferings().then(() => {
+    tickSavedValues('massageStyles', data.massageStyles);
+    tickSavedValues('traditions', data.traditions);
+    tickSavedValues('treatments', data.treatments);
+    tickSavedValues('classification', Array.isArray(data.classification) ? data.classification : (data.classification ? [data.classification] : []));
+    tickSavedValues('serviceOfferings', data.serviceOfferings);
+    tickSavedValues('facilities', data.facilities);
+  });
+}
+
+async function logAudit(action, oldValues, newValues) {
+  function sanitize(obj) {
+    const clean = {};
+    Object.entries(obj).forEach(([k, v]) => {
+      clean[k] = v === undefined ? null : v;
+    });
+    return clean;
+  }
+  await addDoc(collection(db, 'auditLog'), {
+    supplierId,
+    action,
+    actor: 'admin',
+    oldValues: sanitize(oldValues),
+    newValues: sanitize(newValues),
+    timestamp: serverTimestamp(),
+  });
+}
+
+function showMsg(savedId, errId, success) {
+  const saved = document.getElementById(savedId);
+  const err = document.getElementById(errId);
+  if (success) {
+    saved.classList.add('show');
+    setTimeout(() => saved.classList.remove('show'), 3000);
+  } else {
+    err.classList.add('show');
+    setTimeout(() => err.classList.remove('show'), 4000);
+  }
+}
+
+window.saveSection = async function(section) {
+  try {
+    let update = {};
+    let oldValues = {};
+    if (section === 'account') {
+      oldValues = { status: supplierData.status, subscriptionStatus: supplierData.subscriptionStatus, supplierNumber: supplierData.supplierNumber, supplierType: supplierData.supplierType };
+      update = {
+        supplierNumber: document.getElementById('supplierNumber').value.trim(),
+        supplierType: document.getElementById('supplierType').value,
+        status: document.getElementById('regStatus').value,
+        subscriptionStatus: document.getElementById('subStatus').value,
+        updatedAt: serverTimestamp(),
+      };
+    } else if (section === 'personal') {
+      oldValues = { firstName: supplierData.firstName, lastName: supplierData.lastName, displayName: supplierData.displayName, cellNumber: supplierData.cellNumber, email: supplierData.email };
+      update = {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        displayName: document.getElementById('displayName').value.trim(),
+        gender: document.getElementById('gender').value,
+        cellNumber: document.getElementById('cellNumber').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        whatsappNumber: document.getElementById('whatsappNumber').value.trim(),
+        contactPreferences: [document.getElementById('contactPreference').value],
+        updatedAt: serverTimestamp(),
+      };
+    } else if (section === 'location') {
+      oldValues = { province: supplierData.province, suburb: supplierData.suburb, gpsLat: supplierData.gpsLat, gpsLng: supplierData.gpsLng };
+      update = {
+        province: document.getElementById('province').value,
+        town: document.getElementById('town').value,
+        area: document.getElementById('area').value,
+        suburb: document.getElementById('suburb').value,
+        gpsLat: parseFloat(document.getElementById('gpsLat').value) || null,
+        gpsLng: parseFloat(document.getElementById('gpsLng').value) || null,
+        updatedAt: serverTimestamp(),
+      };
+    } else if (section === 'premises') {
+      oldValues = { address: supplierData.address, premisesType: supplierData.premisesType, addressVisible: supplierData.addressVisible, facilities: supplierData.facilities };
+      update = {
+        address: document.getElementById('address').value.trim(),
+        addressLine1: document.getElementById('address').value.trim(),
+        premisesType: document.getElementById('premisesType').value,
+        addressVisible: document.getElementById('addressVisible').checked,
+        facilities: getChecked('facilities'),
+        updatedAt: serverTimestamp(),
+      };
+    } else if (section === 'about') {
+      oldValues = { aboutMe: supplierData.aboutMe, specialsText: supplierData.specialsText, experienceYears: supplierData.experienceYears, genderServed: supplierData.genderServed };
+      update = {
+        aboutMe: document.getElementById('aboutMe').value.trim(),
+        specialsText: document.getElementById('specialsText').value.trim(),
+        experienceYears: document.getElementById('experienceYears').value,
+        genderServed: document.getElementById('genderServed').value,
+        updatedAt: serverTimestamp(),
+      };
+    } else if (section === 'availability') {
+      oldValues = { weeklyHours: supplierData.weeklyHours, availableOutsideHours: supplierData.availableOutsideHours, mobileAvailable: supplierData.mobileAvailable };
+      update = {
+        weeklyHours: getWeeklyHours(),
+        availableOutsideHours: document.getElementById('availableOutsideHours').checked,
+        mobileAvailable: document.getElementById('preparedToTravel').checked,
+        updatedAt: serverTimestamp(),
+      };
+    } else if (section === 'services') {
+      oldValues = { massageStyles: supplierData.massageStyles, traditions: supplierData.traditions, treatments: supplierData.treatments, classification: supplierData.classification, serviceOfferings: supplierData.serviceOfferings };
+      update = {
+        massageStyles: getChecked('massageStyles'),
+        traditions: getChecked('traditions'),
+        treatments: getChecked('treatments'),
+        classification: getChecked('classification'),
+        serviceOfferings: getChecked('serviceOfferings'),
+        updatedAt: serverTimestamp(),
+      };
+    }
+    await updateDoc(doc(db, 'suppliers', supplierId), update);
+    await logAudit('admin_edit_' + section, oldValues, update);
+    Object.assign(supplierData, update);
+    showMsg('saved' + section.charAt(0).toUpperCase() + section.slice(1), 'err' + section.charAt(0).toUpperCase() + section.slice(1), true);
+  } catch (err) {
+    console.error('Save error:', err);
+    showMsg('saved' + section.charAt(0).toUpperCase() + section.slice(1), 'err' + section.charAt(0).toUpperCase() + section.slice(1), false);
+  }
+}
+
+window.suspendSupplier = async function() {
+  if (!confirm('Suspend this supplier? They will be hidden from the directory immediately.')) return;
+  try {
+    const oldStatus = supplierData.status;
+    await updateDoc(doc(db, 'suppliers', supplierId), {
+      status: 'suspended',
+      updatedAt: serverTimestamp(),
+    });
+    await logAudit('admin_suspend', { status: oldStatus }, { status: 'suspended' });
+    supplierData.status = 'suspended';
+    const badge = document.getElementById('statusBadge');
+    badge.textContent = 'Suspended';
+    badge.className = 'status-badge suspended';
+    document.getElementById('regStatus').value = 'suspended';
+    alert('Supplier suspended.');
+  } catch (err) {
+    console.error('Suspend error:', err);
+    alert('Error suspending supplier.');
+  }
+}
+
+async function loadLocationsForAdmin() {
+  try {
+    const [provSnap] = await Promise.all([getDocs(query(collection(db, 'locations_provinces'), orderBy('name')))]);
+    const provEl = document.getElementById('province');
+    provSnap.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d.data().name;
+      o.textContent = d.data().name;
+      provEl.appendChild(o);
+    });
+  } catch(e) { console.error(e); }
+}
+
+window.onProvinceChange = async function() {
+  const province = document.getElementById('province').value;
+  const townEl = document.getElementById('town');
+  townEl.innerHTML = '<option value="">Select city / town</option>';
+  document.getElementById('area').innerHTML = '<option value="">Select area</option>';
+  document.getElementById('suburb').innerHTML = '<option value="">Select suburb</option>';
+  if (!province) return;
+  const snap = await getDocs(query(collection(db, 'locations_towns'), where('province','==',province), orderBy('name')));
+  snap.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d.data().name;
+    o.textContent = d.data().name;
+    townEl.appendChild(o);
+  });
+  if (supplierData.town) townEl.value = supplierData.town;
+}
+
+window.onTownChange = async function() {
+  const town = document.getElementById('town').value;
+  const areaEl = document.getElementById('area');
+  const suburbEl = document.getElementById('suburb');
+  areaEl.innerHTML = '<option value="">Select area</option>';
+  suburbEl.innerHTML = '<option value="">Select suburb</option>';
+  if (!town) return;
+  const [areaSnap, suburbSnap] = await Promise.all([
+    getDocs(query(collection(db, 'locations_areas'), where('town','==',town), orderBy('name'))),
+    getDocs(query(collection(db, 'locations_suburbs'), where('town','==',town), orderBy('name'))),
+  ]);
+  areaSnap.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d.data().name;
+    o.textContent = d.data().name;
+    areaEl.appendChild(o);
+  });
+  suburbSnap.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d.data().name;
+    o.textContent = d.data().name;
+    suburbEl.appendChild(o);
+  });
+  if (supplierData.area) areaEl.value = supplierData.area;
+  if (supplierData.suburb) suburbEl.value = supplierData.suburb;
+}
+
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    document.getElementById('adminLayout').style.display = 'block';
+  }
+  supplierId = getParam('id');
+  if (!supplierId) { alert('No supplier ID provided.'); goBack(); return; }
+  document.getElementById('adminLayout').style.display = 'block';
+  await loadLocationsForAdmin();
+  const docSnap = await getDoc(doc(db, 'suppliers', supplierId));
+  if (!docSnap.exists) { alert('Supplier not found.'); goBack(); return; }
+  const data = docSnap.data();
+  populateForm(data);
+  if (data.province) {
+    document.getElementById('province').value = data.province;
+    await onProvinceChange();
+    if (data.town) {
+      document.getElementById('town').value = data.town;
+      await onTownChange();
+    }
+    if (data.area) document.getElementById('area').value = data.area;
+    if (data.suburb) document.getElementById('suburb').value = data.suburb;
+  }
+});
+</script>
+</body>
+</html>

@@ -71,6 +71,15 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    match /auditLog/{document=**} {
+      allow read, write: if true;
+    }
+
+    match /offerings/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

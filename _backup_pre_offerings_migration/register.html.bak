@@ -695,42 +695,52 @@
 
           <div class="field-stack">
 
-            <div id="massageStylesField">
-              <div class="form-section-label">Massage Styles * <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(select at least one)</span></div>
-              <div id="massageStylesGroup" class="check-group check-group--3col">
-                <div class="loading-options">Loading...</div>
+            <div id="massageTypesField">
+              <div class="form-section-label">Massage Types * <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(select at least one)</span></div>
+              <div class="check-group check-group--3col">
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Reflexology" /><span class="check-item__label">Reflexology</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Swedish" /><span class="check-item__label">Swedish</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Sports" /><span class="check-item__label">Sports</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Hot Stone" /><span class="check-item__label">Hot Stone</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Aromatherapy" /><span class="check-item__label">Aromatherapy</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Deep Tissue" /><span class="check-item__label">Deep Tissue</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Shiatsu" /><span class="check-item__label">Shiatsu</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Thai" /><span class="check-item__label">Thai</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Pregnancy" /><span class="check-item__label">Pregnancy</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Kahuna" /><span class="check-item__label">Kahuna</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Ayurvedic" /><span class="check-item__label">Ayurvedic</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Tantric" /><span class="check-item__label">Tantric</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Couples" /><span class="check-item__label">Couples</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Lymphatic Drainage" /><span class="check-item__label">Lymphatic Drainage</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Trigger Point" /><span class="check-item__label">Trigger Point</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Lomi Lomi" /><span class="check-item__label">Lomi Lomi</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Craniosacral" /><span class="check-item__label">Craniosacral</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Chair" /><span class="check-item__label">Chair</span></label>
+                <label class="check-item"><input type="checkbox" name="massageTypes" value="Four Hands" /><span class="check-item__label">Four Hands</span></label>
               </div>
             </div>
 
-            <div id="traditionsField" style="margin-top:var(--space-4);">
-              <div class="form-section-label">Traditions <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(optional)</span></div>
-              <div id="traditionsGroup" class="check-group check-group--3col">
-                <div class="loading-options">Loading...</div>
+            <div>
+              <div class="form-section-label">Treatments</div>
+              <div class="check-group">
+                <label class="check-item"><input type="checkbox" name="treatments" value="Full Body" /><span class="check-item__label">Full Body</span></label>
+                <label class="check-item"><input type="checkbox" name="treatments" value="Back &amp; Neck" /><span class="check-item__label">Back &amp; Neck</span></label>
+                <label class="check-item"><input type="checkbox" name="treatments" value="Indian Head" /><span class="check-item__label">Indian Head</span></label>
+                <label class="check-item"><input type="checkbox" name="treatments" value="Facial" /><span class="check-item__label">Facial</span></label>
+                <label class="check-item"><input type="checkbox" name="treatments" value="Manicure" /><span class="check-item__label">Manicure</span></label>
+                <label class="check-item"><input type="checkbox" name="treatments" value="Pedicure" /><span class="check-item__label">Pedicure</span></label>
               </div>
             </div>
 
-            <div id="treatmentsField" style="margin-top:var(--space-4);">
-              <div class="form-section-label">Treatments * <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(select at least one)</span></div>
-              <div id="treatmentsGroup" class="check-group check-group--3col">
-                <div class="loading-options">Loading...</div>
-              </div>
-            </div>
-
-            <div id="classificationField" style="margin-top:var(--space-4);">
-              <div class="form-section-label">Classification * <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(select at least one)</span></div>
-              <div id="classificationGroup" class="check-group">
-                <div class="loading-options">Loading...</div>
+            <div id="classificationField">
+              <div class="form-section-label">Classification</div>
+              <div class="radio-group">
+                <label class="radio-item"><input type="radio" name="classification" value="Massage" /><span class="radio-item__label">Massage</span></label>
+                <label class="radio-item"><input type="radio" name="classification" value="Holistic" /><span class="radio-item__label">Holistic</span></label>
               </div>
               <div class="field__note" style="margin-top:var(--space-2);">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 This is the badge shown on your listing card — choose what best describes your service
-              </div>
-            </div>
-
-            <div id="serviceOfferingsField" style="margin-top:var(--space-4);">
-              <div class="form-section-label">Service Offerings <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(optional)</span></div>
-              <div id="serviceOfferingsGroup" class="check-group check-group--3col">
-                <div class="loading-options">Loading...</div>
               </div>
             </div>
 
@@ -1008,43 +1018,6 @@
 
   const auth    = getAuth(app);
   const storage = getStorage(app);
-
-  // ── Cached offerings (loaded once on page load)
-  let offeringsCache = [];
-
-  async function loadOfferings() {
-    try {
-      const snap = await getDocs(
-        query(collection(db, 'offerings'), where('launchActive', '==', true))
-      );
-      offeringsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderOfferingsGroup('massageStyles',    'massageStylesGroup',    'massageStyles');
-      renderOfferingsGroup('traditions',       'traditionsGroup',       'traditions');
-      renderOfferingsGroup('treatments',       'treatmentsGroup',       'treatments');
-      renderOfferingsGroup('classification',   'classificationGroup',   'classification');
-      renderOfferingsGroup('serviceOfferings', 'serviceOfferingsGroup', 'serviceOfferings');
-    } catch (err) {
-      console.error('Failed to load offerings:', err);
-    }
-  }
-
-  function renderOfferingsGroup(category, containerId, inputName) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    const items = offeringsCache
-      .filter(o => o.category === category && o.visibleTo && o.visibleTo.includes('therapist'))
-      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-    if (items.length === 0) {
-      container.innerHTML = '<div class="loading-options" style="color:var(--text-muted);">No options available.</div>';
-      return;
-    }
-    container.innerHTML = items.map(item => `
-      <label class="check-item">
-        <input type="checkbox" name="${inputName}" value="${item.name}" />
-        <span class="check-item__label">${item.name}</span>
-      </label>
-    `).join('');
-  }
 
   // ── State ──
   let currentRegStep    = 1;
@@ -1473,19 +1446,9 @@
 
   function validateStep3() {
     clearErrors();
-    const massageStyles = Array.from(document.querySelectorAll('input[name="massageStyles"]:checked'));
-    if (massageStyles.length === 0) {
-      markError(document.getElementById('massageStylesField'), 'Please select at least one massage style.');
-      return false;
-    }
-    const treatments = Array.from(document.querySelectorAll('input[name="treatments"]:checked'));
-    if (treatments.length === 0) {
-      markError(document.getElementById('treatmentsField'), 'Please select at least one treatment.');
-      return false;
-    }
-    const classification = Array.from(document.querySelectorAll('input[name="classification"]:checked'));
-    if (classification.length === 0) {
-      markError(document.getElementById('classificationField'), 'Please select at least one classification.');
+    const massageTypes = Array.from(document.querySelectorAll('input[name="massageTypes"]:checked'));
+    if (massageTypes.length === 0) {
+      markError(document.getElementById('massageTypesField'), 'Please select at least one massage type.');
       return false;
     }
     return true;
@@ -1751,11 +1714,9 @@
       parking:            document.getElementById('parking').checked,
 
       // Services
-      massageStyles:    getChecked('massageStyles'),
-      traditions:       getChecked('traditions'),
-      treatments:       getChecked('treatments'),
-      classification:   getChecked('classification'),
-      serviceOfferings: getChecked('serviceOfferings'),
+      massageTypes:       getChecked('massageTypes'),
+      treatments:         getChecked('treatments'),
+      classification:     document.querySelector('input[name="classification"]:checked')?.value || null,
       genderServed:       document.querySelector('input[name="genderServed"]:checked')?.value || null,
       qualifications,
       affiliations:       getChecked('affiliations'),
@@ -1878,7 +1839,6 @@
 
   // ── Init ──
   populateProvinces();
-  loadOfferings();
   buildWeeklyHoursGrid();
   addQualification();
 

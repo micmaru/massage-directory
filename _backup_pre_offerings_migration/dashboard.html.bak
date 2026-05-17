@@ -264,39 +264,44 @@
         <div class="dash-card__title">Your Services</div>
         <div class="dash-card__sub">Updates save immediately to your listing.</div>
 
-        <div id="dashMassageStylesField">
-          <div class="form-section-label" style="margin-top:0;">Massage Styles</div>
-          <div id="dashMassageStylesGroup" class="check-group check-group--3col">
-            <div class="loading-options">Loading...</div>
-          </div>
+        <div class="form-section-label" style="margin-top:0;">Massage Types</div>
+        <div class="check-group check-group--3col" id="dashMassageTypesGroup">
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Reflexology" /><span class="check-item__label">Reflexology</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Swedish" /><span class="check-item__label">Swedish</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Sports" /><span class="check-item__label">Sports</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Hot Stone" /><span class="check-item__label">Hot Stone</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Aromatherapy" /><span class="check-item__label">Aromatherapy</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Deep Tissue" /><span class="check-item__label">Deep Tissue</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Shiatsu" /><span class="check-item__label">Shiatsu</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Thai" /><span class="check-item__label">Thai</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Pregnancy" /><span class="check-item__label">Pregnancy</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Kahuna" /><span class="check-item__label">Kahuna</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Ayurvedic" /><span class="check-item__label">Ayurvedic</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Tantric" /><span class="check-item__label">Tantric</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Couples" /><span class="check-item__label">Couples</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Lymphatic Drainage" /><span class="check-item__label">Lymphatic Drainage</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Trigger Point" /><span class="check-item__label">Trigger Point</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Lomi Lomi" /><span class="check-item__label">Lomi Lomi</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Craniosacral" /><span class="check-item__label">Craniosacral</span></label>
+          <label class="check-item"><input type="checkbox" name="dashMassageTypes" value="Chair" /><span class="check-item__label">Chair</span></label>
+          <label class="check-item" id="dashMassageTypeAdultItem"><input type="checkbox" name="dashMassageTypes" value="Adult" /><span class="check-item__label">Adult</span></label>
         </div>
 
-        <div id="dashTraditionsField" style="margin-top:var(--space-4);">
-          <div class="form-section-label">Traditions</div>
-          <div id="dashTraditionsGroup" class="check-group check-group--3col">
-            <div class="loading-options">Loading...</div>
-          </div>
+        <div class="form-section-label">Treatments</div>
+        <div class="check-group">
+          <label class="check-item"><input type="checkbox" name="dashTreatments" value="Full Body" /><span class="check-item__label">Full Body</span></label>
+          <label class="check-item"><input type="checkbox" name="dashTreatments" value="Back &amp; Neck" /><span class="check-item__label">Back &amp; Neck</span></label>
+          <label class="check-item"><input type="checkbox" name="dashTreatments" value="Indian Head" /><span class="check-item__label">Indian Head</span></label>
+          <label class="check-item"><input type="checkbox" name="dashTreatments" value="Facial" /><span class="check-item__label">Facial</span></label>
+          <label class="check-item"><input type="checkbox" name="dashTreatments" value="Manicure" /><span class="check-item__label">Manicure</span></label>
+          <label class="check-item"><input type="checkbox" name="dashTreatments" value="Pedicure" /><span class="check-item__label">Pedicure</span></label>
         </div>
 
-        <div id="dashTreatmentsField" style="margin-top:var(--space-4);">
-          <div class="form-section-label">Treatments</div>
-          <div id="dashTreatmentsGroup" class="check-group check-group--3col">
-            <div class="loading-options">Loading...</div>
-          </div>
-        </div>
-
-        <div id="dashClassificationField" style="margin-top:var(--space-4);">
-          <div class="form-section-label">Classification</div>
-          <div id="dashClassificationGroup" class="check-group">
-            <div class="loading-options">Loading...</div>
-          </div>
-        </div>
-
-        <div id="dashServiceOfferingsField" style="margin-top:var(--space-4);">
-          <div class="form-section-label">Service Offerings</div>
-          <div id="dashServiceOfferingsGroup" class="check-group check-group--3col">
-            <div class="loading-options">Loading...</div>
-          </div>
+        <div class="form-section-label">Classification</div>
+        <div class="radio-group">
+          <label class="radio-item"><input type="radio" name="dashClassification" value="Massage" /><span class="radio-item__label">Massage</span></label>
+          <label class="radio-item"><input type="radio" name="dashClassification" value="Holistic" /><span class="radio-item__label">Holistic</span></label>
+          <label class="radio-item" id="dashClassificationAdultItem"><input type="radio" name="dashClassification" value="Adult" /><span class="radio-item__label">Adult</span></label>
         </div>
 
         <div class="form-section-label">Genders Served</div>
@@ -397,43 +402,6 @@
 
     const auth    = getAuth(app);
     const storage = getStorage(app);
-
-    // ── Cached offerings
-    let dashOfferingsCache = [];
-
-    async function loadDashOfferings() {
-      try {
-        const snap = await getDocs(
-          query(collection(db, 'offerings'), where('launchActive', '==', true))
-        );
-        dashOfferingsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderDashGroup('massageStyles',    'dashMassageStylesGroup',    'dashMassageStyles');
-        renderDashGroup('traditions',       'dashTraditionsGroup',       'dashTraditions');
-        renderDashGroup('treatments',       'dashTreatmentsGroup',       'dashTreatments');
-        renderDashGroup('classification',   'dashClassificationGroup',   'dashClassification');
-        renderDashGroup('serviceOfferings', 'dashServiceOfferingsGroup', 'dashServiceOfferings');
-      } catch (err) {
-        console.error('Failed to load dash offerings:', err);
-      }
-    }
-
-    function renderDashGroup(category, containerId, inputName) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      const items = dashOfferingsCache
-        .filter(o => o.category === category && o.visibleTo && o.visibleTo.includes('therapist'))
-        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-      if (items.length === 0) {
-        container.innerHTML = '<div class="loading-options" style="color:var(--text-muted);">No options available.</div>';
-        return;
-      }
-      container.innerHTML = items.map(item => `
-        <label class="check-item">
-          <input type="checkbox" name="${inputName}" value="${item.name}" />
-          <span class="check-item__label">${item.name}</span>
-        </label>
-      `).join('');
-    }
 
     // ── State ──
     let confirmationResult  = null;
@@ -682,7 +650,6 @@
       supplierDocId = sdoc.id;
       supplierData  = sdoc.data();
       await populateDashboard(supplierData);
-      loadDashOfferings();
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('dashboardScreen').classList.remove('hidden');
       window.scrollTo({ top: 0, behavior: 'instant' });
@@ -751,29 +718,22 @@
       document.getElementById('editAddress').value = data.address || '';
 
       // ── Services card ──
-      const massageStyles = data.massageStyles || [];
-      const traditions = data.traditions || [];
+      const massageTypes = data.massageTypes || [];
+      document.querySelectorAll('input[name="dashMassageTypes"]').forEach(cb => {
+        cb.checked = massageTypes.includes(cb.value);
+      });
+      if (isSpa) document.getElementById('dashMassageTypeAdultItem').classList.add('hidden');
+
       const treatments = data.treatments || [];
-      const classification = Array.isArray(data.classification) ? data.classification : (data.classification ? [data.classification] : []);
-      const serviceOfferings = data.serviceOfferings || [];
-
-      await loadDashOfferings();
-
-      document.querySelectorAll('input[name="dashMassageStyles"]').forEach(cb => {
-        cb.checked = massageStyles.includes(cb.value);
-      });
-      document.querySelectorAll('input[name="dashTraditions"]').forEach(cb => {
-        cb.checked = traditions.includes(cb.value);
-      });
       document.querySelectorAll('input[name="dashTreatments"]').forEach(cb => {
         cb.checked = treatments.includes(cb.value);
       });
-      document.querySelectorAll('input[name="dashClassification"]').forEach(cb => {
-        cb.checked = classification.includes(cb.value);
-      });
-      document.querySelectorAll('input[name="dashServiceOfferings"]').forEach(cb => {
-        cb.checked = serviceOfferings.includes(cb.value);
-      });
+
+      if (data.classification) {
+        const r = document.querySelector(`input[name="dashClassification"][value="${data.classification}"]`);
+        if (r) r.checked = true;
+      }
+      if (isSpa) document.getElementById('dashClassificationAdultItem').classList.add('hidden');
 
       if (data.genderServed) {
         const r = document.querySelector(`input[name="dashGenderServed"][value="${data.genderServed}"]`);
@@ -1194,17 +1154,15 @@
         return;
       }
 
-      const massageStyles    = Array.from(document.querySelectorAll('input[name="dashMassageStyles"]:checked')).map(cb => cb.value);
-      const traditions       = Array.from(document.querySelectorAll('input[name="dashTraditions"]:checked')).map(cb => cb.value);
-      const treatments       = Array.from(document.querySelectorAll('input[name="dashTreatments"]:checked')).map(cb => cb.value);
-      const classification   = Array.from(document.querySelectorAll('input[name="dashClassification"]:checked')).map(cb => cb.value);
-      const serviceOfferings = Array.from(document.querySelectorAll('input[name="dashServiceOfferings"]:checked')).map(cb => cb.value);
+      const massageTypes    = Array.from(document.querySelectorAll('input[name="dashMassageTypes"]:checked')).map(cb => cb.value);
+      const treatments      = Array.from(document.querySelectorAll('input[name="dashTreatments"]:checked')).map(cb => cb.value);
+      const classification  = document.querySelector('input[name="dashClassification"]:checked')?.value || null;
       const genderServed    = document.querySelector('input[name="dashGenderServed"]:checked')?.value || null;
 
-      if (massageStyles.length === 0) {
+      if (massageTypes.length === 0) {
         btn.classList.remove('btn--loading');
         btn.textContent = 'Save Services';
-        msgEl.textContent = 'Please select at least one massage style.';
+        msgEl.textContent = 'Please select at least one massage type.';
         msgEl.style.color = '#f87171';
         msgEl.classList.remove('hidden');
         return;
@@ -1212,11 +1170,9 @@
 
       try {
         await updateDoc(doc(db, 'suppliers', supplierDocId), {
-          massageStyles,
-          traditions,
+          massageTypes,
           treatments,
           classification,
-          serviceOfferings,
           genderServed,
           updatedAt: serverTimestamp()
         });
