@@ -480,7 +480,7 @@ function initWeeklyHoursGrid(data) {
   });
 }
 
-function toggleDayRow(day) {
+window.toggleDayRow = function(day) {
   const avail = document.getElementById('avail_' + day).checked;
   document.getElementById('from_' + day).disabled = !avail;
   document.getElementById('to_' + day).disabled = !avail;

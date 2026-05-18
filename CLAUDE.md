@@ -122,3 +122,14 @@ MassageMap is a three-sided massage therapy directory:
 - New session decisions, bugs, fixes, and parked items are APPENDED at the end
 - Never rewrite the context file in a shorter or cleaner format without explicit permission
 - The context file is a reference doc for Claude — but mainly it is Johan's accountability record which is the first priority.
+
+## Design skills — consult before any UI work
+- Emil Kowalski: motion and animation — /mnt/skills/user/emil-kowalski/SKILL.md
+- Impeccable: spacing and typography polish — /mnt/skills/user/impeccable/SKILL.md
+- Taste Skill: design quality judgment — /mnt/skills/user/taste-skill/SKILL.md
+Always consult these before writing any CSS or UI changes.
+
+## Known bugs — do not patch in isolation
+- register-spa.html: location cascade broken — reads from deleted locations.json
+  Fix only as part of Phase D spa registration rebuild. Do not patch standalone.
+  

@@ -969,7 +969,17 @@
       else if (name === 'Terms') { loadTermsDocs(); }
     };
 
-    window.goBack = function() { showScreen('Landing'); setActiveNavItem(''); };
+    window.goBack = function() {
+      const params = new URLSearchParams(window.location.search);
+      const from = params.get('from');
+      if (from === 'therapists') {
+        showScreen('Therapists');
+        setActiveNavItem('Therapists');
+      } else {
+        showScreen('Landing');
+        setActiveNavItem('');
+      }
+    };
 
     // ════════════════════════════════════════════
     // DATE HELPERS
