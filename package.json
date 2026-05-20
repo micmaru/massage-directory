@@ -26,6 +26,6 @@
   },
   "homepage": "https://github.com/micmaru/massage-directory#readme",
   "devDependencies": {
-    "firebase-admin": "^13.9.0"
+    "firebase-admin": "^13.10.0"
   }
 }
