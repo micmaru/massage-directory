@@ -273,3 +273,63 @@ exports.onSupplierRegistered = functions
       console.error("Audit log write failed:", err);
     }
   });
+
+exports.checkIncompleteRegistrations = functions
+  .region("us-central1")
+  .pubsub.schedule("every 24 hours")
+  .onRun(async () => {
+    const db = admin.firestore();
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+
+    function formatPhone(phone) {
+      if (!phone) return null;
+      if (phone.startsWith("+27")) return phone;
+      if (phone.startsWith("0")) return "+27" + phone.slice(1);
+      return phone;
+    }
+
+    let snap;
+    try {
+      snap = await db.collection("pending_registrations")
+        .where("status", "==", "incomplete")
+        .get();
+    } catch (err) {
+      console.error("checkIncompleteRegistrations: Firestore query failed:", err);
+      return;
+    }
+
+    for (const docSnap of snap.docs) {
+      const data = docSnap.data();
+      if (data.smsSent === true) continue;
+
+      const createdAt = data.createdAt?.toMillis?.() ?? 0;
+      if (createdAt >= cutoff) continue;
+
+      const to = formatPhone(data.cellNumber);
+      if (!to) {
+        console.warn(`checkIncompleteRegistrations: no cellNumber on doc ${docSnap.id}, skipping`);
+        continue;
+      }
+
+      try {
+        const smsResponse = await fetch("https://api.bulksms.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic " + Buffer.from(
+              process.env.BULKSMS_TOKEN_ID + ":" + process.env.BULKSMS_TOKEN_SECRET
+            ).toString("base64"),
+          },
+          body: JSON.stringify({
+            to,
+            body: "Hi! It looks like you started registering on MassageMap but didn't finish. Need help? WhatsApp us on 0842500422 and we'll get you listed.",
+          }),
+        });
+        const smsResult = await smsResponse.text();
+        console.log(`checkIncompleteRegistrations: SMS sent to ${to} — HTTP ${smsResponse.status} — ${smsResult}`);
+        await docSnap.ref.update({ smsSent: true });
+      } catch (err) {
+        console.error(`checkIncompleteRegistrations: SMS failed for ${to}:`, err);
+      }
+    }
+  });
