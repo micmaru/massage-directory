@@ -1234,7 +1234,12 @@
     try {
       // 1. Firestore lookup
       const snap = await getDocs(query(collection(db, 'suppliers'), where('cellNumber', '==', phone)));
-      knownSupplierData = snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+      if (!snap.empty) {
+        knownSupplierData = { id: snap.docs[0].id, ...snap.docs[0].data() };
+      } else {
+        const pendSnap = await getDocs(query(collection(db, 'pending_registrations'), where('cellNumber', '==', phone)));
+        knownSupplierData = pendSnap.empty ? null : { id: pendSnap.docs[0].id, ...pendSnap.docs[0].data() };
+      }
 
       if (knownSupplierData) {
         // Returning supplier — check localStorage session first
@@ -1320,7 +1325,9 @@
         storeSession(verifiedPhone, displayName, supplierType);
         showWelcomeBack(displayName, supplierType);
       } else {
-        // New supplier — create pending registration doc, show consent gate
+        // New supplier — store session, create pending registration doc, show consent gate
+        const initialType = new URLSearchParams(window.location.search).get('type') || 'individual';
+        storeSession(verifiedPhone, '', initialType);
         try {
           const pendRef = doc(db, 'pending_registrations', verifiedPhone);
           await setDoc(pendRef, {
@@ -1501,6 +1508,17 @@
         supplierNumber = `T-${yy}-${String(next).padStart(4, '0')}`;
         tx.set(configRef, { counterIndividual: next }, { merge: true });
         tx.set(pendRef,   { supplierNumber },           { merge: true });
+        const supplierRef = doc(db, 'suppliers', authUid);
+        tx.set(supplierRef, {
+          uid:                authUid,
+          cellNumber:         verifiedPhone,
+          supplierNumber,
+          supplierType:       new URLSearchParams(window.location.search).get('type') || 'individual',
+          status:             'pending',
+          subscriptionStatus: 'not_paid',
+          subscriptionExpiry: null,
+          createdAt:          serverTimestamp()
+        }, { merge: true });
       });
       supplierNumberGenerated = supplierNumber;
       document.getElementById('supplierPillNum').textContent = `Your therapist number: ${supplierNumber}`;
