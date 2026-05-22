@@ -1508,7 +1508,7 @@
         supplierNumber = `T-${yy}-${String(next).padStart(4, '0')}`;
         tx.set(configRef, { counterIndividual: next }, { merge: true });
         tx.set(pendRef,   { supplierNumber },           { merge: true });
-        const supplierRef = doc(db, 'suppliers', authUid);
+        const supplierRef = doc(db, 'suppliers', verifiedPhone);
         tx.set(supplierRef, {
           uid:                  authUid,
           cellNumber:           verifiedPhone,
@@ -1920,11 +1920,10 @@
     btn.textContent = 'Submitting…';
 
     try {
-      const uid = auth.currentUser?.uid || authUid;
-      if (!uid) throw new Error('Phone verification required. Please refresh and start again.');
+      if (!verifiedPhone) throw new Error('Phone verification required. Please refresh and start again.');
 
       const pendRef     = doc(db, 'pending_registrations', verifiedPhone);
-      const supplierRef = doc(db, 'suppliers', uid);
+      const supplierRef = doc(db, 'suppliers', verifiedPhone);
 
       const pendSnap = await getDoc(pendRef);
       const saved    = pendSnap.exists() ? pendSnap.data() : {};
