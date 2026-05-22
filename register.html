@@ -1510,14 +1510,15 @@
         tx.set(pendRef,   { supplierNumber },           { merge: true });
         const supplierRef = doc(db, 'suppliers', authUid);
         tx.set(supplierRef, {
-          uid:                authUid,
-          cellNumber:         verifiedPhone,
+          uid:                  authUid,
+          cellNumber:           verifiedPhone,
           supplierNumber,
-          supplierType:       new URLSearchParams(window.location.search).get('type') || 'individual',
-          status:             'pending',
-          subscriptionStatus: 'not_paid',
-          subscriptionExpiry: null,
-          createdAt:          serverTimestamp()
+          supplierType:         new URLSearchParams(window.location.search).get('type') || 'individual',
+          status:               'pending',
+          subscriptionStatus:   'not_paid',
+          subscriptionExpiry:   null,
+          registrationComplete: false,
+          createdAt:            serverTimestamp()
         }, { merge: true });
       });
       supplierNumberGenerated = supplierNumber;
@@ -1941,6 +1942,7 @@
         referralCode:          generateReferralCode(saved.firstName || ''),
         createdAt:             serverTimestamp(),
         lastUpdated:           serverTimestamp(),
+        registrationComplete:  true,
         firstName:             saved.firstName             || null,
         lastName:              saved.lastName              || null,
         displayName:           saved.displayName           || null,

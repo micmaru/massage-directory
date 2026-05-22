@@ -109,6 +109,11 @@ exports.onSupplierRegistered = functions
     if (!admin.apps.length) { admin.initializeApp(); }
     const db = admin.firestore();
 
+    if (!snap.data().registrationComplete) {
+      console.log("onSupplierRegistered: lightweight write detected — skipping notifications");
+      return null;
+    }
+
     const { displayName, firstName, lastName, supplierType, cellNumber, email, supplierNumber, province, area } = snap.data();
 
     function formatPhone(phone) {
