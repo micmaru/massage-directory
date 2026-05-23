@@ -1237,8 +1237,10 @@
       if (!snap.empty) {
         knownSupplierData = { id: snap.docs[0].id, ...snap.docs[0].data() };
       } else {
-        const pendSnap = await getDocs(query(collection(db, 'pending_registrations'), where('cellNumber', '==', phone)));
-        knownSupplierData = pendSnap.empty ? null : { id: pendSnap.docs[0].id, ...pendSnap.docs[0].data() };
+        try {
+          const pendSnap = await getDocs(query(collection(db, 'pending_registrations'), where('cellNumber', '==', phone)));
+          knownSupplierData = pendSnap.empty ? null : { id: pendSnap.docs[0].id, ...pendSnap.docs[0].data() };
+        } catch (_) {}
       }
 
       if (knownSupplierData) {
