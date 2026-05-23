@@ -104,17 +104,19 @@ exports.onSupplierRegistered = functions
   .region("us-central1")
   .firestore
   .document("suppliers/{supplierId}")
-  .onCreate(async (snap, context) => {
+  .onUpdate(async (change, context) => {
     const admin = require("firebase-admin");
     if (!admin.apps.length) { admin.initializeApp(); }
     const db = admin.firestore();
 
-    if (!snap.data().registrationComplete) {
-      console.log("onSupplierRegistered: lightweight write detected — skipping notifications");
+    const after = change.after.data();
+    const before = change.before.data();
+    if (!after.registrationComplete || before.registrationComplete === true) {
+      console.log("onSupplierRegistered: skipping — not a registrationComplete transition");
       return null;
     }
 
-    const { displayName, firstName, lastName, supplierType, cellNumber, email, supplierNumber, province, area } = snap.data();
+    const { displayName, firstName, lastName, supplierType, cellNumber, email, supplierNumber, province, area } = after;
 
     function formatPhone(phone) {
       if (!phone) return null;
