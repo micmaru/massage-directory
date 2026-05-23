@@ -374,6 +374,28 @@
       animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+    /* ── Accordion ── */
+    .acc-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: var(--space-3); overflow: hidden; }
+    .acc-header { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-5); cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .acc-num { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: var(--text-xs); font-weight: 700; color: var(--text-muted); transition: background var(--ease), border-color var(--ease), color var(--ease); }
+    .acc-num--done { background: var(--green); border-color: var(--green); color: #fff; }
+    .acc-info { flex: 1; min-width: 0; }
+    .acc-name { font-size: var(--text-base); font-weight: 600; color: var(--text); }
+    .acc-status { font-size: var(--text-xs); color: var(--text-muted); margin-top: 2px; }
+    .acc-status--done { color: var(--green); font-weight: 500; }
+    .acc-chevron { color: var(--text-muted); transition: transform 0.22s ease; flex-shrink: 0; }
+    .acc-chevron--open { transform: rotate(180deg); }
+    .acc-body { padding: var(--space-5); border-top: 1px solid var(--border); }
+    .acc-body.hidden { display: none !important; }
+    .req-badge { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--green); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); border-radius: 4px; padding: 1px 6px; margin-left: var(--space-1); vertical-align: middle; }
+    /* ── Accordion progress ── */
+    .acc-progress { margin-bottom: var(--space-4); }
+    .acc-progress__label { font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: var(--space-2); }
+    .acc-progress__track { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .acc-progress__fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.4s ease; width: 0%; }
+    /* ── Supplier pill ── */
+    .supplier-pill { display: inline-flex; align-items: center; gap: var(--space-2); background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: 99px; padding: var(--space-1) var(--space-3); font-size: var(--text-xs); font-weight: 700; color: var(--green); letter-spacing: 0.3px; margin-bottom: var(--space-4); }
   </style>
 </head>
 <body>
@@ -392,7 +414,7 @@
     <div class="reg-steps hidden" id="regSideSteps">
       <div class="reg-step" id="sideStep1">
         <div class="reg-step__dot" id="sideDot1">1</div>
-        <div class="reg-step__label">Business Info</div>
+        <div class="reg-step__label">Personal</div>
       </div>
       <div class="reg-connector" id="sideConn1"></div>
       <div class="reg-step" id="sideStep2">
@@ -434,7 +456,7 @@
       <div id="phoneScreen">
         <div class="form-card">
           <div class="form-card__title">Get Started</div>
-          <div class="form-card__subtitle">Enter your cell number to continue.</div>
+          <div class="form-card__subtitle">Enter the spa owner's cell number to continue. This number will be your permanent login key.</div>
           <div class="field-stack">
             <div class="field" id="cellField">
               <label class="field__label" for="cell">Cell Number</label>
@@ -479,108 +501,206 @@
     </div>
 
     <!-- ══════════════════════════════════════════
-         REGISTRATION PHASE — 4 steps
+         CONSENT GATE — shown after OTP verified
+    ══════════════════════════════════════════ -->
+    <div id="consentPhase" class="hidden">
+      <div class="form-card">
+        <div class="form-card__title">Before you register</div>
+        <div class="form-card__subtitle">MassageMap collects your personal information to create and manage your listing. This includes your name, contact details, location, and photos. Your data is stored securely and used only for directory and communication purposes. You can update or remove your information at any time from your dashboard.</div>
+        <div class="field-stack">
+          <div class="tnc-row">
+            <input type="checkbox" id="popiaConsent" onchange="onConsentChange()" />
+            <div class="tnc-row__text">I consent to MassageMap collecting and processing my personal information as described above, in accordance with the <strong>Protection of Personal Information Act (POPIA)</strong>.</div>
+          </div>
+          <div class="tnc-row">
+            <input type="checkbox" id="tncConsentCheck" onchange="onConsentChange()" />
+            <div class="tnc-row__text">I have read and agree to the <a href="#" onclick="openModal(event)">Terms &amp; Conditions</a> of MassageMap. I confirm that all information I provide will be accurate and up to date.</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-nav">
+        <button type="button" class="btn btn--primary btn--full" id="beginRegBtn" onclick="beginRegistration()" style="opacity:0.4; pointer-events:none;">Begin Registration</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         REGISTRATION PHASE — accordion
     ══════════════════════════════════════════ -->
     <div id="regPhase" class="hidden">
 
       <h1 class="reg-main-heading">Register as Spa</h1>
 
-      <!-- Mobile step bar -->
-      <div class="mobile-step-bar" id="mobileStepBar">
-        <div class="mobile-step-bar__top">
-          <span class="mobile-step-bar__num" id="mobileStepNum">Step 1 of 4</span>
-          <span class="mobile-step-bar__name" id="mobileStepName">Personal Details</span>
+      <!-- Progress bar -->
+      <div class="acc-progress">
+        <div class="acc-progress__label">
+          <span id="accProgressLabel">0 of 8 sections saved</span>
         </div>
-        <div class="mobile-step-bar__segs">
-          <div class="mobile-step-seg mobile-step-seg--active" id="mobileSeg1"></div>
-          <div class="mobile-step-seg" id="mobileSeg2"></div>
-          <div class="mobile-step-seg" id="mobileSeg3"></div>
-          <div class="mobile-step-seg" id="mobileSeg4"></div>
+        <div class="acc-progress__track">
+          <div class="acc-progress__fill" id="accProgressFill"></div>
         </div>
       </div>
 
-      <!-- ── STEP 1: BUSINESS INFO ── -->
-      <div id="regStep1">
-        <div class="form-card">
-          <div class="form-card__title">Business Info</div>
-          <div class="form-card__subtitle">Your spa's trading name, contacts, and preferences.</div>
+      <!-- Supplier number pill (hidden until Personal is saved) -->
+      <div class="supplier-pill hidden" id="supplierPill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="supplierPillNum"></span>
+      </div>
 
+      <!-- ── SECTION 1: BUSINESS DETAILS ── -->
+      <div class="acc-section" id="accSec1">
+        <div class="acc-header" onclick="toggleAccSection(1)">
+          <div class="acc-num" id="accNum1">1</div>
+          <div class="acc-info">
+            <div class="acc-name">Business Details <span class="req-badge">Required</span></div>
+            <div class="acc-status" id="accStatus1">Not started</div>
+          </div>
+          <svg class="acc-chevron" id="accChevron1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="acc-body hidden" id="accBody1">
           <div class="field-stack">
-
-            <div class="field" id="tradingNameField">
-              <label class="field__label" for="tradingName">Spa / Salon Trading Name *</label>
-              <input class="input" id="tradingName" type="text" placeholder="Trading name" />
-            </div>
-
-            <div class="field-row">
-              <div class="field" id="ownerFirstNameField">
-                <label class="field__label" for="ownerFirstName">Owner First Name *</label>
-                <input class="input" id="ownerFirstName" type="text" placeholder="First name" autocomplete="given-name" />
-              </div>
-              <div class="field" id="ownerLastNameField">
-                <label class="field__label" for="ownerLastName">Owner Last Name *</label>
-                <input class="input" id="ownerLastName" type="text" placeholder="Last name" autocomplete="family-name" />
-              </div>
-            </div>
-
-            <div class="field-row">
-              <div class="field">
-                <label class="field__label" for="managerFirstName">Manager First Name <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
-                <input class="input" id="managerFirstName" type="text" placeholder="First name" />
-              </div>
-              <div class="field">
-                <label class="field__label" for="managerLastName">Manager Last Name <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
-                <input class="input" id="managerLastName" type="text" placeholder="Last name" />
-              </div>
-            </div>
-
-            <div class="field">
-              <label class="field__label" for="managerPhone">Manager / Alternative Phone <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
-              <input class="input" id="managerPhone" type="tel" placeholder="e.g. 011 123 4567" />
+            <div class="field" id="displayNameField">
+              <label class="field__label" for="displayName">Spa Trading Name *</label>
+              <input class="input" id="displayName" type="text" placeholder="Your spa's public name" />
               <div class="field__note">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                This number is not OTP verified — for admin contact only
+                This is the name displayed publicly on your listing
               </div>
             </div>
-
-            <div class="field">
-              <label class="field__label" for="salonCell">Salon Cell Number</label>
-              <input class="input input--locked" id="salonCell" type="tel" readonly />
-              <div style="display:flex; align-items:center; gap:var(--space-2); margin-top:var(--space-2);">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green);"><polyline points="20 6 9 17 4 12"/></svg>
-                <span style="font-size:var(--text-xs); font-weight:600; color:var(--green);">Verified</span>
+            <div class="field" id="tradingNameField">
+              <label class="field__label" for="tradingName">Legal Trading Name *</label>
+              <input class="input" id="tradingName" type="text" placeholder="Registered business name" />
+              <div class="field__note">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Admin and vetting only — never shown publicly
               </div>
             </div>
-
             <div class="field">
-              <label class="field__label" for="salonLandline">Salon Landline <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
-              <input class="input" id="salonLandline" type="tel" placeholder="e.g. 011 123 4567" />
+              <label class="field__label" for="registrationNumber">Company Registration Number <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="registrationNumber" type="text" placeholder="e.g. 2021/123456/07" />
+              <div class="field__note">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Admin and vetting only — never shown publicly
+              </div>
             </div>
-
-            <div class="field" id="salonEmailField">
-              <label class="field__label" for="salonEmail">Salon Email *</label>
-              <input class="input" id="salonEmail" type="email" placeholder="info@yourspa.co.za" autocomplete="email" />
-            </div>
-
             <div class="field">
-              <label class="field__label" for="websiteUrl">Website URL <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
-              <input class="input" id="websiteUrl" type="url" placeholder="https://www.yourspa.co.za" />
+              <label class="field__label" for="vatNumber">VAT Number <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="vatNumber" type="text" placeholder="e.g. 4123456789" />
             </div>
+            <div class="toggle-wrap">
+              <div class="toggle-wrap__label">Requires tax invoice for subscription payments</div>
+              <label class="toggle">
+                <input type="checkbox" id="requiresInvoice" name="requiresInvoice" />
+                <span class="toggle__track"></span>
+              </label>
+            </div>
+            <div>
+              <div class="form-section-label" style="margin-top:var(--space-2);">Owner Details</div>
+              <div class="field__note" style="margin-bottom:var(--space-3);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Admin and vetting only — never shown publicly
+              </div>
+              <div class="field-row">
+                <div class="field" id="ownerFirstNameField">
+                  <label class="field__label" for="ownerFirstName">First Name *</label>
+                  <input class="input" id="ownerFirstName" type="text" placeholder="Owner's first name" autocomplete="given-name" />
+                </div>
+                <div class="field" id="ownerLastNameField">
+                  <label class="field__label" for="ownerLastName">Last Name *</label>
+                  <input class="input" id="ownerLastName" type="text" placeholder="Owner's last name" autocomplete="family-name" />
+                </div>
+              </div>
+            </div>
+            <div class="field" id="ownerMobileField">
+              <label class="field__label" for="ownerMobile">Owner Mobile *</label>
+              <input class="input" id="ownerMobile" type="tel" placeholder="Owner's cell number" />
+              <div class="field__note">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Admin and vetting only — never shown publicly
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-5);" onclick="saveAccSection(1)">Save — Business Details</button>
+        </div>
+      </div>
 
+      <!-- ── SECTION 2: ACCOUNT ── -->
+      <div class="acc-section" id="accSec2">
+        <div class="acc-header" onclick="toggleAccSection(2)">
+          <div class="acc-num" id="accNum2">2</div>
+          <div class="acc-info">
+            <div class="acc-name">Account <span class="req-badge">Required</span></div>
+            <div class="acc-status" id="accStatus2">Not started</div>
+          </div>
+          <svg class="acc-chevron" id="accChevron2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="acc-body hidden" id="accBody2">
+          <div class="field-stack">
             <div class="field">
-              <label class="field__label" for="companyReg">Company Registration Number <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
-              <input class="input" id="companyReg" type="text" placeholder="e.g. 2023/123456/07" />
+              <label class="field__label" for="cellDisplay">Login Number</label>
+              <input class="input input--locked" id="cellDisplay" type="tel" readonly />
+              <div class="field__note">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                This number is your permanent login key. To change it, contact MassageMap support.
+              </div>
             </div>
-
+            <div class="field">
+              <label class="field__label" for="spaPhone">Spa Landline <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="spaPhone" type="tel" placeholder="e.g. 011 123 4567" />
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle-wrap__label">Show landline on listing</div>
+              <label class="toggle">
+                <input type="checkbox" id="spaPhoneVisible" name="spaPhoneVisible" />
+                <span class="toggle__track"></span>
+              </label>
+            </div>
+            <div class="field">
+              <label class="field__label" for="spaMobile">Spa Mobile <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="spaMobile" type="tel" placeholder="e.g. 082 123 4567" />
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle-wrap__label">Show mobile on listing</div>
+              <label class="toggle">
+                <input type="checkbox" id="spaMobileVisible" name="spaMobileVisible" />
+                <span class="toggle__track"></span>
+              </label>
+            </div>
+            <div>
+              <div class="form-section-label" style="margin-top:var(--space-2);">Manager Details</div>
+              <div class="field__note" style="margin-bottom:var(--space-3);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Admin and vetting only — never shown publicly
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label class="field__label" for="managerFirstName">First Name <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+                  <input class="input" id="managerFirstName" type="text" placeholder="Manager's first name" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="managerLastName">Last Name <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+                  <input class="input" id="managerLastName" type="text" placeholder="Manager's last name" />
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field__label" for="managerMobile">Manager Mobile <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="managerMobile" type="tel" placeholder="Manager's cell number" />
+            </div>
             <div class="field">
               <label class="field__label" for="whatsappNumber">WhatsApp Number <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
-              <input class="input" id="whatsappNumber" type="tel" placeholder="Leave blank to use your salon cell number" />
-              <div class="field__note">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                Leave blank to use your salon cell number
-              </div>
+              <input class="input" id="whatsappNumber" type="tel" placeholder="Leave blank to use your login number" />
             </div>
-
+            <div class="toggle-wrap">
+              <div class="toggle-wrap__label">Show WhatsApp button on listing</div>
+              <label class="toggle">
+                <input type="checkbox" id="showWhatsapp" name="showWhatsapp" />
+                <span class="toggle__track"></span>
+              </label>
+            </div>
+            <div class="field">
+              <label class="field__label" for="email">Email Address *</label>
+              <input class="input" id="email" type="email" placeholder="spa@email.com" autocomplete="email" />
+            </div>
             <div>
               <div class="form-section-label">Contact Preferences</div>
               <div class="check-group">
@@ -592,341 +712,344 @@
                   <input type="checkbox" name="contactPref" value="email" id="contactPrefEmail" />
                   <span class="check-item__label">Email</span>
                 </label>
+                <label class="check-item">
+                  <input type="checkbox" name="contactPref" value="whatsapp" id="contactPrefWhatsapp" />
+                  <span class="check-item__label">WhatsApp</span>
+                </label>
               </div>
             </div>
-
           </div>
-        </div>
-
-        <div class="form-nav">
-          <button type="button" class="btn btn--primary btn--full" onclick="goToRegStep(2)">Next — Location</button>
+          <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-5);" onclick="saveAccSection(2)">Save — Account</button>
         </div>
       </div>
 
-      <!-- ── STEP 2: LOCATION & PREMISES ── -->
-      <div id="regStep2" class="hidden">
-        <div class="form-card">
-          <div class="form-card__title">Location &amp; Premises</div>
-          <div class="form-card__subtitle">Where you operate and your working environment.</div>
-
+      <!-- ── SECTION 3: LOCATION ── -->
+      <div class="acc-section" id="accSec3">
+        <div class="acc-header" onclick="toggleAccSection(3)">
+          <div class="acc-num" id="accNum3">3</div>
+          <div class="acc-info">
+            <div class="acc-name">Location <span class="req-badge">Required</span></div>
+            <div class="acc-status" id="accStatus3">Not started</div>
+          </div>
+          <svg class="acc-chevron" id="accChevron3" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="acc-body hidden" id="accBody3">
           <div class="field-stack">
-
             <div class="field" id="provinceField">
               <label class="field__label" for="province">Province *</label>
               <select class="select" id="province" name="province" onchange="onProvinceChange()">
                 <option value="">Select province…</option>
               </select>
             </div>
-
             <div class="field" id="areaField">
               <label class="field__label" for="area">City / Town *</label>
               <select class="select" id="area" name="area" disabled onchange="onAreaChange()">
                 <option value="">Select city/town…</option>
               </select>
             </div>
-
+            <div class="field hidden" id="locationAreaField">
+              <label class="field__label" for="locationArea">Location Area <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <select class="select" id="locationArea" name="locationArea" disabled onchange="onLocationAreaChange()">
+                <option value="">Select area…</option>
+              </select>
+            </div>
             <div class="field" id="suburbField">
               <label class="field__label" for="suburb">Suburb *</label>
               <select class="select" id="suburb" name="suburb" disabled>
                 <option value="">Select suburb…</option>
               </select>
             </div>
-
-            <div class="field">
-              <label class="field__label" for="address">Full Street Address <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
-              <input class="input" id="address" type="text" placeholder="Your street address" autocomplete="street-address" />
-              <div class="field__note">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                Completing your address helps admin verify your listing faster. Your address is never shown publicly — admin only.
-              </div>
+            <div class="field" id="addressLine1Field">
+              <label class="field__label" for="addressLine1">Street Address *</label>
+              <input class="input" id="addressLine1" type="text" placeholder="Your spa's street address" autocomplete="street-address" />
             </div>
-
             <div class="toggle-wrap">
               <div>
                 <div class="toggle-wrap__label">Show full address publicly</div>
-                <div style="font-size:var(--text-xs); color:var(--text-muted); margin-top:2px;">Off = suburb only shown (recommended)</div>
+                <div style="font-size:var(--text-xs); color:var(--text-muted); margin-top:2px;">On = full address shown on listing (recommended for spas)</div>
               </div>
               <label class="toggle">
-                <input type="checkbox" id="addressVisible" name="addressVisible" />
+                <input type="checkbox" id="addressVisible" name="addressVisible" checked />
                 <span class="toggle__track"></span>
               </label>
             </div>
-
-            <div class="field__note">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-              Premises type: Business
-            </div>
-
             <div>
-              <div class="form-section-label">Facilities</div>
-              <div class="check-group">
-                <label class="check-item">
-                  <input type="checkbox" id="shower" name="facilities" value="shower" />
-                  <span class="check-item__label">Shower facilities</span>
-                </label>
-                <label class="check-item">
-                  <input type="checkbox" id="parking" name="facilities" value="parking" />
-                  <span class="check-item__label">Off-street parking</span>
-                </label>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="form-nav">
-          <button type="button" class="btn btn--secondary" onclick="goToRegStep(1)">Back</button>
-          <button type="button" class="btn btn--primary" style="flex:1;" onclick="goToRegStep(3)">Next — Services</button>
-        </div>
-      </div>
-
-      <!-- ── STEP 3: SERVICES & AVAILABILITY ── -->
-      <div id="regStep3" class="hidden">
-
-        <!-- What you offer -->
-        <div class="form-card">
-          <div class="form-card__title">What You Offer Publicly</div>
-          <div class="form-card__subtitle">Choose the services shown on your listing.</div>
-
-          <div class="field-stack">
-
-            <div id="massageTypesField">
-              <div class="form-section-label">Massage Types * <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(select at least one)</span></div>
-              <div class="check-group check-group--3col">
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Reflexology" /><span class="check-item__label">Reflexology</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Swedish" /><span class="check-item__label">Swedish</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Sports" /><span class="check-item__label">Sports</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Hot Stone" /><span class="check-item__label">Hot Stone</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Aromatherapy" /><span class="check-item__label">Aromatherapy</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Deep Tissue" /><span class="check-item__label">Deep Tissue</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Shiatsu" /><span class="check-item__label">Shiatsu</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Thai" /><span class="check-item__label">Thai</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Pregnancy" /><span class="check-item__label">Pregnancy</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Kahuna" /><span class="check-item__label">Kahuna</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Ayurvedic" /><span class="check-item__label">Ayurvedic</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Tantric" /><span class="check-item__label">Tantric</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Couples" /><span class="check-item__label">Couples</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Lymphatic Drainage" /><span class="check-item__label">Lymphatic Drainage</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Trigger Point" /><span class="check-item__label">Trigger Point</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Lomi Lomi" /><span class="check-item__label">Lomi Lomi</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Craniosacral" /><span class="check-item__label">Craniosacral</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Chair" /><span class="check-item__label">Chair</span></label>
-                <label class="check-item"><input type="checkbox" name="massageTypes" value="Four Hands" /><span class="check-item__label">Four Hands</span></label>
-              </div>
-            </div>
-
-            <div>
-              <div class="form-section-label">Treatments</div>
-              <div class="check-group">
-                <label class="check-item"><input type="checkbox" name="treatments" value="Full Body" /><span class="check-item__label">Full Body</span></label>
-                <label class="check-item"><input type="checkbox" name="treatments" value="Back &amp; Neck" /><span class="check-item__label">Back &amp; Neck</span></label>
-                <label class="check-item"><input type="checkbox" name="treatments" value="Indian Head" /><span class="check-item__label">Indian Head</span></label>
-                <label class="check-item"><input type="checkbox" name="treatments" value="Facial" /><span class="check-item__label">Facial</span></label>
-                <label class="check-item"><input type="checkbox" name="treatments" value="Manicure" /><span class="check-item__label">Manicure</span></label>
-                <label class="check-item"><input type="checkbox" name="treatments" value="Pedicure" /><span class="check-item__label">Pedicure</span></label>
-              </div>
-            </div>
-
-            <div id="classificationField">
-              <div class="form-section-label">Classification</div>
-              <div class="radio-group">
-                <label class="radio-item"><input type="radio" name="classification" value="Massage" /><span class="radio-item__label">Massage</span></label>
-                <label class="radio-item"><input type="radio" name="classification" value="Holistic" /><span class="radio-item__label">Holistic</span></label>
-              </div>
-              <div class="field__note" style="margin-top:var(--space-2);">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                This is the badge shown on your listing card — choose what best describes your service
-              </div>
-            </div>
-
-            <div id="gendersServedField">
-              <div class="form-section-label">Genders Served</div>
-              <div class="radio-group">
-                <label class="radio-item"><input type="radio" name="genderServed" value="ladies" /><span class="radio-item__label">Ladies only</span></label>
-                <label class="radio-item"><input type="radio" name="genderServed" value="gents" /><span class="radio-item__label">Gentlemen only</span></label>
-                <label class="radio-item"><input type="radio" name="genderServed" value="both" /><span class="radio-item__label">Both</span></label>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Availability -->
-        <div class="form-card">
-          <div class="form-card__title">Availability</div>
-
-          <div class="field-stack">
-
-            <div>
-              <div class="form-section-label" style="margin-bottom:var(--space-3);">Working Hours</div>
-              <div class="hours-grid" id="weeklyHoursGrid"></div>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="form-nav">
-          <button type="button" class="btn btn--secondary" onclick="goToRegStep(2)">Back</button>
-          <button type="button" class="btn btn--primary" style="flex:1;" onclick="goToRegStep(4)">Next — Photos</button>
-        </div>
-      </div>
-
-      <!-- ── STEP 4: PHOTOS, BIO & SPECIALS ── -->
-      <div id="regStep4" class="hidden">
-        <div class="form-card">
-          <div class="form-card__title">Photos, Bio &amp; Specials <span style="font-size:var(--text-sm); font-weight:400; color:var(--text-muted);">(all optional)</span></div>
-
-          <div class="field-stack">
-
-            <!-- Profile photos -->
-            <div>
-              <div class="form-section-label">Photos <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(up to 5)</span></div>
+              <div class="form-section-label" style="margin-top:var(--space-2);">Capture GPS Location</div>
               <div class="field__note" style="margin-bottom:var(--space-3);">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                We recommend including an exterior photo of your spa so clients know what to expect.
+                Tap the button to capture your spa's exact GPS coordinates
               </div>
-              <div class="photo-slots" id="photoSlots">
+              <button type="button" class="btn btn--secondary" id="gpsBtn" onclick="captureGps()" style="width:100%;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                Use My Current Location
+              </button>
+              <div id="gpsStatus" style="font-size:var(--text-xs); color:var(--text-muted); margin-top:var(--space-2);">Not captured yet</div>
+              <input type="hidden" id="gpsLat" name="gpsLat" />
+              <input type="hidden" id="gpsLng" name="gpsLng" />
+            </div>
+          </div>
+          <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-5);" onclick="saveAccSection(3)">Save — Location</button>
+        </div>
+      </div>
 
-                <div class="photo-slot" id="photoSlot1">
-                  <div class="photo-slot__row">
-                    <label class="photo-slot__btn" for="photo1">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                      Upload or take photo
-                    </label>
-                    <input type="file" id="photo1" accept="image/*" capture="environment" onchange="onPhotoChange(this, 1)" />
-                    <span class="photo-slot__filename hidden" id="photoName1"></span>
-                    <button type="button" class="photo-slot__delete hidden" id="photoDelete1" onclick="deletePhoto(1)">Remove</button>
-                  </div>
-                </div>
-
-                <button type="button" class="qual-add-btn hidden" id="addPhotoBtn2" onclick="revealPhotoSlot(2)">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Add another photo
-                </button>
-
-                <div class="photo-slot hidden" id="photoSlot2">
-                  <div class="photo-slot__row">
-                    <label class="photo-slot__btn" for="photo2">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                      Choose photo
-                    </label>
-                    <input type="file" id="photo2" accept="image/*" onchange="onPhotoChange(this, 2)" />
-                    <span class="photo-slot__filename hidden" id="photoName2"></span>
-                    <button type="button" class="photo-slot__delete hidden" id="photoDelete2" onclick="deletePhoto(2)">Remove</button>
-                  </div>
-                </div>
-
-                <button type="button" class="qual-add-btn hidden" id="addPhotoBtn3" onclick="revealPhotoSlot(3)">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Add another photo
-                </button>
-
-                <div class="photo-slot hidden" id="photoSlot3">
-                  <div class="photo-slot__row">
-                    <label class="photo-slot__btn" for="photo3">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                      Choose photo
-                    </label>
-                    <input type="file" id="photo3" accept="image/*" onchange="onPhotoChange(this, 3)" />
-                    <span class="photo-slot__filename hidden" id="photoName3"></span>
-                    <button type="button" class="photo-slot__delete hidden" id="photoDelete3" onclick="deletePhoto(3)">Remove</button>
-                  </div>
-                </div>
-
-                <button type="button" class="qual-add-btn hidden" id="addPhotoBtn4" onclick="revealPhotoSlot(4)">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Add another photo
-                </button>
-
-                <div class="photo-slot hidden" id="photoSlot4">
-                  <div class="photo-slot__row">
-                    <label class="photo-slot__btn" for="photo4">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                      Choose photo
-                    </label>
-                    <input type="file" id="photo4" accept="image/*" onchange="onPhotoChange(this, 4)" />
-                    <span class="photo-slot__filename hidden" id="photoName4"></span>
-                    <button type="button" class="photo-slot__delete hidden" id="photoDelete4" onclick="deletePhoto(4)">Remove</button>
-                  </div>
-                </div>
-
-                <button type="button" class="qual-add-btn hidden" id="addPhotoBtn5" onclick="revealPhotoSlot(5)">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Add another photo
-                </button>
-
-                <div class="photo-slot hidden" id="photoSlot5">
-                  <div class="photo-slot__row">
-                    <label class="photo-slot__btn" for="photo5">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                      Choose photo
-                    </label>
-                    <input type="file" id="photo5" accept="image/*" onchange="onPhotoChange(this, 5)" />
-                    <span class="photo-slot__filename hidden" id="photoName5"></span>
-                    <button type="button" class="photo-slot__delete hidden" id="photoDelete5" onclick="deletePhoto(5)">Remove</button>
-                  </div>
-                </div>
-
+      <!-- ── SECTION 4: PREMISES & FACILITIES ── -->
+      <div class="acc-section" id="accSec4">
+        <div class="acc-header" onclick="toggleAccSection(4)">
+          <div class="acc-num" id="accNum4">4</div>
+          <div class="acc-info">
+            <div class="acc-name">Premises &amp; Facilities</div>
+            <div class="acc-status" id="accStatus4">Not started</div>
+          </div>
+          <svg class="acc-chevron" id="accChevron4" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="acc-body hidden" id="accBody4">
+          <div class="field-stack">
+            <div>
+              <div class="form-section-label">Premises Type</div>
+              <div class="radio-group radio-group--row">
+                <label class="radio-item radio-item--flex"><input type="radio" name="premisesType" value="home" /><span class="radio-item__label">Home</span></label>
+                <label class="radio-item radio-item--flex"><input type="radio" name="premisesType" value="business" /><span class="radio-item__label">Business</span></label>
               </div>
             </div>
-
-            <!-- ID photo -->
-            <div id="idPhotoField">
-              <div class="form-section-label">Identity Photo</div>
-              <div class="photo-slot">
-                <div class="photo-slot__row">
-                  <label class="photo-slot__btn" for="idPhoto">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    Upload photo
-                  </label>
-                  <input type="file" id="idPhoto" accept="image/*" onchange="onIdPhotoChange(this)" />
-                  <span class="photo-slot__filename hidden" id="idPhotoName"></span>
-                  <button type="button" class="photo-slot__delete hidden" id="idPhotoDelete" onclick="deleteIdPhoto()">Remove</button>
-                </div>
-                <div style="font-size:var(--text-xs); color:var(--text-muted); margin-top:var(--space-2); line-height:1.5;">Upload a clear photo of your face, or a photo of your ID, passport or driver's licence.</div>
+            <div class="toggle-wrap">
+              <div class="toggle-wrap__label">Mobile massage available</div>
+              <label class="toggle">
+                <input type="checkbox" id="mobileMassage" name="mobileMassage" onchange="onMobileToggle()" />
+                <span class="toggle__track"></span>
+              </label>
+            </div>
+            <div class="field hidden conditional-field" id="travelKmField">
+              <label class="field__label" for="willingToTravelKm">Willing to travel up to</label>
+              <select class="select" id="willingToTravelKm" name="willingToTravelKm">
+                <option value="10">10 km</option>
+                <option value="25">25 km</option>
+                <option value="50">50 km</option>
+                <option value="100">100 km</option>
+              </select>
+            </div>
+            <div>
+              <div class="form-section-label">Amenities</div>
+              <div id="amenitiesGroup" class="check-group">
+                <div class="loading-options">Loading…</div>
               </div>
             </div>
+          </div>
+          <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-5);" onclick="saveAccSection(4)">Save — Premises &amp; Facilities</button>
+        </div>
+      </div>
 
-            <!-- Bio -->
+      <!-- ── SECTION 5: ABOUT ── -->
+      <div class="acc-section" id="accSec5">
+        <div class="acc-header" onclick="toggleAccSection(5)">
+          <div class="acc-num" id="accNum5">5</div>
+          <div class="acc-info">
+            <div class="acc-name">About</div>
+            <div class="acc-status" id="accStatus5">Not started</div>
+          </div>
+          <svg class="acc-chevron" id="accChevron5" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="acc-body hidden" id="accBody5">
+          <div class="field-stack">
+            <div>
+              <div class="form-section-label">Genders Served</div>
+              <div class="radio-group radio-group--row">
+                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="female" /><span class="radio-item__label">Ladies</span></label>
+                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="male" /><span class="radio-item__label">Gents</span></label>
+                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="both" /><span class="radio-item__label">Both</span></label>
+              </div>
+            </div>
             <div class="field">
-              <label class="field__label" for="aboutMe">About the Spa / Bio <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
-              <textarea class="textarea" id="aboutMe" name="aboutMe" maxlength="300" placeholder="What makes your spa special? A short note for potential clients." oninput="updateCharCount(this)" style="min-height:96px;"></textarea>
-              <div class="char-count" id="aboutMeCount">0 / 300</div>
+              <label class="field__label" for="aboutSpa">About the Spa / Bio <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <textarea class="textarea" id="aboutSpa" name="aboutSpa" maxlength="300" placeholder="What makes your spa special?" oninput="updateCharCount(this)" style="min-height:96px;"></textarea>
+              <div class="char-count" id="aboutSpaCount">0 / 300</div>
             </div>
-
-            <!-- Specials -->
+            <div>
+              <div class="form-section-label">Professional Associations <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(optional)</span></div>
+              <div class="check-group check-group--1col">
+                <label class="check-item">
+                  <input type="checkbox" name="associationMembership" value="AHPCSA" />
+                  <span class="check-item__label">AHPCSA</span>
+                </label>
+                <label class="check-item">
+                  <input type="checkbox" name="associationMembership" value="MTASA" />
+                  <span class="check-item__label">MTASA</span>
+                </label>
+                <label class="check-item">
+                  <input type="checkbox" name="associationMembership" value="SAAHIP" />
+                  <span class="check-item__label">SAAHIP</span>
+                </label>
+                <label class="check-item">
+                  <input type="checkbox" name="associationMembership" value="SPAASA" />
+                  <span class="check-item__label">SPAASA</span>
+                </label>
+              </div>
+            </div>
             <div class="field">
               <label class="field__label" for="specialsText">Specials / Promotions <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
               <textarea class="textarea textarea--sm" id="specialsText" name="specialsText" maxlength="300" placeholder="Any current deals or promotions…" oninput="updateSpecialsCount(this)"></textarea>
               <div class="char-count" id="specialsCount">0 / 300</div>
             </div>
-
-            <!-- T&C -->
-            <div class="tnc-row">
-              <input type="checkbox" id="tncCheck" onchange="onTncChange()" />
-              <div class="tnc-row__text">
-                I agree to the <a href="#" onclick="openModal(event)">Terms &amp; Conditions</a> of MassageMap. I confirm that all information I have provided is accurate and up to date.
-              </div>
-            </div>
-
           </div>
-        </div>
-
-        <div id="submitError" class="step-error hidden"></div>
-
-        <div class="form-nav">
-          <button type="button" class="btn btn--secondary" onclick="goToRegStep(3)">Back</button>
-          <button type="button" class="btn btn--primary btn--lg" style="flex:1; opacity:0.4; pointer-events:none;" id="registerBtn" onclick="submitForm()">Register</button>
+          <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-5);" onclick="saveAccSection(5)">Save — About</button>
         </div>
       </div>
 
-      <!-- ── SUCCESS SCREEN ── -->
-      <div class="success-screen" id="successScreen">
-        <div class="success-screen__icon">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <!-- ── SECTION 6: AVAILABILITY ── -->
+      <div class="acc-section" id="accSec6">
+        <div class="acc-header" onclick="toggleAccSection(6)">
+          <div class="acc-num" id="accNum6">6</div>
+          <div class="acc-info">
+            <div class="acc-name">Availability</div>
+            <div class="acc-status" id="accStatus6">Not started</div>
+          </div>
+          <svg class="acc-chevron" id="accChevron6" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
-        <div class="success-screen__title">Registration received!</div>
-        <div class="success-screen__body">Your listing is under review. We'll be in touch soon. Redirecting…</div>
+        <div class="acc-body hidden" id="accBody6">
+          <div class="field-stack">
+            <div>
+              <div class="form-section-label" style="margin-bottom:var(--space-3);">Working Hours</div>
+              <div class="hours-grid" id="weeklyHoursGrid"></div>
+            </div>
+            <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+              <input type="checkbox" id="availableOutsideHours" name="availableOutsideHours" style="width:16px; height:16px; accent-color:var(--accent); flex-shrink:0;" />
+              <span style="font-size:var(--text-sm); color:var(--text);">Available outside listed hours — customer must make arrangements</span>
+            </label>
+          </div>
+          <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-5);" onclick="saveAccSection(6)">Save — Availability</button>
+        </div>
+      </div>
+
+      <!-- ── SECTION 7: SERVICES ── -->
+      <div class="acc-section" id="accSec7">
+        <div class="acc-header" onclick="toggleAccSection(7)">
+          <div class="acc-num" id="accNum7">7</div>
+          <div class="acc-info">
+            <div class="acc-name">Services <span class="req-badge">Required</span></div>
+            <div class="acc-status" id="accStatus7">Not started</div>
+          </div>
+          <svg class="acc-chevron" id="accChevron7" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="acc-body hidden" id="accBody7">
+          <div class="field-stack">
+            <div id="massageStylesField">
+              <div class="form-section-label">Massage Styles *</div>
+              <div id="massageStylesGroup" class="check-group check-group--3col">
+                <div class="loading-options">Loading…</div>
+              </div>
+            </div>
+            <div id="traditionsField">
+              <div class="form-section-label">Traditions <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(optional)</span></div>
+              <div id="traditionsGroup" class="check-group check-group--3col">
+                <div class="loading-options">Loading…</div>
+              </div>
+            </div>
+            <div id="treatmentsField">
+              <div class="form-section-label">Treatments *</div>
+              <div id="treatmentsGroup" class="check-group check-group--3col">
+                <div class="loading-options">Loading…</div>
+              </div>
+            </div>
+            <div id="classificationField">
+              <div class="form-section-label">Classification *</div>
+              <div id="classificationGroup" class="check-group">
+                <div class="loading-options">Loading…</div>
+              </div>
+            </div>
+            <div id="serviceOfferingsField">
+              <div class="form-section-label">Service Offerings <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(optional)</span></div>
+              <div id="serviceOfferingsGroup" class="check-group check-group--3col">
+                <div class="loading-options">Loading…</div>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-5);" onclick="saveAccSection(7)">Save — Services</button>
+        </div>
+      </div>
+
+      <!-- ── SECTION 8: PHOTOS ── -->
+      <div class="acc-section" id="accSec8">
+        <div class="acc-header" onclick="toggleAccSection(8)">
+          <div class="acc-num" id="accNum8">8</div>
+          <div class="acc-info">
+            <div class="acc-name">Photos <span class="req-badge">Required</span></div>
+            <div class="acc-status" id="accStatus8">Not started</div>
+          </div>
+          <svg class="acc-chevron" id="accChevron8" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="acc-body hidden" id="accBody8">
+          <div class="field-stack">
+            <div class="photo-slots" id="photoSlots">
+
+              <div class="photo-slot" id="photoSlot1">
+                <div class="photo-slot__row">
+                  <label class="photo-slot__btn" for="photo1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Upload a clear face photo *
+                  </label>
+                  <input type="file" id="photo1" accept="image/*" capture="environment" onchange="onPhotoChange(this, 1)" />
+                  <span class="photo-slot__filename hidden" id="photoName1"></span>
+                  <button type="button" class="photo-slot__delete hidden" id="photoDelete1" onclick="deletePhoto(1)">&#x2715;</button>
+                </div>
+              </div>
+
+              <button type="button" class="qual-add-btn hidden" id="addPhotoBtn2" onclick="revealPhotoSlot(2)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add another photo
+              </button>
+              <div class="photo-slot hidden" id="photoSlot2">
+                <div class="photo-slot__row">
+                  <label class="photo-slot__btn" for="photo2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Choose photo
+                  </label>
+                  <input type="file" id="photo2" accept="image/*" onchange="onPhotoChange(this, 2)" />
+                  <span class="photo-slot__filename hidden" id="photoName2"></span>
+                  <button type="button" class="photo-slot__delete hidden" id="photoDelete2" onclick="deletePhoto(2)">&#x2715;</button>
+                </div>
+              </div>
+
+              <button type="button" class="qual-add-btn hidden" id="addPhotoBtn3" onclick="revealPhotoSlot(3)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add another photo
+              </button>
+              <div class="photo-slot hidden" id="photoSlot3">
+                <div class="photo-slot__row">
+                  <label class="photo-slot__btn" for="photo3">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Choose photo
+                  </label>
+                  <input type="file" id="photo3" accept="image/*" onchange="onPhotoChange(this, 3)" />
+                  <span class="photo-slot__filename hidden" id="photoName3"></span>
+                  <button type="button" class="photo-slot__delete hidden" id="photoDelete3" onclick="deletePhoto(3)">&#x2715;</button>
+                </div>
+              </div>
+
+              <button type="button" class="qual-add-btn hidden" id="addPhotoBtn4" onclick="revealPhotoSlot(4)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add another photo
+              </button>
+              <div class="photo-slot hidden" id="photoSlot4">
+                <div class="photo-slot__row">
+                  <label class="photo-slot__btn" for="photo4">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Choose photo
+                  </label>
+                  <input type="file" id="photo4" accept="image/*" onchange="onPhotoChange(this, 4)" />
+                  <span class="photo-slot__filename hidden" id="photoName4"></span>
+                  <button type="button" class="photo-slot__delete hidden" id="photoDelete4" onclick="deletePhoto(4)">&#x2715;</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-5);" onclick="saveAccSection(8)">Save — Photos</button>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div style="margin-top:var(--space-5);">
+        <div id="validationSheet" class="step-error hidden"></div>
+        <button type="button" class="btn btn--primary btn--full btn--lg" id="registerBtn" onclick="submitForm()" style="opacity:0.4; pointer-events:none;">Submit Registration</button>
       </div>
 
     </div><!-- /#regPhase -->
@@ -961,79 +1084,217 @@
     getStorage, ref as storageRef, uploadBytes, getDownloadURL
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
   import {
-    collection, doc, setDoc, serverTimestamp, runTransaction,
-    query, where, getDocs
+    collection, doc, setDoc, getDoc, serverTimestamp, runTransaction,
+    query, where, getDocs, orderBy
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
   const auth    = getAuth(app);
   const storage = getStorage(app);
 
+  // ── Cached offerings (loaded once on page load)
+  let offeringsCache = [];
+
+  async function loadOfferings() {
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'offerings'), where('launchActive', '==', true))
+      );
+      offeringsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderOfferingsGroup('massageStyles',    'massageStylesGroup',    'massageStyles');
+      renderOfferingsGroup('traditions',       'traditionsGroup',       'traditions');
+      renderOfferingsGroup('treatments',       'treatmentsGroup',       'treatments');
+      renderOfferingsGroup('classification',   'classificationGroup',   'classification');
+      renderOfferingsGroup('serviceOfferings', 'serviceOfferingsGroup', 'serviceOfferings');
+      renderOfferingsGroup('amenities',        'amenitiesGroup',        'amenities');
+    } catch (err) {
+      console.error('Failed to load offerings:', err);
+    }
+  }
+
+  function renderOfferingsGroup(category, containerId, inputName) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    let items = offeringsCache
+      .filter(o => o.category === category && (category === 'amenities' || (o.visibleTo && o.visibleTo.includes('spa'))))
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    if (category === 'massageStyles') {
+      items = items.filter(item => item.name !== 'Tantric');
+    }
+    if (items.length === 0) {
+      container.innerHTML = '<div class="loading-options" style="color:var(--text-muted);">No options available.</div>';
+      return;
+    }
+    container.innerHTML = items.map(item => `
+      <label class="check-item">
+        <input type="checkbox" name="${inputName}" value="${item.name}" />
+        <span class="check-item__label">${item.name}</span>
+      </label>
+    `).join('');
+  }
+
   // ── State ──
-  let currentRegStep    = 1;
-  let phoneVerified     = false;
+  let phoneVerified      = false;
   let confirmationResult = null;
-  let appVerifier       = null;
-  let authUid           = null;
-  let verifiedPhone     = '';
-  let knownSupplierData = null;
+  let appVerifier        = null;
+  let authUid            = null;
+  let verifiedPhone      = '';
+  let knownSupplierData  = null;
+
+  const accSectionStates = {1:'empty',2:'empty',3:'empty',4:'empty',5:'empty',6:'empty',7:'empty',8:'empty'};
+  const REQUIRED_SECTIONS = {
+    1: 'Business details (spa name, legal name, owner details)',
+    3: 'Location (province and city / town)',
+    5: 'About (genders served)',
+    7: 'Services (massage styles, treatments, classification)',
+    8: 'Photos (at least one photo)'
+  };
+  let supplierNumberGenerated = null;
 
   // ════════════════════════════════════════════
-  let LOCATIONS = { provinces: [] };
-  fetch('locations.json')
-    .then(r => r.json())
-    .then(data => {
-      LOCATIONS = data;
-      populateProvinces();
-    })
-    .catch(err => console.error('Failed to load locations:', err));
+  // ════════════════════════════════════════════
+  // LOCATION CASCADE — reads from Firestore
+  // ════════════════════════════════════════════
+  let provincesCache = [];
+  let townsCache = {};
+  let suburbsCache = {};
 
-  function populateProvinces() {
+  async function populateProvinces() {
     const sel = document.getElementById('province');
-    LOCATIONS.provinces.forEach(p => {
-      const o = document.createElement('option');
-      o.value = p.id; o.textContent = p.name;
-      sel.appendChild(o);
-    });
+    sel.innerHTML = '<option value="">Select province…</option>';
+    try {
+      const snap = await getDocs(query(collection(db, 'locations_provinces'), orderBy('name', 'asc')));
+      provincesCache = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
+      provincesCache.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.id; o.textContent = p.name;
+        sel.appendChild(o);
+      });
+    } catch (err) {
+      console.error('Failed to load provinces:', err);
+    }
   }
 
-  // ════════════════════════════════════════════
-  // LOCATION CASCADES
-  // ════════════════════════════════════════════
-  function onProvinceChange() {
+  async function onProvinceChange() {
     const provinceId = document.getElementById('province').value;
-    const areaEl    = document.getElementById('area');
+    const townEl    = document.getElementById('area');
     const suburbEl  = document.getElementById('suburb');
-    areaEl.innerHTML   = '<option value="">Select city/town…</option>';
+    townEl.innerHTML   = '<option value="">Select city/town…</option>';
     suburbEl.innerHTML = '<option value="">Select suburb…</option>';
-    areaEl.disabled = true; suburbEl.disabled = true;
+    townEl.disabled = true; suburbEl.disabled = true;
     if (!provinceId) return;
-    const province = LOCATIONS.provinces.find(p => p.id === provinceId);
-    if (!province) return;
-    province.towns.forEach(a => {
+    if (!townsCache[provinceId]) {
+      try {
+        const snap = await getDocs(query(
+          collection(db, 'locations_towns'),
+          where('provinceId', '==', provinceId),
+          orderBy('name', 'asc')
+        ));
+        townsCache[provinceId] = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
+      } catch (err) {
+        console.error('Failed to load towns:', err);
+        return;
+      }
+    }
+    townsCache[provinceId].forEach(t => {
       const o = document.createElement('option');
-      o.value = a.id; o.textContent = a.name;
-      areaEl.appendChild(o);
+      o.value = t.id; o.textContent = t.name;
+      townEl.appendChild(o);
     });
-    areaEl.disabled = false;
+    townEl.disabled = false;
   }
 
-  function onAreaChange() {
-    const provinceId = document.getElementById('province').value;
-    const areaId     = document.getElementById('area').value;
-    const suburbEl   = document.getElementById('suburb');
-    suburbEl.innerHTML = '<option value="">Select suburb…</option>';
+  let areasCache = {};
+
+  async function onAreaChange() {
+    const townId          = document.getElementById('area').value;
+    const suburbEl        = document.getElementById('suburb');
+    const locationAreaEl   = document.getElementById('locationArea');
+    const locationAreaField = document.getElementById('locationAreaField');
+    const suburbField     = document.getElementById('suburbField');
+
+    suburbEl.innerHTML        = '<option value="">Select suburb…</option>';
+    locationAreaEl.innerHTML   = '<option value="">Select area…</option>';
+    suburbEl.disabled         = true;
+    locationAreaEl.disabled    = true;
+    locationAreaField.classList.add('hidden');
+    suburbField.querySelector('label').textContent = 'Suburb *';
+
+    if (!townId) return;
+
+    // Load suburbs
+    if (!suburbsCache[townId]) {
+      try {
+        const snap = await getDocs(query(
+          collection(db, 'locations_suburbs'),
+          where('townId', '==', townId),
+          orderBy('name', 'asc')
+        ));
+        suburbsCache[townId] = snap.docs.map(d => d.data().name);
+      } catch (err) {
+        console.error('Failed to load suburbs:', err);
+        return;
+      }
+    }
+
+    // Check for areas
+    if (!areasCache[townId]) {
+      try {
+        const snap = await getDocs(query(
+          collection(db, 'locations_areas'),
+          where('townId', '==', townId)
+        ));
+        areasCache[townId] = snap.docs.map(d => ({ id: d.id, name: d.data().areaName, suburbs: d.data().suburbs || [] }));
+      } catch (err) {
+        console.error('Failed to load areas:', err);
+        areasCache[townId] = [];
+      }
+    }
+
+    if (areasCache[townId].length > 0) {
+      // Areas exist — show area dropdown, hide suburb until area selected
+      const noneOpt = document.createElement('option');
+      noneOpt.value = 'none'; noneOpt.textContent = 'My suburb is not in these areas';
+      locationAreaEl.appendChild(noneOpt);
+      areasCache[townId].forEach(a => {
+        const o = document.createElement('option');
+        o.value = a.id; o.textContent = a.name;
+        locationAreaEl.appendChild(o);
+      });
+      locationAreaEl.disabled = false;
+      locationAreaField.classList.remove('hidden');
+      suburbField.classList.add('hidden');
+    } else {
+      // No areas — show all suburbs directly
+      suburbsCache[townId].forEach(s => {
+        const o = document.createElement('option');
+        o.value = s; o.textContent = s;
+        suburbEl.appendChild(o);
+      });
+      suburbEl.disabled = false;
+    }
+  }
+
+  window.onLocationAreaChange = async function() {
+    const areaId   = document.getElementById('locationArea').value;
+    const suburbField = document.getElementById('suburbField');
+    suburbField.classList.add('hidden');
+    if (areaId === 'none') {
+      suburbField.classList.remove('hidden');
+    }
+    const suburbEl = document.getElementById('suburb');
+    const townId   = document.getElementById('area').value;
+    suburbEl.innerHTML = '<option value="">Select suburb… (optional)</option>';
     suburbEl.disabled  = true;
-    if (!areaId) return;
-    const province = LOCATIONS.provinces.find(p => p.id === provinceId);
-    if (!province) return;
-    const area = province.towns.find(a => a.id === areaId);
-    if (!area) return;
-    area.suburbs.forEach(s => {
-      const o = document.createElement('option');
-      o.value = s; o.textContent = s;
-      suburbEl.appendChild(o);
-    });
-    suburbEl.disabled = false;
+    if (areaId === 'none') {
+      // Show all suburbs
+      if (!suburbsCache[townId]) return;
+      suburbsCache[townId].forEach(s => {
+        const o = document.createElement('option');
+        o.value = s; o.textContent = s;
+        suburbEl.appendChild(o);
+      });
+      suburbEl.disabled = false;
+    }
   }
 
   // ════════════════════════════════════════════
@@ -1064,7 +1325,12 @@
     try {
       // 1. Firestore lookup
       const snap = await getDocs(query(collection(db, 'suppliers'), where('cellNumber', '==', phone)));
-      knownSupplierData = snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+      if (!snap.empty) {
+        knownSupplierData = { id: snap.docs[0].id, ...snap.docs[0].data() };
+      } else {
+        const pendSnap = await getDocs(query(collection(db, 'pending_registrations'), where('cellNumber', '==', phone)));
+        knownSupplierData = pendSnap.empty ? null : { id: pendSnap.docs[0].id, ...pendSnap.docs[0].data() };
+      }
 
       if (knownSupplierData) {
         // Returning supplier — check localStorage session first
@@ -1146,11 +1412,22 @@
       if (knownSupplierData) {
         // Store a fresh 30-day session token then show welcome
         const displayName  = knownSupplierData.displayName || knownSupplierData.firstName || '';
-        const supplierType = knownSupplierData.supplierType || 'individual';
+        const supplierType = knownSupplierData.supplierType || 'spa';
         storeSession(verifiedPhone, displayName, supplierType);
         showWelcomeBack(displayName, supplierType);
       } else {
-        startRegistration();
+        // New supplier — store session, create pending registration doc, show consent gate
+        const initialType = new URLSearchParams(window.location.search).get('type') || 'spa';
+        storeSession(verifiedPhone, '', initialType);
+        try {
+          const pendRef = doc(db, 'pending_registrations', verifiedPhone);
+          await setDoc(pendRef, {
+            cellNumber: verifiedPhone,
+            createdAt:  serverTimestamp(),
+            status:     'incomplete'
+          });
+        } catch (e) { console.error('pending_registrations create error:', e); }
+        showConsentGate();
       }
     } catch (err) {
       console.error('OTP verify error:', err);
@@ -1198,76 +1475,16 @@
     document.getElementById('otpScreen').classList.add('hidden');
     document.getElementById('welcomeName').textContent = displayName || 'there';
     document.getElementById('welcomeBack').classList.remove('hidden');
+    const isComplete = knownSupplierData?.registrationComplete === true;
     setTimeout(() => {
-      window.location.href = 'dashboard.html?type=spa';
+      window.location.href = isComplete
+        ? 'dashboard.html?type=spa'
+        : 'register-spa.html?type=spa';
     }, 2000);
   }
 
   // ════════════════════════════════════════════
-  // START REGISTRATION (after OTP verified)
-  // ════════════════════════════════════════════
-  function startRegistration() {
-    document.getElementById('otpPhase').classList.add('hidden');
-    document.getElementById('regPhase').classList.remove('hidden');
-    document.getElementById('regSideSteps').classList.remove('hidden');
-    document.getElementById('salonCell').value = verifiedPhone;
-    updateRegProgress(1);
-  }
-
-  // ════════════════════════════════════════════
-  // REGISTRATION STEP NAVIGATION
-  // ════════════════════════════════════════════
-  const STEP_LABELS = ['Business Info', 'Location & Premises', 'Services & Availability', 'Photos & Bio'];
-
-  function goToRegStep(n) {
-    if (n > currentRegStep) {
-      if (currentRegStep === 1 && !validateStep1()) return;
-      if (currentRegStep === 2 && !validateStep2()) return;
-      if (currentRegStep === 3 && !validateStep3()) return;
-    }
-    document.getElementById('regStep' + currentRegStep).classList.add('hidden');
-    clearErrors();
-    currentRegStep = n;
-    document.getElementById('regStep' + currentRegStep).classList.remove('hidden');
-    updateRegProgress(n);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function goBack() {
-    if (currentRegStep > 1) goToRegStep(currentRegStep - 1);
-  }
-
-  function updateRegProgress(n) {
-    for (let i = 1; i <= 4; i++) {
-      const step = document.getElementById('sideStep' + i);
-      const dot  = document.getElementById('sideDot' + i);
-      step.classList.remove('reg-step--active', 'reg-step--done');
-      if (i < n) {
-        step.classList.add('reg-step--done');
-        dot.textContent = '✓';
-      } else {
-        dot.textContent = String(i);
-        if (i === n) step.classList.add('reg-step--active');
-      }
-    }
-    for (let i = 1; i <= 3; i++) {
-      document.getElementById('sideConn' + i).classList.toggle('reg-connector--done', i < n);
-    }
-    document.getElementById('sideBackBtn').classList.toggle('hidden', n < 2);
-
-    // Mobile step bar
-    document.getElementById('mobileStepNum').textContent  = `Step ${n} of 4`;
-    document.getElementById('mobileStepName').textContent = STEP_LABELS[n - 1];
-    for (let i = 1; i <= 4; i++) {
-      const seg = document.getElementById('mobileSeg' + i);
-      seg.classList.remove('mobile-step-seg--active', 'mobile-step-seg--done');
-      if (i < n)      seg.classList.add('mobile-step-seg--done');
-      else if (i === n) seg.classList.add('mobile-step-seg--active');
-    }
-  }
-
-  // ════════════════════════════════════════════
-  // VALIDATION
+  // VALIDATION HELPERS
   // ════════════════════════════════════════════
   function clearErrors() {
     document.querySelectorAll('.field--error').forEach(f => f.classList.remove('field--error'));
@@ -1284,59 +1501,255 @@
     }
   }
 
-  function validateStep1() {
-    clearErrors();
-    let ok = true;
-    if (!v('tradingName'))    { markError(document.getElementById('tradingNameField'),    'Trading name is required.');     ok = false; }
-    if (!v('ownerFirstName')) { markError(document.getElementById('ownerFirstNameField'), 'Owner first name is required.'); ok = false; }
-    if (!v('ownerLastName'))  { markError(document.getElementById('ownerLastNameField'),  'Owner last name is required.');  ok = false; }
-    const emailVal = v('salonEmail');
-    if (!emailVal) {
-      markError(document.getElementById('salonEmailField'), 'Salon email is required.');
-      ok = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
-      markError(document.getElementById('salonEmailField'), 'Please enter a valid email address.');
-      ok = false;
-    }
-    return ok;
-  }
-
-  function validateStep2() {
-    clearErrors();
-    let ok = true;
-    if (!document.getElementById('province').value) { markError(document.getElementById('provinceField'), 'Please select a province.'); ok = false; }
-    if (!document.getElementById('area').value)     { markError(document.getElementById('areaField'),    'Please select an area.');     ok = false; }
-    if (!document.getElementById('suburb').value)   { markError(document.getElementById('suburbField'),  'Please select a suburb.');    ok = false; }
-    return ok;
-  }
-
-  function validateStep3() {
-    clearErrors();
-    const massageTypes = Array.from(document.querySelectorAll('input[name="massageTypes"]:checked'));
-    if (massageTypes.length === 0) {
-      markError(document.getElementById('massageTypesField'), 'Please select at least one massage type.');
-      return false;
-    }
-    return true;
-  }
-
-  function validateStep4() {
-    clearErrors();
-    if (!document.getElementById('idPhoto').files[0]) {
-      markError(document.getElementById('idPhotoField'), 'Identity photo is required.');
-      return false;
-    }
-    return true;
+  // ════════════════════════════════════════════
+  // MOBILE TOGGLE
+  // ════════════════════════════════════════════
+  function onMobileToggle() {
+    const on = document.getElementById('mobileMassage').checked;
+    document.getElementById('travelKmField').classList.toggle('hidden', !on);
   }
 
   // ════════════════════════════════════════════
-  // T&C
+  // CONSENT GATE
   // ════════════════════════════════════════════
-  function onTncChange() {
-    const checked = document.getElementById('tncCheck').checked;
-    const btn     = document.getElementById('registerBtn');
-    btn.style.opacity      = checked ? '1' : '0.4';
-    btn.style.pointerEvents = checked ? 'auto' : 'none';
+  function showConsentGate() {
+    document.getElementById('otpPhase').classList.add('hidden');
+    document.getElementById('consentPhase').classList.remove('hidden');
+  }
+
+  function onConsentChange() {
+    const popia = document.getElementById('popiaConsent')?.checked;
+    const tnc   = document.getElementById('tncConsentCheck')?.checked;
+    const btn   = document.getElementById('beginRegBtn');
+    btn.style.opacity       = (popia && tnc) ? '1'    : '0.4';
+    btn.style.pointerEvents = (popia && tnc) ? 'auto' : 'none';
+  }
+
+  async function beginRegistration() {
+    try {
+      const pendRef = doc(db, 'pending_registrations', verifiedPhone);
+      await setDoc(pendRef, {
+        dataConsentGiven:     true,
+        dataConsentTimestamp: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      console.error('beginRegistration consent save error:', err);
+    }
+    document.getElementById('consentPhase').classList.add('hidden');
+    document.getElementById('regPhase').classList.remove('hidden');
+    const cellDisplay = document.getElementById('cellDisplay');
+    if (cellDisplay) cellDisplay.value = verifiedPhone;
+  }
+
+  // ════════════════════════════════════════════
+  // ACCORDION
+  // ════════════════════════════════════════════
+  function toggleAccSection(n) {
+    for (let i = 1; i <= 8; i++) {
+      const body    = document.getElementById('accBody'    + i);
+      const chevron = document.getElementById('accChevron' + i);
+      if (i === n) {
+        const isOpen = !body.classList.contains('hidden');
+        body.classList.toggle('hidden', isOpen);
+        chevron.classList.toggle('acc-chevron--open', !isOpen);
+      } else {
+        body.classList.add('hidden');
+        chevron.classList.remove('acc-chevron--open');
+      }
+    }
+  }
+
+  async function saveAccSection(n) {
+    accSectionStates[n] = 'done';
+    const numEl    = document.getElementById('accNum'    + n);
+    const statusEl = document.getElementById('accStatus' + n);
+    const body     = document.getElementById('accBody'   + n);
+    const chevron  = document.getElementById('accChevron' + n);
+    numEl.textContent = '✓';
+    numEl.classList.add('acc-num--done');
+    statusEl.textContent = 'Complete';
+    statusEl.classList.add('acc-status--done');
+    body.classList.add('hidden');
+    chevron.classList.remove('acc-chevron--open');
+    updateAccordionProgress();
+    if (n === 1) generateSupplierNumber();
+    await persistSectionToFirestore(n);
+  }
+
+  function updateAccordionProgress() {
+    const total = 8;
+    const done  = Object.values(accSectionStates).filter(s => s === 'done').length;
+    const pct   = Math.round((done / total) * 100);
+    document.getElementById('accProgressFill').style.width  = pct + '%';
+    document.getElementById('accProgressLabel').textContent = `${done} of ${total} sections saved`;
+    const allRequiredDone = Object.keys(REQUIRED_SECTIONS).every(k => accSectionStates[Number(k)] === 'done');
+    const btn = document.getElementById('registerBtn');
+    btn.style.opacity       = allRequiredDone ? '1'    : '0.4';
+    btn.style.pointerEvents = allRequiredDone ? 'auto' : 'none';
+  }
+
+  async function generateSupplierNumber() {
+    try {
+      const configRef = doc(db, 'settings', 'config');
+      const pendRef   = doc(db, 'pending_registrations', verifiedPhone);
+      let supplierNumber;
+      await runTransaction(db, async tx => {
+        const snap    = await tx.get(configRef);
+        const current = snap.exists() ? (snap.data().counterSpa || 1000) : 1000;
+        const next    = Math.max(current + 1, 1001);
+        const yy      = String(new Date().getFullYear()).slice(-2);
+        supplierNumber = `S-${yy}-${String(next).padStart(4, '0')}`;
+        tx.set(configRef, { counterSpa: next }, { merge: true });
+        tx.set(pendRef,   { supplierNumber },           { merge: true });
+        const supplierRef = doc(db, 'suppliers', verifiedPhone);
+        tx.set(supplierRef, {
+          uid:                  authUid,
+          cellNumber:           verifiedPhone,
+          supplierNumber,
+          supplierType:         new URLSearchParams(window.location.search).get('type') || 'spa',
+          status:               'pending',
+          subscriptionStatus:   'not_paid',
+          subscriptionExpiry:   null,
+          registrationComplete: false,
+          createdAt:            serverTimestamp()
+        }, { merge: true });
+      });
+      supplierNumberGenerated = supplierNumber;
+      document.getElementById('supplierPillNum').textContent = `Your spa number: ${supplierNumber}`;
+      document.getElementById('supplierPill').classList.remove('hidden');
+    } catch (err) {
+      console.error('generateSupplierNumber error:', err);
+    }
+  }
+
+  async function persistSectionToFirestore(n) {
+    if (!verifiedPhone) return;
+    const pendRef = doc(db, 'pending_registrations', verifiedPhone);
+    let data = {};
+
+    if (n === 1) {
+      data = {
+        displayName:        v('displayName'),
+        tradingName:        v('tradingName'),
+        registrationNumber: v('registrationNumber') || null,
+        vatNumber:          v('vatNumber') || null,
+        requiresInvoice:    document.getElementById('requiresInvoice').checked,
+        ownerFirstName:     v('ownerFirstName'),
+        ownerLastName:      v('ownerLastName'),
+        ownerMobile:        v('ownerMobile')
+      };
+    } else if (n === 2) {
+      const showWhatsapp = document.getElementById('showWhatsapp').checked;
+      const emailVal     = v('email');
+      const contactPreferences = ['phone'];
+      if (showWhatsapp)  contactPreferences.push('whatsapp');
+      if (emailVal)      contactPreferences.push('email');
+      data = {
+        spaPhone:           v('spaPhone') || null,
+        spaPhoneVisible:    document.getElementById('spaPhoneVisible').checked,
+        spaMobile:          v('spaMobile') || null,
+        spaMobileVisible:   document.getElementById('spaMobileVisible').checked,
+        managerFirstName:   v('managerFirstName') || null,
+        managerLastName:    v('managerLastName') || null,
+        managerMobile:      v('managerMobile') || null,
+        whatsappNumber:     v('whatsappNumber') || null,
+        showWhatsapp,
+        email:              emailVal || null,
+        contactPreferences
+      };
+    } else if (n === 3) {
+      const addressLine1 = v('addressLine1') || null;
+      const suburb       = document.getElementById('suburb').value;
+      const manualLat    = document.getElementById('gpsLat').value;
+      const manualLng    = document.getElementById('gpsLng').value;
+      let gpsLat = manualLat ? parseFloat(manualLat) : null;
+      let gpsLng = manualLng ? parseFloat(manualLng) : null;
+      if (!gpsLat) {
+        const geoQuery = addressLine1
+          ? `${addressLine1}, ${suburb}, South Africa`
+          : `${suburb}, South Africa`;
+        const geo = await geocodeAddress(geoQuery);
+        gpsLat = geo ? geo.lat : null;
+        gpsLng = geo ? geo.lng : null;
+      }
+      data = {
+        province:       document.getElementById('province').value,
+        area:           document.getElementById('area').value,
+        locationArea:   document.getElementById('locationArea').value || null,
+        suburb,
+        addressLine1,
+        addressVisible: document.getElementById('addressVisible').checked,
+        gpsLat,
+        gpsLng
+      };
+    } else if (n === 4) {
+      const amenities = Array.from(
+        document.querySelectorAll('#amenitiesGroup input[type="checkbox"]:checked')
+      ).map(cb => cb.value);
+      data = {
+        premisesType:      document.querySelector('input[name="premisesType"]:checked')?.value || null,
+        mobileAvailable:   document.getElementById('mobileMassage').checked,
+        willingToTravelKm: document.getElementById('mobileMassage').checked
+          ? parseInt(document.getElementById('willingToTravelKm').value) : null,
+        amenities
+      };
+    } else if (n === 5) {
+      const associations = Array.from(
+        document.querySelectorAll('input[name="associationMembership"]:checked')
+      ).map(cb => cb.value);
+      data = {
+        genderServed:          document.querySelector('input[name="genderServed"]:checked')?.value || null,
+        aboutSpa:              v('aboutSpa') || null,
+        associationMembership: associations,
+        specialsText:          v('specialsText') || null
+      };
+    } else if (n === 6) {
+      const weeklyHours = {};
+      DAYS.forEach(day => {
+        const available = document.getElementById('day-' + day).checked;
+        weeklyHours[day] = {
+          available,
+          from: available ? parseInt(document.getElementById('dayFrom-' + day).value) : null,
+          to:   available ? parseInt(document.getElementById('dayTo-'   + day).value) : null
+        };
+      });
+      data = {
+        weeklyHours,
+        availableOutsideHours: document.getElementById('availableOutsideHours').checked
+      };
+    } else if (n === 7) {
+      const getChecked = name =>
+        Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
+      data = {
+        massageStyles:    getChecked('massageStyles'),
+        traditions:       getChecked('traditions'),
+        treatments:       getChecked('treatments'),
+        classification:   getChecked('classification'),
+        serviceOfferings: getChecked('serviceOfferings')
+      };
+    } else if (n === 8) {
+      const uid    = auth.currentUser?.uid || authUid;
+      const photos = [];
+      for (let i = 1; i <= 4; i++) {
+        const fileInput = document.getElementById('photo' + i);
+        if (fileInput && fileInput.files[0]) {
+          const file   = fileInput.files[0];
+          const result = await uploadPhoto(file, `suppliers/${uid}/photos/${i}-${file.name}`);
+          photos.push({ ...result, visibility: 'public' });
+        }
+      }
+      data = { photos };
+    }
+
+    try {
+      await setDoc(pendRef, data, { merge: true });
+    } catch (err) {
+      console.error('persistSectionToFirestore error:', err);
+    }
+  }
+
+  function closeValidationSheet() {
+    document.getElementById('validationSheet').classList.add('hidden');
   }
 
   // ════════════════════════════════════════════
@@ -1403,6 +1816,30 @@
   }
 
   // ════════════════════════════════════════════
+  // QUALIFICATIONS
+  // ════════════════════════════════════════════
+  function addQualification() {
+    const list = document.getElementById('qualList');
+    const row  = document.createElement('div');
+    row.className = 'qual-row';
+    row.innerHTML = `
+      <input class="input" type="text" placeholder="Institute / School" style="font-size:var(--text-sm);" />
+      <input class="input" type="text" placeholder="Certificate / Diploma" style="font-size:var(--text-sm);" />
+      <button type="button" class="qual-remove" onclick="removeQualification(this)" aria-label="Remove">×</button>
+    `;
+    list.appendChild(row);
+  }
+
+  function removeQualification(btn) {
+    const row = btn.closest('.qual-row');
+    if (document.querySelectorAll('.qual-row').length > 1) {
+      row.remove();
+    } else {
+      row.querySelectorAll('input').forEach(i => { i.value = ''; });
+    }
+  }
+
+  // ════════════════════════════════════════════
   // PHOTO HELPERS
   // ════════════════════════════════════════════
   function onPhotoChange(input, slotIndex) {
@@ -1447,7 +1884,7 @@
   // CHAR COUNTERS
   // ════════════════════════════════════════════
   function updateCharCount(el) {
-    document.getElementById('aboutMeCount').textContent = el.value.length + ' / 300';
+    document.getElementById('aboutSpaCount').textContent = el.value.length + ' / 300';
   }
 
   function updateSpecialsCount(el) {
@@ -1481,6 +1918,46 @@
   }
 
   // ════════════════════════════════════════════
+  // GPS CAPTURE
+  // ════════════════════════════════════════════
+  function captureGps() {
+    const btn    = document.getElementById('gpsBtn');
+    const status = document.getElementById('gpsStatus');
+    if (!navigator.geolocation) {
+      status.textContent = 'GPS not supported on this device.';
+      status.style.color = '#ef4444';
+      return;
+    }
+    btn.disabled    = true;
+    btn.textContent = 'Capturing…';
+    status.textContent = 'Waiting for GPS…';
+    status.style.color = 'var(--text-muted)';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lng = pos.coords.longitude.toFixed(6);
+        document.getElementById('gpsLat').value = lat;
+        document.getElementById('gpsLng').value = lng;
+        status.textContent = `Captured: ${lat}, ${lng}`;
+        status.style.color = 'var(--green)';
+        btn.disabled    = false;
+        btn.textContent = 'Use My Current Location';
+      },
+      err => {
+        let msg = 'Could not capture GPS.';
+        if (err.code === 1) msg = 'Location access denied. Please allow location in your browser settings.';
+        if (err.code === 2) msg = 'Position unavailable. Try again outdoors.';
+        if (err.code === 3) msg = 'GPS timed out. Please try again.';
+        status.textContent = msg;
+        status.style.color = '#ef4444';
+        btn.disabled    = false;
+        btn.textContent = 'Use My Current Location';
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  // ════════════════════════════════════════════
   // REFERRAL CODE
   // ════════════════════════════════════════════
   function generateReferralCode(firstName) {
@@ -1508,61 +1985,70 @@
       };
     });
 
+    const qualifications = [];
+    document.querySelectorAll('.qual-row').forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (inputs[0] && inputs[0].value.trim()) {
+        qualifications.push({
+          institute:       inputs[0].value.trim(),
+          certificateType: inputs[1] ? inputs[1].value.trim() : ''
+        });
+      }
+    });
+
     // Contact preferences (SMS always included)
-    const contactPreferences = ['sms', ...getChecked('contactPref').filter(val => val !== 'sms')];
+    const contactPreferences = ['sms', ...getChecked('contactPref').filter(v => v !== 'sms')];
 
     return {
       supplierType: 'spa',
       uid:          authUid,
 
-      // Business
-      tradingName:      v('tradingName'),
-      displayName:      v('tradingName'),
-      ownerFirstName:   v('ownerFirstName'),
-      ownerLastName:    v('ownerLastName'),
-      managerFirstName: v('managerFirstName') || null,
-      managerLastName:  v('managerLastName') || null,
-      managerPhone:     v('managerPhone') || null,
-      cellNumber:       verifiedPhone,
-      landlineNumber:   v('salonLandline') || null,
-      salonEmail:       v('salonEmail'),
-      websiteUrl:       v('websiteUrl') || null,
-      companyRegNumber: v('companyReg') || null,
-      whatsappNumber:   v('whatsappNumber') || null,
+      // Personal
+      firstName:          v('firstName'),
+      lastName:           v('lastName'),
+      displayName:        v('displayName'),
+      gender:             document.querySelector('input[name="personalGender"]:checked')?.value || null,
+      cellNumber:         verifiedPhone,
+      whatsappNumber:     v('whatsappNumber') || null,
+      email:              v('email') || null,
       contactPreferences,
+      experienceYears:    v('experienceYears') || null,
 
       // Location
-      province:         document.getElementById('province').value,
-      area:             document.getElementById('area').value,
-      suburb:           document.getElementById('suburb').value,
-      address:          v('address') || null,
-      addressVisible:   document.getElementById('addressVisible').checked,
-      premisesType:     'business',
-      shower:           document.getElementById('shower').checked,
-      parking:          document.getElementById('parking').checked,
+      province:           document.getElementById('province').value,
+      area:               document.getElementById('area').value,
+      suburb:             document.getElementById('suburb').value,
+      address:            v('address') || null,
+      addressVisible:     document.getElementById('addressVisible').checked,
+      premisesType:       document.querySelector('input[name="premisesType"]:checked')?.value || null,
+      shower:             document.getElementById('shower').checked,
+      parking:            document.getElementById('parking').checked,
 
       // Services
-      massageTypes:     getChecked('massageTypes'),
+      massageStyles:    getChecked('massageStyles'),
+      traditions:       getChecked('traditions'),
       treatments:       getChecked('treatments'),
-      classification:   document.querySelector('input[name="classification"]:checked')?.value || null,
-      genderServed:     document.querySelector('input[name="genderServed"]:checked')?.value || null,
-      qualifications:   [],
-      affiliations:     [],
+      classification:   getChecked('classification'),
+      serviceOfferings: getChecked('serviceOfferings'),
+      genderServed:       document.querySelector('input[name="genderServed"]:checked')?.value || null,
+      qualifications,
+      affiliations:       getChecked('affiliations'),
 
       // Availability
+      mobileAvailable:       document.getElementById('mobileMassage').checked,
+      willingToTravelKm:     document.getElementById('mobileMassage').checked
+                               ? parseInt(document.getElementById('willingToTravelKm').value) : null,
       weeklyHours,
-      availableOutsideHours: false,
-      mobileAvailable:       false,
-      willingToTravelKm:     null,
+      availableOutsideHours: document.getElementById('availableOutsideHours').checked,
 
       // Photos & bio
-      idPhotoUrl:   idResult,
-      photos:       profilePhotos,
-      aboutMe:      v('aboutMe') || null,
+      idPhotoUrl:  idResult,
+      photos:      profilePhotos,
+      aboutSpa:     v('aboutSpa') || null,
       specialsText: v('specialsText') || null,
 
       status:       'pending',
-      referralCode: generateReferralCode(v('tradingName')),
+      referralCode: generateReferralCode(v('firstName')),
       createdAt:    serverTimestamp()
     };
   }
@@ -1571,120 +2057,125 @@
   // SUBMIT
   // ════════════════════════════════════════════
   async function submitForm() {
-    if (!validateStep4()) return;
+    const missing = Object.keys(REQUIRED_SECTIONS)
+      .filter(k => accSectionStates[Number(k)] !== 'done')
+      .map(k => REQUIRED_SECTIONS[Number(k)]);
+    if (missing.length > 0) {
+      const sheet = document.getElementById('validationSheet');
+      sheet.innerHTML = '<strong>Please complete these required sections:</strong><ul style="margin:var(--space-2) 0 0 var(--space-4);">' +
+        missing.map(m => `<li>${m}</li>`).join('') + '</ul>';
+      sheet.classList.remove('hidden');
+      window.scrollTo({ top: sheet.offsetTop - 20, behavior: 'smooth' });
+      return;
+    }
 
-    const btn    = document.getElementById('registerBtn');
-    const errDiv = document.getElementById('submitError');
-    errDiv.classList.add('hidden');
+    const btn = document.getElementById('registerBtn');
+    document.getElementById('validationSheet').classList.add('hidden');
     btn.classList.add('btn--loading');
-    btn.textContent = 'Registering…';
+    btn.textContent = 'Submitting…';
 
     try {
-      const uid = auth.currentUser?.uid || authUid;
-      if (!uid) throw new Error('Phone verification required. Please refresh and start again.');
+      if (!verifiedPhone) throw new Error('Phone verification required. Please refresh and start again.');
 
-      // 1. Upload ID photo
-      let idResult = null;
-      const idFile = document.getElementById('idPhoto').files[0];
-      if (idFile) {
-        idResult = await uploadPhoto(idFile, `suppliers/${uid}/id/${idFile.name}`);
-      }
+      const pendRef     = doc(db, 'pending_registrations', verifiedPhone);
+      const supplierRef = doc(db, 'suppliers', verifiedPhone);
 
-      // 2. Upload profile photos
-      const profilePhotos = [];
-      for (let i = 1; i <= 5; i++) {
-        const fileInput = document.getElementById('photo' + i);
-        if (fileInput && fileInput.files[0]) {
-          const file   = fileInput.files[0];
-          const result = await uploadPhoto(file, `suppliers/${uid}/photos/${i}-${file.name}`);
-          profilePhotos.push({ ...result, visibility: 'public' });
-        }
-      }
+      const pendSnap = await getDoc(pendRef);
+      const saved    = pendSnap.exists() ? pendSnap.data() : {};
 
-      // 3. Build Firestore document
-      const data = buildFormData(idResult, profilePhotos);
+      const finalData = {
+        supplierType:          'spa',
+        uid:                   authUid,
+        supplierNumber:        supplierNumberGenerated,
+        cellNumber:            verifiedPhone,
+        status:                'pending',
+        subscriptionStatus:    'not_paid',
+        subscriptionExpiry:    null,
+        dataConsentGiven:      true,
+        dataConsentTimestamp:  saved.dataConsentTimestamp  || null,
+        referralCode:          generateReferralCode(saved.displayName || ''),
+        createdAt:             serverTimestamp(),
+        lastUpdated:           serverTimestamp(),
+        registrationComplete:  true,
+        // Business details
+        displayName:           saved.displayName           || null,
+        tradingName:           saved.tradingName           || null,
+        registrationNumber:    saved.registrationNumber    || null,
+        vatNumber:             saved.vatNumber             || null,
+        requiresInvoice:       saved.requiresInvoice       || false,
+        ownerFirstName:        saved.ownerFirstName        || null,
+        ownerLastName:         saved.ownerLastName         || null,
+        ownerMobile:           saved.ownerMobile           || null,
+        // Contact
+        spaPhone:              saved.spaPhone              || null,
+        spaPhoneVisible:       saved.spaPhoneVisible       || false,
+        spaMobile:             saved.spaMobile             || null,
+        spaMobileVisible:      saved.spaMobileVisible      || false,
+        managerFirstName:      saved.managerFirstName      || null,
+        managerLastName:       saved.managerLastName       || null,
+        managerMobile:         saved.managerMobile         || null,
+        whatsappNumber:        saved.whatsappNumber        || null,
+        showWhatsapp:          saved.showWhatsapp          || false,
+        email:                 saved.email                 || null,
+        contactPreferences:    saved.contactPreferences    || ['phone'],
+        // Location
+        province:              saved.province              || null,
+        area:                  saved.area                  || null,
+        locationArea:          saved.locationArea          || null,
+        suburb:                saved.suburb                || null,
+        addressLine1:          saved.addressLine1          || null,
+        addressVisible:        saved.addressVisible        || true,
+        gpsLat:                saved.gpsLat                || null,
+        gpsLng:                saved.gpsLng                || null,
+        // Premises
+        amenities:             saved.amenities             || [],
+        // About
+        genderServed:          saved.genderServed          || null,
+        aboutSpa:              saved.aboutSpa              || null,
+        associationMembership: saved.associationMembership || [],
+        specialsText:          saved.specialsText          || null,
+        // Availability
+        weeklyHours:           saved.weeklyHours           || {},
+        availableOutsideHours: saved.availableOutsideHours || false,
+        // Services
+        massageStyles:         saved.massageStyles         || [],
+        traditions:            saved.traditions            || [],
+        treatments:            saved.treatments            || [],
+        classification:        saved.classification        || [],
+        serviceOfferings:      saved.serviceOfferings      || [],
+        // Photos
+        photos:                saved.photos                || []
+      };
 
-      // 4. Geocode GPS coordinates
-      const geoQuery = data.address
-        ? `${data.address}, ${data.suburb}, South Africa`
-        : `${data.suburb}, South Africa`;
-      const geo = await geocodeAddress(geoQuery);
-      if (geo) data.geoLocation = geo;
+      await setDoc(supplierRef, finalData);
+      await setDoc(pendRef, { status: 'completed' }, { merge: true });
 
-      // 5. Atomic supplier number + Firestore write
-      let supplierNumber;
-      const counterRef  = doc(db, 'settings', 'supplierCounter');
-      const supplierRef = doc(db, 'suppliers', uid);
-      await runTransaction(db, async tx => {
-        const counterSnap = await tx.get(counterRef);
-        const lastNumber  = counterSnap.exists() ? (counterSnap.data().lastNumber || 0) : 0;
-        const next        = lastNumber + 1;
-        const year        = new Date().getFullYear();
-        supplierNumber    = `MM-${year}-${String(next).padStart(5,'0')}-S`;
-        tx.set(counterRef,  { lastNumber: next }, { merge: true });
-        tx.set(supplierRef, { ...data, supplierNumber });
-      });
+      storeSession(verifiedPhone, finalData.displayName, finalData.supplierType);
 
-      storeSession(verifiedPhone, data.displayName, data.supplierType);
+      document.getElementById('regPhase').classList.add('hidden');
+      const successDiv = document.createElement('div');
+      successDiv.className = 'success-screen';
+      successDiv.style.display = 'flex';
+      successDiv.innerHTML = `
+        <div class="success-screen__icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="success-screen__title">Registration received!</div>
+        <div class="success-screen__body">Your listing is under review. We'll be in touch soon. Redirecting…</div>
+      `;
+      document.querySelector('.reg-content').appendChild(successDiv);
 
-      // 6. Telegram notification (non-fatal)
-      {
-        const tgMsg = [
-          '🆕 New MassageMap Registration',
-          `Name: ${data.displayName || data.firstName}`,
-          `Type: Spa`,
-          `Number: ${supplierNumber}`,
-          `Area: ${data.province} — ${data.area}`,
-          `Cell: ${data.cellNumber}`,
-        ].join('\n');
-        fetch(
-          `https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage` +
-          `?chat_id=${CONFIG.TELEGRAM_CHAT_ID}&text=${encodeURIComponent(tgMsg)}`
-        ).catch(() => {});
-      }
-
-      // 7. Admin email notification (non-fatal)
-      fetch('http://localhost:3003/send-admin-notification', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          supplierName:  data.displayName || data.tradingName,
-          supplierType:  'spa',
-          supplierNumber,
-          province:      data.province,
-          area:          data.area,
-          cellNumber:    data.cellNumber,
-          registeredAt:  new Date().toISOString(),
-        }),
-      }).catch(() => {});
-
-      // 8. Success UI
-      document.getElementById('regStep4').classList.add('hidden');
-      for (let i = 1; i <= 4; i++) {
-        document.getElementById('sideStep' + i).classList.remove('reg-step--active');
-        document.getElementById('sideStep' + i).classList.add('reg-step--done');
-        document.getElementById('sideDot' + i).textContent = '✓';
-      }
-      for (let i = 1; i <= 3; i++) {
-        document.getElementById('sideConn' + i).classList.add('reg-connector--done');
-      }
-      document.getElementById('sideBackBtn').classList.add('hidden');
-      document.getElementById('mobileStepBar').classList.add('hidden');
-      const s = document.getElementById('successScreen');
-      s.style.display = 'flex';
-
-      // 9. Redirect
       setTimeout(() => {
-        window.location.href = `info.html?num=${encodeURIComponent(supplierNumber)}`;
+        window.location.href = `info.html?num=${encodeURIComponent(supplierNumberGenerated || '')}`;
       }, 3000);
 
     } catch (err) {
       console.error('Submit error:', err);
       btn.classList.remove('btn--loading');
-      btn.textContent = 'Register';
-      errDiv.textContent = 'Registration failed: ' + (err.message || 'please try again.');
-      errDiv.classList.remove('hidden');
-      window.scrollTo({ top: document.getElementById('regStep4').offsetTop, behavior: 'smooth' });
+      btn.textContent = 'Submit Registration';
+      const sheet = document.getElementById('validationSheet');
+      sheet.textContent = 'Submission failed: ' + (err.message || 'please try again.');
+      sheet.classList.remove('hidden');
     }
   }
 
@@ -1697,28 +2188,34 @@
 
   // ── Init ──
   populateProvinces();
+  loadOfferings();
   buildWeeklyHoursGrid();
 
   // ── Expose globals (onclick handlers) ──
-  window.handleNext          = handleNext;
-  window.resendOtp           = resendOtp;
-  window.verifyOtp           = verifyOtp;
-  window.goToRegStep         = goToRegStep;
-  window.goBack              = goBack;
-  window.onProvinceChange    = onProvinceChange;
-  window.onAreaChange        = onAreaChange;
-  window.onDayToggle         = onDayToggle;
-  window.onPhotoChange       = onPhotoChange;
-  window.deletePhoto         = deletePhoto;
-  window.revealPhotoSlot     = revealPhotoSlot;
-  window.onIdPhotoChange     = onIdPhotoChange;
-  window.deleteIdPhoto       = deleteIdPhoto;
-  window.updateCharCount     = updateCharCount;
-  window.updateSpecialsCount = updateSpecialsCount;
-  window.onTncChange         = onTncChange;
-  window.openModal           = openModal;
-  window.closeModal          = closeModal;
-  window.submitForm          = submitForm;
+  window.handleNext            = handleNext;
+  window.resendOtp             = resendOtp;
+  window.verifyOtp             = verifyOtp;
+  window.onProvinceChange      = onProvinceChange;
+  window.onAreaChange          = onAreaChange;
+  window.onLocationAreaChange   = onLocationAreaChange;
+  window.onMobileToggle        = onMobileToggle;
+  window.onDayToggle           = onDayToggle;
+  window.onPhotoChange         = onPhotoChange;
+  window.deletePhoto           = deletePhoto;
+  window.revealPhotoSlot       = revealPhotoSlot;
+  window.updateCharCount       = updateCharCount;
+  window.updateSpecialsCount   = updateSpecialsCount;
+  window.openModal             = openModal;
+  window.closeModal            = closeModal;
+  window.submitForm            = submitForm;
+  window.toggleAccSection      = toggleAccSection;
+  window.toggleAccordion       = toggleAccSection;
+  window.saveAccSection        = saveAccSection;
+  window.saveAccordionSection  = saveAccSection;
+  window.onConsentChange       = onConsentChange;
+  window.beginRegistration     = beginRegistration;
+  window.closeValidationSheet  = closeValidationSheet;
+  window.captureGps            = captureGps;
 </script>
 </body>
 </html>

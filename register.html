@@ -666,9 +666,9 @@
                 <option value="">Select city/town…</option>
               </select>
             </div>
-            <div class="field hidden" id="massageAreaField">
-              <label class="field__label" for="massageArea">Area *</label>
-              <select class="select" id="massageArea" name="massageArea" disabled onchange="onMassageAreaChange()">
+            <div class="field hidden" id="locationAreaField">
+              <label class="field__label" for="locationArea">Area *</label>
+              <select class="select" id="locationArea" name="locationArea" disabled onchange="onLocationAreaChange()">
                 <option value="">Select area…</option>
               </select>
             </div>
@@ -1117,15 +1117,15 @@
   async function onAreaChange() {
     const townId          = document.getElementById('area').value;
     const suburbEl        = document.getElementById('suburb');
-    const massageAreaEl   = document.getElementById('massageArea');
-    const massageAreaField = document.getElementById('massageAreaField');
+    const locationAreaEl   = document.getElementById('locationArea');
+    const locationAreaField = document.getElementById('locationAreaField');
     const suburbField     = document.getElementById('suburbField');
 
     suburbEl.innerHTML        = '<option value="">Select suburb…</option>';
-    massageAreaEl.innerHTML   = '<option value="">Select area…</option>';
+    locationAreaEl.innerHTML   = '<option value="">Select area…</option>';
     suburbEl.disabled         = true;
-    massageAreaEl.disabled    = true;
-    massageAreaField.classList.add('hidden');
+    locationAreaEl.disabled    = true;
+    locationAreaField.classList.add('hidden');
     suburbField.querySelector('label').textContent = 'Suburb *';
 
     if (!townId) return;
@@ -1163,14 +1163,14 @@
       // Areas exist — show area dropdown, hide suburb until area selected
       const noneOpt = document.createElement('option');
       noneOpt.value = 'none'; noneOpt.textContent = 'My suburb is not in these areas';
-      massageAreaEl.appendChild(noneOpt);
+      locationAreaEl.appendChild(noneOpt);
       areasCache[townId].forEach(a => {
         const o = document.createElement('option');
         o.value = a.id; o.textContent = a.name;
-        massageAreaEl.appendChild(o);
+        locationAreaEl.appendChild(o);
       });
-      massageAreaEl.disabled = false;
-      massageAreaField.classList.remove('hidden');
+      locationAreaEl.disabled = false;
+      locationAreaField.classList.remove('hidden');
       suburbField.classList.add('hidden');
     } else {
       // No areas — show all suburbs directly
@@ -1183,8 +1183,8 @@
     }
   }
 
-  window.onMassageAreaChange = async function() {
-    const areaId   = document.getElementById('massageArea').value;
+  window.onLocationAreaChange = async function() {
+    const areaId   = document.getElementById('locationArea').value;
     const suburbField = document.getElementById('suburbField');
     suburbField.classList.add('hidden');
     if (areaId === 'none') {
@@ -1561,7 +1561,7 @@
       data = {
         province:       document.getElementById('province').value,
         area:           document.getElementById('area').value,
-        massageArea:    document.getElementById('massageArea').value || null,
+        locationArea:    document.getElementById('locationArea').value || null,
         suburb,
         addressLine1,
         addressVisible: document.getElementById('addressVisible').checked,
@@ -1952,7 +1952,7 @@
         contactPreferences:    saved.contactPreferences    || ['sms'],
         province:              saved.province              || null,
         area:                  saved.area                  || null,
-        massageArea:           saved.massageArea           || null,
+        locationArea:           saved.locationArea           || null,
         suburb:                saved.suburb                || null,
         addressLine1:          saved.addressLine1          || null,
         addressVisible:        saved.addressVisible        || false,
@@ -2028,7 +2028,7 @@
   window.verifyOtp             = verifyOtp;
   window.onProvinceChange      = onProvinceChange;
   window.onAreaChange          = onAreaChange;
-  window.onMassageAreaChange   = onMassageAreaChange;
+  window.onLocationAreaChange   = onLocationAreaChange;
   window.onMobileToggle        = onMobileToggle;
   window.onDayToggle           = onDayToggle;
   window.onPhotoChange         = onPhotoChange;

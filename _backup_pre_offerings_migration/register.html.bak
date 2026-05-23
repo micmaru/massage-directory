@@ -614,9 +614,9 @@
               </select>
             </div>
 
-            <div class="field hidden" id="massageAreaField">
-              <label class="field__label" for="massageArea">Area *</label>
-              <select class="select" id="massageArea" name="massageArea" disabled onchange="onMassageAreaChange()">
+            <div class="field hidden" id="locationAreaField">
+              <label class="field__label" for="locationArea">Area *</label>
+              <select class="select" id="locationArea" name="locationArea" disabled onchange="onLocationAreaChange()">
                 <option value="">Select area…</option>
               </select>
             </div>
@@ -1086,15 +1086,15 @@
   async function onAreaChange() {
     const townId          = document.getElementById('area').value;
     const suburbEl        = document.getElementById('suburb');
-    const massageAreaEl   = document.getElementById('massageArea');
-    const massageAreaField = document.getElementById('massageAreaField');
+    const locationAreaEl   = document.getElementById('locationArea');
+    const locationAreaField = document.getElementById('locationAreaField');
     const suburbField     = document.getElementById('suburbField');
 
     suburbEl.innerHTML        = '<option value="">Select suburb…</option>';
-    massageAreaEl.innerHTML   = '<option value="">Select area…</option>';
+    locationAreaEl.innerHTML   = '<option value="">Select area…</option>';
     suburbEl.disabled         = true;
-    massageAreaEl.disabled    = true;
-    massageAreaField.classList.add('hidden');
+    locationAreaEl.disabled    = true;
+    locationAreaField.classList.add('hidden');
     suburbField.querySelector('label').textContent = 'Suburb *';
 
     if (!townId) return;
@@ -1132,14 +1132,14 @@
       // Areas exist — show area dropdown, hide suburb until area selected
       const noneOpt = document.createElement('option');
       noneOpt.value = 'none'; noneOpt.textContent = 'My suburb is not in these areas';
-      massageAreaEl.appendChild(noneOpt);
+      locationAreaEl.appendChild(noneOpt);
       areasCache[townId].forEach(a => {
         const o = document.createElement('option');
         o.value = a.id; o.textContent = a.name;
-        massageAreaEl.appendChild(o);
+        locationAreaEl.appendChild(o);
       });
-      massageAreaEl.disabled = false;
-      massageAreaField.classList.remove('hidden');
+      locationAreaEl.disabled = false;
+      locationAreaField.classList.remove('hidden');
       suburbField.classList.add('hidden');
     } else {
       // No areas — show all suburbs directly
@@ -1152,8 +1152,8 @@
     }
   }
 
-  window.onMassageAreaChange = async function() {
-    const areaId   = document.getElementById('massageArea').value;
+  window.onLocationAreaChange = async function() {
+    const areaId   = document.getElementById('locationArea').value;
     const suburbField = document.getElementById('suburbField');
     suburbField.classList.add('hidden');
     if (areaId === 'none') {
@@ -1437,10 +1437,10 @@
     let ok = true;
     if (!document.getElementById('province').value) { markError(document.getElementById('provinceField'), 'Please select a province.'); ok = false; }
     if (!document.getElementById('area').value)     { markError(document.getElementById('areaField'),    'Please select a city/town.'); ok = false; }
-    const massageAreaVal = document.getElementById('massageArea')?.value;
-    const massageAreaVisible = !document.getElementById('massageAreaField')?.classList.contains('hidden');
-    if (massageAreaVisible && !massageAreaVal) { markError(document.getElementById('massageAreaField'), 'Please select an area.'); ok = false; }
-    if (!massageAreaVisible && !document.getElementById('suburb').value) { markError(document.getElementById('suburbField'), 'Please select a suburb.'); ok = false; }
+    const locationAreaVal = document.getElementById('locationArea')?.value;
+    const locationAreaVisible = !document.getElementById('locationAreaField')?.classList.contains('hidden');
+    if (locationAreaVisible && !locationAreaVal) { markError(document.getElementById('locationAreaField'), 'Please select an area.'); ok = false; }
+    if (!locationAreaVisible && !document.getElementById('suburb').value) { markError(document.getElementById('suburbField'), 'Please select a suburb.'); ok = false; }
     return ok;
   }
 
@@ -1850,7 +1850,7 @@
   window.goBack              = goBack;
   window.onProvinceChange    = onProvinceChange;
   window.onAreaChange           = onAreaChange;
-  window.onMassageAreaChange    = onMassageAreaChange;
+  window.onLocationAreaChange    = onLocationAreaChange;
   window.onMobileToggle      = onMobileToggle;
   window.onDayToggle         = onDayToggle;
   window.addQualification    = addQualification;

@@ -233,9 +233,9 @@
               <option value="">Select city/town…</option>
             </select>
           </div>
-          <div class="field hidden" id="editMassageAreaField">
-            <label class="field__label" for="editMassageArea">Area</label>
-            <select id="editMassageArea" class="select" onchange="onEditMassageAreaChange()" disabled>
+          <div class="field hidden" id="editLocationAreaField">
+            <label class="field__label" for="editLocationArea">Area</label>
+            <select id="editLocationArea" class="select" onchange="onEditLocationAreaChange()" disabled>
               <option value="">Select area…</option>
             </select>
           </div>
@@ -708,9 +708,9 @@
         if (data.area) {
           document.getElementById('editArea').value = data.area;
           await onEditAreaChange();
-          if (data.massageArea) {
-            document.getElementById('editMassageArea').value = data.massageArea;
-            await onEditMassageAreaChange();
+          if (data.locationArea) {
+            document.getElementById('editLocationArea').value = data.locationArea;
+            await onEditLocationAreaChange();
           }
         }
       }
@@ -834,15 +834,15 @@
     window.onEditAreaChange = async function() {
       const tid                = document.getElementById('editArea').value;
       const suburbEl           = document.getElementById('editSuburb');
-      const massageAreaEl      = document.getElementById('editMassageArea');
-      const massageAreaField   = document.getElementById('editMassageAreaField');
+      const locationAreaEl      = document.getElementById('editLocationArea');
+      const locationAreaField   = document.getElementById('editLocationAreaField');
       const suburbField        = document.getElementById('editSuburbField');
 
       suburbEl.innerHTML      = '<option value="">Select suburb…</option>';
-      massageAreaEl.innerHTML = '<option value="">Select area…</option>';
+      locationAreaEl.innerHTML = '<option value="">Select area…</option>';
       suburbEl.disabled       = true;
-      massageAreaEl.disabled  = true;
-      massageAreaField.classList.add('hidden');
+      locationAreaEl.disabled  = true;
+      locationAreaField.classList.add('hidden');
       suburbField.classList.remove('hidden');
 
       if (!tid) return;
@@ -877,14 +877,14 @@
       if (areasCache[tid].length > 0) {
         const noneOpt = document.createElement('option');
         noneOpt.value = 'none'; noneOpt.textContent = 'My suburb is not in these areas';
-        massageAreaEl.appendChild(noneOpt);
+        locationAreaEl.appendChild(noneOpt);
         areasCache[tid].forEach(a => {
           const o = document.createElement('option');
           o.value = a.id; o.textContent = a.name;
-          massageAreaEl.appendChild(o);
+          locationAreaEl.appendChild(o);
         });
-        massageAreaEl.disabled = false;
-        massageAreaField.classList.remove('hidden');
+        locationAreaEl.disabled = false;
+        locationAreaField.classList.remove('hidden');
         suburbField.classList.add('hidden');
       } else {
         suburbsCache[tid].forEach(s => {
@@ -896,8 +896,8 @@
       }
     };
 
-    window.onEditMassageAreaChange = async function() {
-      const areaId      = document.getElementById('editMassageArea').value;
+    window.onEditLocationAreaChange = async function() {
+      const areaId      = document.getElementById('editLocationArea').value;
       const suburbEl    = document.getElementById('editSuburb');
       const suburbField = document.getElementById('editSuburbField');
       const tid         = document.getElementById('editArea').value;
@@ -1068,10 +1068,10 @@
 
       const province     = document.getElementById('editProvince').value;
       const area         = document.getElementById('editArea').value;
-      const massageArea  = document.getElementById('editMassageArea')?.value || '';
+      const locationArea  = document.getElementById('editLocationArea')?.value || '';
       const suburb       = document.getElementById('editSuburb').value;
       const address      = document.getElementById('editAddress').value.trim();
-      const massageAreaVisible = !document.getElementById('editMassageAreaField')?.classList.contains('hidden');
+      const locationAreaVisible = !document.getElementById('editLocationAreaField')?.classList.contains('hidden');
 
       if (!province || !area) {
         btn.classList.remove('btn--loading');
@@ -1081,7 +1081,7 @@
         msgEl.classList.remove('hidden');
         return;
       }
-      if (massageAreaVisible && !massageArea) {
+      if (locationAreaVisible && !locationArea) {
         btn.classList.remove('btn--loading');
         btn.textContent = 'Save Location';
         msgEl.textContent = 'Please select an area.';
@@ -1089,7 +1089,7 @@
         msgEl.classList.remove('hidden');
         return;
       }
-      if (!massageAreaVisible && !suburb) {
+      if (!locationAreaVisible && !suburb) {
         btn.classList.remove('btn--loading');
         btn.textContent = 'Save Location';
         msgEl.textContent = 'Please select a suburb.';
@@ -1099,13 +1099,13 @@
       }
 
       try {
-        const geoQuery = [suburb || massageArea, area, province, 'South Africa'].filter(Boolean).join(', ');
+        const geoQuery = [suburb || locationArea, area, province, 'South Africa'].filter(Boolean).join(', ');
         const coords   = await geocodeAddress(geoQuery);
 
         const update = {
           province,
           area,
-          massageArea: massageArea && massageArea !== 'none' ? massageArea : null,
+          locationArea: locationArea && locationArea !== 'none' ? locationArea : null,
           suburb:      suburb || null,
           address:     address || null,
           updatedAt:   serverTimestamp()
