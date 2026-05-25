@@ -181,14 +181,31 @@
             <label class="field__label" for="editDisplayName">Display Name</label>
             <input type="text" id="editDisplayName" class="input" placeholder="e.g. Sarah M." />
           </div>
-          <div class="field">
+          <div class="field hidden" id="dashGenderField">
+            <div class="form-section-label" style="margin-bottom:var(--space-2);">Gender</div>
+            <div class="radio-group radio-group--row" id="dashGenderGroup">
+              <label class="radio-item radio-item--flex"><input type="radio" name="dashGender" value="female" /><span class="radio-item__label">Female</span></label>
+              <label class="radio-item radio-item--flex"><input type="radio" name="dashGender" value="male" /><span class="radio-item__label">Male</span></label>
+              <label class="radio-item radio-item--flex"><input type="radio" name="dashGender" value="non-binary" /><span class="radio-item__label">Non-binary</span></label>
+            </div>
+          </div>
+          <div class="field" id="dashAboutMeField">
             <label class="field__label" for="editAboutMe">
               About Me / Bio
-              <span id="aboutMeCount" style="font-weight:400; margin-left: var(--space-2);">0 / 300</span>
+              <span id="aboutMeCount" style="font-weight:400; margin-left:var(--space-2);">0 / 300</span>
             </label>
             <textarea id="editAboutMe" class="textarea" rows="4" maxlength="300"
               placeholder="Tell clients about yourself…"
               oninput="document.getElementById('aboutMeCount').textContent = this.value.length + ' / 300'"></textarea>
+          </div>
+          <div class="field hidden" id="dashAboutSpaField">
+            <label class="field__label" for="editAboutSpa">
+              About the Spa / Bio
+              <span id="aboutSpaCount" style="font-weight:400; margin-left:var(--space-2);">0 / 300</span>
+            </label>
+            <textarea id="editAboutSpa" class="textarea" rows="4" maxlength="300"
+              placeholder="What makes your spa special…"
+              oninput="document.getElementById('aboutSpaCount').textContent = this.value.length + ' / 300'"></textarea>
           </div>
           <div class="field">
             <label class="field__label" for="editSpecials">
@@ -205,14 +222,113 @@
             </label>
             <input type="tel" id="editWhatsapp" class="input" placeholder="e.g. 0821234567" />
           </div>
+          <div class="toggle-wrap">
+            <div class="toggle-wrap__label">Show WhatsApp button on listing</div>
+            <label class="toggle">
+              <input type="checkbox" id="dashShowWhatsapp" />
+              <span class="toggle__track"></span>
+            </label>
+          </div>
           <div class="field">
             <label class="field__label" for="editEmail" id="emailLabel">Email Address</label>
             <input type="email" id="editEmail" class="input" placeholder="e.g. you@example.com" />
+          </div>
+          <div class="field hidden" id="dashExperienceField">
+            <label class="field__label" for="editExperienceYears">Years of Experience</label>
+            <select class="select" id="editExperienceYears">
+              <option value="">Select…</option>
+              <option value="0-1">Less than 1 year</option>
+              <option value="1-3">1–3 years</option>
+              <option value="3-5">3–5 years</option>
+              <option value="5+">5+ years</option>
+            </select>
+          </div>
+          <div class="field hidden" id="dashQualificationsField">
+            <label class="field__label" for="editQualifications">Qualifications
+              <span style="font-weight:400; color:var(--text-muted);">(optional)</span>
+            </label>
+            <input type="text" id="editQualifications" class="input"
+              placeholder="e.g. ITEC Diploma in Massage, 2019" />
+          </div>
+          <div class="field" id="dashAssociationsField">
+            <div class="form-section-label">Professional Associations
+              <span style="font-weight:400; text-transform:none; letter-spacing:0;
+              color:var(--text-muted);">(optional)</span>
+            </div>
+            <div class="check-group check-group--1col">
+              <label class="check-item"><input type="checkbox" name="dashAssociation" value="AHPCSA" /><span class="check-item__label">AHPCSA</span></label>
+              <label class="check-item"><input type="checkbox" name="dashAssociation" value="MTASA" /><span class="check-item__label">MTASA</span></label>
+              <label class="check-item"><input type="checkbox" name="dashAssociation" value="SAAHIP" /><span class="check-item__label">SAAHIP</span></label>
+              <label class="check-item"><input type="checkbox" name="dashAssociation" value="SPAASA" /><span class="check-item__label">SPAASA</span></label>
+            </div>
+          </div>
+          <div class="field" id="dashContactPrefsField">
+            <div class="form-section-label">Contact Preferences</div>
+            <div class="check-group" id="dashContactPrefsGroup">
+              <label class="check-item" id="dashContactPrefSmsItem">
+                <input type="checkbox" id="dashContactPrefSms"
+                  value="sms" checked disabled />
+                <span class="check-item__label">SMS</span>
+              </label>
+              <label class="check-item" id="dashContactPrefPhoneItem"
+                style="display:none;">
+                <input type="checkbox" id="dashContactPrefPhone" value="phone" />
+                <span class="check-item__label">Phone</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox" id="dashContactPrefEmail" value="email" />
+                <span class="check-item__label">Email</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox" id="dashContactPrefWhatsapp" value="whatsapp" />
+                <span class="check-item__label">WhatsApp</span>
+              </label>
+            </div>
           </div>
         </div>
         <div class="section-footer">
           <button type="button" class="btn btn--primary btn--sm" id="saveProfileBtn" onclick="saveProfile()">Save Profile</button>
           <span id="profileMsg" class="hidden" style="font-size: var(--text-sm);"></span>
+        </div>
+      </div>
+
+      <!-- ── Business Contact card (spa only) ── -->
+      <div class="dash-card hidden" id="dashBusinessContactCard">
+        <div class="dash-card__title">Business Contact</div>
+        <div class="dash-card__sub">Contact details shown on your public listing.</div>
+        <div class="field-stack">
+          <div class="field">
+            <label class="field__label" for="editSpaPhone">Spa Landline
+              <span style="font-weight:400; color:var(--text-muted);">(optional)</span>
+            </label>
+            <input type="tel" id="editSpaPhone" class="input" placeholder="e.g. 011 123 4567" />
+          </div>
+          <div class="toggle-wrap">
+            <div class="toggle-wrap__label">Show landline on listing</div>
+            <label class="toggle">
+              <input type="checkbox" id="dashSpaPhoneVisible" />
+              <span class="toggle__track"></span>
+            </label>
+          </div>
+          <div class="field">
+            <label class="field__label" for="editSpaMobile">Spa Mobile
+              <span style="font-weight:400; color:var(--text-muted);">(optional)</span>
+            </label>
+            <input type="tel" id="editSpaMobile" class="input" placeholder="e.g. 082 123 4567" />
+          </div>
+          <div class="toggle-wrap">
+            <div class="toggle-wrap__label">Show mobile on listing</div>
+            <label class="toggle">
+              <input type="checkbox" id="dashSpaMobileVisible" />
+              <span class="toggle__track"></span>
+            </label>
+          </div>
+        </div>
+        <div class="section-footer">
+          <button type="button" class="btn btn--primary btn--sm"
+            id="saveBusinessContactBtn" onclick="saveBusinessContact()">Save Contact</button>
+          <span id="businessContactMsg" class="hidden"
+            style="font-size:var(--text-sm);"></span>
         </div>
       </div>
 
@@ -246,11 +362,22 @@
             </select>
           </div>
           <div class="field">
-            <label class="field__label" for="editAddress">
+            <label class="field__label" for="editAddressLine1">
               Full Street Address <span style="font-weight:400; color: var(--text-muted);">(optional)</span>
             </label>
-            <input type="text" id="editAddress" class="input" placeholder="e.g. 12 Main Street, Sandton" />
+            <input type="text" id="editAddressLine1" class="input" placeholder="e.g. 12 Main Street, Sandton" />
             <p class="helper-note">Your address is never shown publicly — admin only.</p>
+          </div>
+          <div class="toggle-wrap">
+            <div>
+              <div class="toggle-wrap__label">Show full address publicly</div>
+              <div style="font-size:var(--text-xs); color:var(--text-muted); margin-top:2px;">
+                Off = suburb only shown (recommended for therapists)</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="dashAddressVisible" />
+              <span class="toggle__track"></span>
+            </label>
           </div>
         </div>
         <div class="section-footer">
@@ -295,6 +422,27 @@
         <div id="dashServiceOfferingsField" style="margin-top:var(--space-4);">
           <div class="form-section-label">Service Offerings</div>
           <div id="dashServiceOfferingsGroup" class="check-group check-group--3col">
+            <div class="loading-options">Loading...</div>
+          </div>
+        </div>
+
+        <div id="dashPremisesField" class="hidden" style="margin-bottom:var(--space-4);">
+          <div class="form-section-label" style="margin-top:0;">Premises Type</div>
+          <div class="radio-group radio-group--row">
+            <label class="radio-item radio-item--flex">
+              <input type="radio" name="dashPremisesType" value="home" />
+              <span class="radio-item__label">Home</span>
+            </label>
+            <label class="radio-item radio-item--flex">
+              <input type="radio" name="dashPremisesType" value="business" />
+              <span class="radio-item__label">Business</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="dashAmenitiesField" style="margin-bottom:var(--space-4);">
+          <div class="form-section-label" style="margin-top:0;">Amenities</div>
+          <div id="dashAmenitiesGroup" class="check-group">
             <div class="loading-options">Loading...</div>
           </div>
         </div>
@@ -362,14 +510,6 @@
         <div id="dashPhotoContainer"></div>
         <input type="file" id="dashPhotoFileInput" accept="image/*" class="hidden" />
 
-        <!-- ID photo -->
-        <div style="margin-top: var(--space-4);">
-          <div class="form-section-label" style="margin-top:0;">ID / Passport Photo <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(optional)</span></div>
-          <div id="dashIdPhotoContainer"></div>
-          <input type="file" id="dashIdPhoto" accept="image/*" class="hidden" onchange="onDashIdPhotoChange(this)" />
-          <p class="note--amber">Optional during registration — will be required before your listing goes live.</p>
-        </div>
-
         <div class="section-footer">
           <button type="button" class="btn btn--primary btn--sm" id="savePhotosBtn" onclick="savePhotos()">Save Photos</button>
           <span id="photosMsg" class="hidden" style="font-size: var(--text-sm);"></span>
@@ -412,6 +552,7 @@
         renderDashGroup('treatments',       'dashTreatmentsGroup',       'dashTreatments');
         renderDashGroup('classification',   'dashClassificationGroup',   'dashClassification');
         renderDashGroup('serviceOfferings', 'dashServiceOfferingsGroup', 'dashServiceOfferings');
+        renderDashGroup('amenities',        'dashAmenitiesGroup',        'dashAmenities');
       } catch (err) {
         console.error('Failed to load dash offerings:', err);
       }
@@ -421,7 +562,9 @@
       const container = document.getElementById(containerId);
       if (!container) return;
       const items = dashOfferingsCache
-        .filter(o => o.category === category && o.visibleTo && o.visibleTo.includes('therapist'))
+        .filter(o => o.category === category &&
+          (category === 'amenities' || (o.visibleTo &&
+          (o.visibleTo.includes('therapist') || o.visibleTo.includes('spa')))))
         .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
       if (items.length === 0) {
         container.innerHTML = '<div class="loading-options" style="color:var(--text-muted);">No options available.</div>';
@@ -442,9 +585,7 @@
     let supplierData        = null;
     let currentPhotos         = [];  // array of { url, storagePath }
     let pendingUploads        = [];  // array of { file, localUrl }
-    let dashCurrentIdPhotoUrl  = null;
-    let dashNewIdPhotoFile     = null;
-    let dashNewIdPhotoLocalUrl = null;
+
     let currentUid             = null;
 
     // ════════════════════════════════════════════
@@ -715,15 +856,32 @@
       // ── Profile card ──
       document.getElementById('editDisplayName').value = data.displayName || '';
 
+      // Gender (therapist only)
+      if (!isSpa) {
+        document.getElementById('dashGenderField').classList.remove('hidden');
+        const genderVal = data.gender || '';
+        const gr = document.querySelector(`input[name="dashGender"][value="${genderVal}"]`);
+        if (gr) gr.checked = true;
+      }
+
       const aboutMe = data.aboutMe || '';
       document.getElementById('editAboutMe').value = aboutMe;
       document.getElementById('aboutMeCount').textContent = aboutMe.length + ' / 300';
+
+      if (isSpa) {
+        document.getElementById('dashAboutMeField').classList.add('hidden');
+        document.getElementById('dashAboutSpaField').classList.remove('hidden');
+        const aboutSpa = data.aboutSpa || '';
+        document.getElementById('editAboutSpa').value = aboutSpa;
+        document.getElementById('aboutSpaCount').textContent = aboutSpa.length + ' / 300';
+      }
 
       const specials = data.specialsText || '';
       document.getElementById('editSpecials').value = specials;
       document.getElementById('specialsCount').textContent = specials.length + ' / 300';
 
       document.getElementById('editWhatsapp').value = data.whatsappNumber || '';
+      document.getElementById('dashShowWhatsapp').checked = !!data.showWhatsapp;
       document.getElementById('editEmail').value    = data.email || '';
 
       const emailLabel = document.getElementById('emailLabel');
@@ -731,6 +889,43 @@
         emailLabel.innerHTML = 'Email Address';
       } else {
         emailLabel.innerHTML = 'Email Address <span style="font-weight:400; color: var(--text-muted);">(optional)</span>';
+      }
+
+      if (!isSpa) {
+        document.getElementById('dashExperienceField').classList.remove('hidden');
+        document.getElementById('editExperienceYears').value = data.experienceYears || '';
+        document.getElementById('dashQualificationsField').classList.remove('hidden');
+        document.getElementById('editQualifications').value = data.qualifications || '';
+      }
+
+      const associations = Array.isArray(data.associationMembership)
+        ? data.associationMembership : [];
+      document.querySelectorAll('input[name="dashAssociation"]').forEach(cb => {
+        cb.checked = associations.includes(cb.value);
+      });
+
+      // ── Contact preferences ──
+      const contactPrefs = data.contactPreferences || [];
+      if (isSpa) {
+        document.getElementById('dashContactPrefSmsItem').style.display = 'none';
+        document.getElementById('dashContactPrefPhoneItem').style.display = '';
+        document.getElementById('dashContactPrefPhone').checked =
+          contactPrefs.includes('phone');
+      } else {
+        document.getElementById('dashContactPrefSms').checked = true;
+      }
+      document.getElementById('dashContactPrefEmail').checked =
+        contactPrefs.includes('email');
+      document.getElementById('dashContactPrefWhatsapp').checked =
+        contactPrefs.includes('whatsapp');
+
+      // ── Business Contact card (spa only) ──
+      if (isSpa) {
+        document.getElementById('dashBusinessContactCard').classList.remove('hidden');
+        document.getElementById('editSpaPhone').value        = data.spaPhone   || '';
+        document.getElementById('dashSpaPhoneVisible').checked = !!data.spaPhoneVisible;
+        document.getElementById('editSpaMobile').value       = data.spaMobile  || '';
+        document.getElementById('dashSpaMobileVisible').checked = !!data.spaMobileVisible;
       }
 
       // ── Location card ──
@@ -748,7 +943,8 @@
         }
       }
       if (data.suburb) document.getElementById('editSuburb').value = data.suburb;
-      document.getElementById('editAddress').value = data.address || '';
+      document.getElementById('editAddressLine1').value = data.addressLine1 || '';
+      document.getElementById('dashAddressVisible').checked = !!data.addressVisible;
 
       // ── Services card ──
       const massageStyles = data.massageStyles || [];
@@ -779,6 +975,19 @@
         const r = document.querySelector(`input[name="dashGenderServed"][value="${data.genderServed}"]`);
         if (r) r.checked = true;
       }
+
+      // ── Premises (therapist only) ──
+      if (!isSpa) {
+        document.getElementById('dashPremisesField').classList.remove('hidden');
+        const pt = data.premisesType || '';
+        const pr = document.querySelector(`input[name="dashPremisesType"][value="${pt}"]`);
+        if (pr) pr.checked = true;
+      }
+      // ── Amenities (both) ──
+      const savedAmenities = data.amenities || [];
+      document.querySelectorAll('#dashAmenitiesGroup input[type="checkbox"]').forEach(cb => {
+        cb.checked = savedAmenities.includes(cb.value);
+      });
 
       // ── Availability card ──
       if (isSpa) {
@@ -817,10 +1026,7 @@
       pendingUploads = [];
       buildPhotoSlots();
 
-      dashCurrentIdPhotoUrl  = data.idPhotoUrl || null;
-      dashNewIdPhotoFile     = null;
-      dashNewIdPhotoLocalUrl = null;
-      buildIdPhotoSlot();
+
     }
 
     // ════════════════════════════════════════════
@@ -1014,8 +1220,8 @@
         return;
       }
 
+      const isSpa = (supplierData?.supplierType || 'individual') === 'spa';
       const displayName    = document.getElementById('editDisplayName').value.trim();
-      const aboutMe        = document.getElementById('editAboutMe').value.trim();
       const specialsText   = document.getElementById('editSpecials').value.trim();
       const whatsappNumber = document.getElementById('editWhatsapp').value.trim();
       const email          = document.getElementById('editEmail').value.trim();
@@ -1028,8 +1234,6 @@
         msgEl.classList.remove('hidden');
         return;
       }
-
-      const isSpa = (supplierData?.supplierType || 'individual') === 'spa';
       if (isSpa && !email) {
         btn.classList.remove('btn--loading');
         btn.textContent = 'Save Profile';
@@ -1048,13 +1252,40 @@
       }
 
       try {
+        const gender = document.querySelector('input[name="dashGender"]:checked')?.value || null;
+        const aboutSpa = isSpa
+          ? document.getElementById('editAboutSpa').value.trim() : null;
+        const aboutMeVal = !isSpa
+          ? document.getElementById('editAboutMe').value.trim() : null;
+        const showWhatsapp = document.getElementById('dashShowWhatsapp').checked;
+        const experienceYears = !isSpa
+          ? document.getElementById('editExperienceYears').value || null : null;
+        const qualifications = !isSpa
+          ? document.getElementById('editQualifications').value.trim() || null : null;
+        const associationMembership = Array.from(
+          document.querySelectorAll('input[name="dashAssociation"]:checked')
+        ).map(cb => cb.value);
+
         await updateDoc(doc(db, 'suppliers', supplierDocId), {
           displayName,
-          aboutMe,
+          gender:                isSpa ? null : gender,
+          aboutMe:               isSpa ? null : aboutMeVal,
+          aboutSpa:              isSpa ? aboutSpa : null,
           specialsText,
-          whatsappNumber: whatsappNumber || null,
-          email:          email          || null,
-          updatedAt:      serverTimestamp()
+          whatsappNumber:        whatsappNumber || null,
+          showWhatsapp,
+          email:                 email || null,
+          experienceYears:       isSpa ? null : experienceYears,
+          qualifications:        isSpa ? null : qualifications,
+          associationMembership,
+          contactPreferences: isSpa
+            ? ['phone',
+               ...(document.getElementById('dashContactPrefWhatsapp').checked ? ['whatsapp'] : []),
+               ...(document.getElementById('dashContactPrefEmail').checked    ? ['email']    : [])]
+            : ['sms',
+               ...(document.getElementById('dashContactPrefWhatsapp').checked ? ['whatsapp'] : []),
+               ...(document.getElementById('dashContactPrefEmail').checked    ? ['email']    : [])],
+          updatedAt:             serverTimestamp()
         });
         writeChangeLog('Profile');
 
@@ -1080,6 +1311,42 @@
         msgEl.textContent = 'Failed to save. Please try again.';
         msgEl.style.color = '#f87171';
         msgEl.classList.remove('hidden');
+      }
+    };
+
+    // ════════════════════════════════════════════
+    // SAVE BUSINESS CONTACT
+    // ════════════════════════════════════════════
+    window.saveBusinessContact = async function() {
+      const msgEl = document.getElementById('businessContactMsg');
+      msgEl.classList.add('hidden');
+      const btn = document.getElementById('saveBusinessContactBtn');
+      btn.classList.add('btn--loading');
+      btn.textContent = 'Saving…';
+      if (!auth.currentUser) {
+        btn.classList.remove('btn--loading'); btn.textContent = 'Save Contact';
+        msgEl.textContent = 'Session expired, please log in again.';
+        msgEl.style.color = '#f87171'; msgEl.classList.remove('hidden');
+        return;
+      }
+      try {
+        await updateDoc(doc(db, 'suppliers', supplierDocId), {
+          spaPhone:         document.getElementById('editSpaPhone').value.trim() || null,
+          spaPhoneVisible:  document.getElementById('dashSpaPhoneVisible').checked,
+          spaMobile:        document.getElementById('editSpaMobile').value.trim() || null,
+          spaMobileVisible: document.getElementById('dashSpaMobileVisible').checked,
+          updatedAt:        serverTimestamp()
+        });
+        writeChangeLog('BusinessContact');
+        btn.classList.remove('btn--loading'); btn.textContent = 'Save Contact';
+        msgEl.textContent = 'Contact details updated.';
+        msgEl.style.color = 'var(--green)'; msgEl.classList.remove('hidden');
+        setTimeout(() => msgEl.classList.add('hidden'), 3000);
+      } catch (err) {
+        console.error('saveBusinessContact error:', err);
+        btn.classList.remove('btn--loading'); btn.textContent = 'Save Contact';
+        msgEl.textContent = 'Failed to save. Please try again.';
+        msgEl.style.color = '#f87171'; msgEl.classList.remove('hidden');
       }
     };
 
@@ -1110,7 +1377,7 @@
       const area         = document.getElementById('editArea').value;
       const locationArea  = document.getElementById('editLocationArea')?.value || '';
       const suburb       = document.getElementById('editSuburb').value;
-      const address      = document.getElementById('editAddress').value.trim();
+      const address      = document.getElementById('editAddressLine1').value.trim();
       const locationAreaVisible = !document.getElementById('editLocationAreaField')?.classList.contains('hidden');
 
       if (!province || !area) {
@@ -1147,10 +1414,11 @@
           area,
           locationArea: locationArea && locationArea !== 'none' ? locationArea : null,
           suburb:      suburb || null,
-          address:     address || null,
+          addressLine1:   address || null,
+          addressVisible: document.getElementById('dashAddressVisible').checked,
           updatedAt:   serverTimestamp()
         };
-        if (coords) update.geoLocation = { lat: coords.lat, lng: coords.lng };
+        if (coords) { update.gpsLat = coords.lat; update.gpsLng = coords.lng; }
 
         await updateDoc(doc(db, 'suppliers', supplierDocId), update);
         writeChangeLog('Location');
@@ -1175,6 +1443,7 @@
     // SAVE SERVICES
     // ════════════════════════════════════════════
     window.saveServices = async function() {
+      const isSpa = (supplierData?.supplierType || 'individual') === 'spa';
       const msgEl = document.getElementById('servicesMsg');
       msgEl.classList.add('hidden');
       const btn = document.getElementById('saveServicesBtn');
@@ -1218,6 +1487,12 @@
           classification,
           serviceOfferings,
           genderServed,
+          premisesType: !isSpa
+            ? (document.querySelector('input[name="dashPremisesType"]:checked')?.value || null)
+            : null,
+          amenities: Array.from(
+            document.querySelectorAll('#dashAmenitiesGroup input[type="checkbox"]:checked')
+          ).map(cb => cb.value),
           updatedAt: serverTimestamp()
         });
         writeChangeLog('Services');
@@ -1385,57 +1660,6 @@
       this.value = '';
     });
 
-    function buildIdPhotoSlot() {
-      const container = document.getElementById('dashIdPhotoContainer');
-      if (!container) return;
-      container.innerHTML = '';
-
-      if (dashCurrentIdPhotoUrl || dashNewIdPhotoLocalUrl) {
-        const src  = dashNewIdPhotoLocalUrl || dashCurrentIdPhotoUrl;
-        const wrap = document.createElement('div');
-        wrap.style.cssText = 'position:relative; display:inline-block; border-radius:8px; overflow:hidden;';
-        const img  = document.createElement('img');
-        img.src    = src;
-        img.alt    = 'ID photo';
-        img.style.cssText = 'width:72px; height:72px; object-fit:cover; display:block;';
-        const rem  = document.createElement('button');
-        rem.type        = 'button';
-        rem.textContent = '✕';
-        rem.style.cssText = 'position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:50%; background:transparent; border:none; color:#fff; font-size:10px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; font-family:var(--font-sans); text-shadow:0 0 4px rgba(0,0,0,0.9),0 1px 3px rgba(0,0,0,0.7);';
-        rem.onclick = () => window.clearDashIdPhoto();
-        wrap.appendChild(img);
-        wrap.appendChild(rem);
-        container.appendChild(wrap);
-      } else {
-        const slot = document.createElement('div');
-        slot.className = 'photo-slot';
-        slot.innerHTML = `<div class="photo-slot__row">
-          <label class="photo-slot__btn" for="dashIdPhoto">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            Upload ID photo
-          </label>
-        </div>`;
-        container.appendChild(slot);
-      }
-    }
-
-    window.onDashIdPhotoChange = function(input) {
-      if (!input.files.length) return;
-      if (dashNewIdPhotoLocalUrl) URL.revokeObjectURL(dashNewIdPhotoLocalUrl);
-      dashNewIdPhotoFile     = input.files[0];
-      dashNewIdPhotoLocalUrl = URL.createObjectURL(dashNewIdPhotoFile);
-      dashCurrentIdPhotoUrl  = null;
-      buildIdPhotoSlot();
-    };
-
-    window.clearDashIdPhoto = function() {
-      if (dashNewIdPhotoLocalUrl) { URL.revokeObjectURL(dashNewIdPhotoLocalUrl); dashNewIdPhotoLocalUrl = null; }
-      dashNewIdPhotoFile    = null;
-      dashCurrentIdPhotoUrl = null;
-      const input = document.getElementById('dashIdPhoto');
-      if (input) input.value = '';
-      buildIdPhotoSlot();
-    };
 
     // ════════════════════════════════════════════
     // SAVE PHOTOS
@@ -1477,25 +1701,12 @@
 
         const update = { photos: photosArray, updatedAt: serverTimestamp() };
 
-        if (dashNewIdPhotoFile) {
-          const file = dashNewIdPhotoFile;
-          const path = `suppliers/${uploadUid}/id/${Date.now()}-${file.name}`;
-          const ref  = storageRef(storage, path);
-          await uploadBytes(ref, file);
-          update.idPhotoUrl = await getDownloadURL(ref);
-          if (dashNewIdPhotoLocalUrl) { URL.revokeObjectURL(dashNewIdPhotoLocalUrl); dashNewIdPhotoLocalUrl = null; }
-          dashNewIdPhotoFile = null;
-        } else if (dashCurrentIdPhotoUrl) {
-          update.idPhotoUrl = dashCurrentIdPhotoUrl;
-        }
-
         await updateDoc(doc(db, 'suppliers', supplierDocId), update);
         writeChangeLog('Photos');
 
         pendingUploads = [];
         currentPhotos  = photosArray;
         buildPhotoSlots();
-        buildIdPhotoSlot();
 
         btn.classList.remove('btn--loading');
         btn.textContent = 'Save Photos';
@@ -1525,6 +1736,7 @@
     window.sendLoginOtp          = window.sendLoginOtp;
     window.verifyLoginOtp        = window.verifyLoginOtp;
     window.saveProfile           = window.saveProfile;
+    window.saveBusinessContact   = window.saveBusinessContact;
     window.saveLocation          = window.saveLocation;
     window.saveServices          = window.saveServices;
     window.saveAvailability      = window.saveAvailability;
@@ -1533,8 +1745,7 @@
     window.onEditAreaChange      = window.onEditAreaChange;
     window.onDashDayToggle       = window.onDashDayToggle;
     window.onDashMobileToggle    = window.onDashMobileToggle;
-    window.onDashIdPhotoChange   = window.onDashIdPhotoChange;
-    window.clearDashIdPhoto      = window.clearDashIdPhoto;
+
 
   </script>
 </body>

@@ -786,15 +786,29 @@
               <label class="field__label" for="qualifications">Qualifications <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
               <input class="input" id="qualifications" type="text" placeholder="e.g. ITEC Diploma in Massage, 2019" />
             </div>
-            <div class="field">
-              <label class="field__label" for="associationMembership">Professional Association</label>
-              <select class="select" id="associationMembership" name="associationMembership">
-                <option value="">None</option>
-                <option value="AHPCSA">AHPCSA</option>
-                <option value="MTASA">MTASA</option>
-                <option value="SAAHIP">SAAHIP</option>
-                <option value="SPAASA">SPAASA</option>
-              </select>
+            <div>
+              <div class="form-section-label">Professional Associations
+                <span style="font-weight:400; text-transform:none; letter-spacing:0;
+                color:var(--text-muted);">(optional)</span>
+              </div>
+              <div class="check-group check-group--1col">
+                <label class="check-item">
+                  <input type="checkbox" name="associationMembership" value="AHPCSA" />
+                  <span class="check-item__label">AHPCSA</span>
+                </label>
+                <label class="check-item">
+                  <input type="checkbox" name="associationMembership" value="MTASA" />
+                  <span class="check-item__label">MTASA</span>
+                </label>
+                <label class="check-item">
+                  <input type="checkbox" name="associationMembership" value="SAAHIP" />
+                  <span class="check-item__label">SAAHIP</span>
+                </label>
+                <label class="check-item">
+                  <input type="checkbox" name="associationMembership" value="SPAASA" />
+                  <span class="check-item__label">SPAASA</span>
+                </label>
+              </div>
             </div>
             <div class="field">
               <label class="field__label" for="specialsText">Specials / Promotions <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
@@ -1587,7 +1601,9 @@
         experienceYears:       v('experienceYears') || null,
         aboutMe:               v('aboutMe') || null,
         qualifications:        v('qualifications') || null,
-        associationMembership: v('associationMembership') || null,
+        associationMembership: Array.from(
+          document.querySelectorAll('input[name="associationMembership"]:checked')
+        ).map(cb => cb.value),
         specialsText:          v('specialsText') || null
       };
     } else if (n === 6) {
@@ -1932,7 +1948,7 @@
 
       const finalData = {
         supplierType:          'individual',
-        uid,
+        uid: authUid,
         supplierNumber:        supplierNumberGenerated,
         cellNumber:            verifiedPhone,
         status:                'pending',
@@ -1968,7 +1984,7 @@
         experienceYears:       saved.experienceYears       || null,
         aboutMe:               saved.aboutMe               || null,
         qualifications:        saved.qualifications        || null,
-        associationMembership: saved.associationMembership || null,
+        associationMembership: saved.associationMembership || [],
         specialsText:          saved.specialsText          || null,
         weeklyHours:           saved.weeklyHours           || {},
         availableOutsideHours: saved.availableOutsideHours || false,
