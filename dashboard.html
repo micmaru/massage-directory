@@ -213,6 +213,9 @@
   let capturedGpsLng = null;
   let isSpa          = false;
 
+  const DAYS       = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+  const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
   // ════════════════════════════════════════
   // PAGE LOAD — session lookup
   // ════════════════════════════════════════
@@ -329,9 +332,6 @@
   // ════════════════════════════════════════
   // WEEKLY HOURS GRID
   // ════════════════════════════════════════
-  const DAYS       = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-  const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-
   function timeOptions(defaultVal, isTo) {
     const pad   = n => String(n).padStart(2, '0');
     const start = isTo ? 2  : 1;
@@ -372,12 +372,12 @@
     });
   }
 
-  window.onDayToggle = function(day) {
+  function onDayToggle(day) {
     const checked = document.getElementById('day-' + day).checked;
     const timesEl = document.getElementById('dayTimes-' + day);
     timesEl.style.opacity = checked ? '1' : '0.3';
     timesEl.querySelectorAll('select').forEach(s => { s.disabled = !checked; });
-  };
+  }
 
   function collectWeeklyHours() {
     const weeklyHours = {};
@@ -397,15 +397,15 @@
   // ════════════════════════════════════════
   // PHOTO HELPERS
   // ════════════════════════════════════════
-  window.onPhotoChange = function(input, slotIndex) {
+  function onPhotoChange(input, slotIndex) {
     if (!input.files.length) return;
     const nameEl = document.getElementById('photoName' + slotIndex);
     if (nameEl) { nameEl.textContent = input.files[0].name; nameEl.classList.remove('hidden'); }
     const delEl = document.getElementById('photoDelete' + slotIndex);
     if (delEl) delEl.classList.remove('hidden');
-  };
+  }
 
-  window.deletePhotoSlot = function(slotIndex) {
+  function deletePhotoSlot(slotIndex) {
     const inp = document.getElementById('photo' + slotIndex);
     if (inp) inp.value = '';
     const nameEl = document.getElementById('photoName' + slotIndex);
@@ -415,7 +415,7 @@
     const previewEl = document.getElementById('photoPreview' + slotIndex);
     if (previewEl) previewEl.classList.add('hidden');
     window['_delPhoto' + slotIndex] = true;
-  };
+  }
 
   async function uploadPhoto(file, path) {
     const ref = storageRef(storage, path);
@@ -949,7 +949,7 @@
   // ════════════════════════════════════════
   // GPS
   // ════════════════════════════════════════
-  window.captureGps = function() {
+  function captureGps() {
     if (!navigator.geolocation) {
       const el = document.getElementById('gpsConfirm');
       if (el) el.textContent = 'Geolocation not supported on this device.';
@@ -967,24 +967,24 @@
         if (el) el.textContent = 'Could not get GPS location. Please try again.';
       }
     );
-  };
+  }
 
   // ════════════════════════════════════════
   // MOBILE TOGGLE (therapist only)
   // ════════════════════════════════════════
-  window.onMobileToggle = function() {
+  function onMobileToggle() {
     const on    = document.getElementById('t_mobileAvailable')?.checked;
     const field = document.getElementById('travelKmField');
     if (field) field.classList.toggle('hidden', !on);
-  };
+  }
 
   // ════════════════════════════════════════
   // CHAR COUNTER
   // ════════════════════════════════════════
-  window.updateCharCount = function(el, countId) {
+  function updateCharCount(el, countId) {
     const countEl = document.getElementById(countId);
     if (countEl) countEl.textContent = el.value.length + ' / 300';
-  };
+  }
 
   // ════════════════════════════════════════
   // HELPERS
@@ -1005,6 +1005,26 @@
   function gpsText(existing) {
     return existing || '';
   }
+
+  // ── stubs for names not native to dashboard ──
+  function deletePhoto(n)             { deletePhotoSlot(n); }
+  function revealPhotoSlot()          {}
+  function updateSpecialsCount(el)    { updateCharCount(el, ''); }
+  function signOutUser()              { document.getElementById('signOutBtn').click(); }
+
+  // ── window globals ──────────────────────────
+  window.accordionToggle     = accordionToggle;
+  window.saveSection         = saveSection;
+  window.onMobileToggle      = onMobileToggle;
+  window.onPhotoChange       = onPhotoChange;
+  window.deletePhoto         = deletePhoto;
+  window.revealPhotoSlot     = revealPhotoSlot;
+  window.updateCharCount     = updateCharCount;
+  window.updateSpecialsCount = updateSpecialsCount;
+  window.captureGps          = captureGps;
+  window.signOutUser         = signOutUser;
+  window.onDayToggle         = onDayToggle;
+  window.deletePhotoSlot     = deletePhotoSlot;
 </script>
 </body>
 </html>
