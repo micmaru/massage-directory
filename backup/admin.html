@@ -61,7 +61,7 @@
     .filters-row select { height: 36px; font-size: var(--text-sm); }
 
     /* ── Table ── */
-    .table-scroll { overflow-x: scroll; overflow-y: scroll; max-height: calc(100vh - 280px); border-radius: 8px; border: 1px solid var(--border); }
+    .table-scroll { overflow-x: hidden; overflow-y: scroll; height: calc(100vh - 420px); min-height: 300px; border-radius: 8px; border: 1px solid var(--border); width: 100%; }
     .table-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
     .table-scroll::-webkit-scrollbar-track { background: #1e2433; }
     .table-scroll::-webkit-scrollbar-thumb { background: #6c63ff; border-radius: 5px; }
@@ -80,8 +80,8 @@
     .admin-table td:first-child { position: sticky; left: 0; z-index: 1; background-color: #161b27; }
 
     /* ── Pending / review row highlight ── */
-    .row--clickable td { background: rgba(245,158,11,0.05); cursor: pointer; }
-    .row--clickable:hover td { background: rgba(245,158,11,0.11) !important; }
+    .row--clickable { cursor: pointer; }
+    .row--clickable:hover { background: rgba(99, 102, 241, 0.35) !important; outline: 1px solid rgba(99, 102, 241, 0.5); }
     .row--highlighted td { background: rgba(108,99,255,0.13) !important; transition: background 1.5s; }
 
     /* ── Status badges ── */
@@ -91,6 +91,7 @@
     .sbadge--suspended { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
     .sbadge--review    { background: rgba(96,165,250,0.15);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
     .sbadge--rejected { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+    .sbadge--not_paid { background: rgba(156,163,175,0.15); color: #9ca3af; border: 1px solid rgba(156,163,175,0.3); }
 
     /* ── Type badge ── */
     .tbadge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
@@ -325,11 +326,9 @@
                 onclick="goToScreen('Subscriptions')">Subscriptions</button>
             </div>
 
-            <div class="nav-menu-group">
-              <button class="nav-menu-item"
-                onclick="switchTab('Location')">Location Manager</button>
-            </div>
-
+              <div class="nav-menu-group">
+                <button class="nav-menu-item" onclick="lmOpenProvince('');switchTab('Location');">Locations</button>
+              </div>
             <div class="nav-menu-group">
               <button class="nav-menu-item" id="navDbSummary"
                 onclick="goToScreen('DbSummary')">Database Summary</button>
@@ -342,6 +341,10 @@
                   onclick="goToScreen('Settings')">Settings</button>
                 <button class="nav-submenu-item" id="navChangeLog"
                   onclick="goToScreen('ChangeLog')">Change Log</button>
+                <button class="nav-submenu-item" id="navSupplierStatus"
+                  onclick="goToScreen('SupplierStatus')">Supplier Status</button>
+                <button class="nav-submenu-item" id="navTerms"
+                  onclick="goToScreen('Terms')">Terms &amp; Conditions</button>
               </div>
             </div>
 
@@ -375,30 +378,23 @@
               <option value="rejected">Rejected</option>
             </select>
           </div>
-          <div class="table-scroll">
-            <table class="admin-table therapists-tbl">
-              <thead>
-                <tr>
-                  <th>Membership No</th>
-                  <th>First Name</th>
-                  <th>Last Name</th>
-                  <th>Display Name (changeable)</th>
-                  <th>Gender</th>
-                  <th>Province</th>
-                  <th>Suburb</th>
-                  <th>Cell Number</th>
-                  <th>Status</th>
-                  <th>Registered</th>
-                  <th>Subscription</th>
-                  <th>Expiry</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="tTableBody">
-                <tr class="table-msg"><td colspan="13">Loading…</td></tr>
-              </tbody>
-            </table>
-          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="admin-table therapists-tbl">
+            <thead>
+              <tr>
+                <th>Membership No</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Cell Number</th>
+                <th>Reg Status</th>
+                <th>Sub Status</th>
+              </tr>
+            </thead>
+            <tbody id="tTableBody">
+              <tr class="table-msg"><td colspan="6">Loading…</td></tr>
+            </tbody>
+          </table>
         </div>
       </div><!-- /screenTherapists -->
 
@@ -465,6 +461,18 @@
             <input type="search" id="subSearchInput" class="f-search"
                    placeholder="Search membership no, name, trading name…"
                    oninput="onSubFilter()" autocomplete="off" />
+            <select id="subFilterProvince" class="select" onchange="onSubProvinceChange()">
+              <option value="">All Provinces</option>
+            </select>
+            <select id="subFilterTown" class="select" onchange="onSubFilter()">
+              <option value="">All Towns</option>
+            </select>
+            <select id="subFilterStatus" class="select" onchange="onSubFilter()">
+              <option value="">All Subscription Statuses</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+              <option value="not_paid">Not Paid</option>
+            </select>
           </div>
           <div class="table-scroll">
             <table class="admin-table sub-tbl">
@@ -533,6 +541,79 @@
           </div>
         </div>
       </div><!-- /screenChangeLog -->
+
+      <!-- ── SUPPLIER STATUS SUB-SCREEN ── -->
+      <div id="sectionSupplierStatus" class="admin-panel hidden">
+        <div>
+          <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+
+        <!-- Card 1: Bulk Status Update -->
+        <div class="admin-card">
+          <div class="admin-card__title">Bulk Status Update</div>
+          <div class="settings-row">
+            <span class="settings-row__label">From status</span>
+            <select id="bulkFromStatus" class="select">
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row__label">To status</span>
+            <select id="bulkToStatus" class="select">
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="settings-row" style="gap:var(--space-3);flex-wrap:wrap;">
+            <button class="back-btn" id="bulkPreviewBtn">Preview count</button>
+            <span id="bulkPreviewMsg" style="font-size:var(--text-sm);color:var(--text-muted);"></span>
+          </div>
+          <div class="settings-row" style="gap:var(--space-3);flex-wrap:wrap;">
+            <button class="back-btn" id="bulkUpdateBtn" disabled style="opacity:0.45;">Apply bulk update</button>
+            <span id="bulkResultMsg" style="font-size:var(--text-sm);"></span>
+          </div>
+        </div>
+
+        <!-- Card 2: Single Record Status Update -->
+        <div class="admin-card">
+          <div class="admin-card__title">Single Record Status Update</div>
+          <div class="settings-row" style="gap:var(--space-3);flex-wrap:wrap;">
+            <input type="search" id="singleSearchInput" class="f-search"
+              placeholder="Supplier number, display name, first / last name, phone…"
+              autocomplete="off" style="flex:1;min-width:200px;" />
+            <button class="back-btn" id="singleSearchBtn">Search</button>
+          </div>
+          <div id="singleSearchResults" style="margin-top:var(--space-3);display:flex;flex-direction:column;gap:var(--space-2);"></div>
+        </div>
+      </div><!-- /sectionSupplierStatus -->
+
+      <!-- ── TERMS & CONDITIONS SUB-SCREEN ── -->
+      <div id="screenTerms" class="admin-panel hidden">
+        <div>
+          <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card__title">Terms &amp; Conditions</div>
+          <div id="termsDocList" style="display:flex;flex-direction:column;gap:var(--space-3);"></div>
+          <div style="margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border);">
+            <button class="back-btn" onclick="termsAddDoc()">+ Add Document</button>
+          </div>
+        </div>
+        <div id="termsEditorCard" class="admin-card hidden" style="margin-top:0;">
+          <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3);">
+            <input type="text" id="termsDocTitle" class="input" placeholder="Document title…" style="flex:1;" />
+            <button class="btn btn--primary btn--sm" onclick="termsSaveDoc()">Save</button>
+            <button class="back-btn" onclick="termsCancelEdit()">Cancel</button>
+            <span id="termsSaveMsg" class="save-msg hidden"></span>
+          </div>
+          <textarea id="termsDocBody" style="width:100%;box-sizing:border-box;min-height:400px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font-sans);font-size:var(--text-sm);resize:vertical;" placeholder="Enter document content…"></textarea>
+        </div>
+      </div><!-- /screenTerms -->
 
       <!-- ── DATABASE SUMMARY SUB-SCREEN ── -->
       <div id="screenDbSummary" class="admin-panel hidden">
@@ -755,53 +836,78 @@
     <!-- ══════════════════════════════════
          TAB 3 — LOCATION MANAGER  (unchanged)
     ══════════════════════════════════ -->
-    <div id="panelLocation" class="admin-panel hidden">
+    <div id="panelLocation" class="hidden">
 
-      <!-- Section 1: Create new area -->
-      <div class="admin-card">
-        <div class="admin-card__title">Create New Area</div>
+  <!-- Province submenu screen -->
+  <div id="lmProvinceScreen" class="admin-panel hidden">
+  </div>
 
-        <div class="lm-step">
-          <label class="field__label" for="lmProvince">Province</label>
-          <select id="lmProvince" class="select" onchange="lmOnProvinceChange()">
-            <option value="">Select province…</option>
-          </select>
+  <!-- Three-column location manager screen -->
+  <div id="lmManagerScreen" class="hidden" style="height:calc(100vh - 60px);display:flex;flex-direction:column;">
+
+    <!-- Header bar -->
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <span style="font-size:11px;color:var(--text-muted);background:var(--bg);border:1px solid var(--border);padding:2px 10px;border-radius:999px;">Location Manager</span>
+      <span id="lmProvinceHeading" style="font-size:12px;color:var(--text-muted);margin-left:8px;"></span>
+    </div>
+
+    <!-- Four columns -->
+    <div style="display:grid;grid-template-columns:200px 220px 1fr 1fr;gap:0;flex:1;overflow:hidden;">
+
+      <!-- COL 1: Province -->
+      <div style="display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">Province</div>
+        <div id="lmProvinceList" style="flex:1;overflow-y:auto;padding:4px;"></div>
+      </div>
+
+      <!-- COL 2: Towns -->
+      <div style="display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">Town / City</div>
+        <div style="padding:8px;border-bottom:1px solid var(--border);flex-shrink:0;">
+          <input type="text" id="lmTownSearch" class="input" placeholder="Search towns…" oninput="lmFilterTowns(this.value)" style="font-size:12px;padding:5px 8px;width:100%;box-sizing:border-box;" />
         </div>
+        <div id="lmTownList" style="flex:1;overflow-y:auto;padding:4px;"></div>
+      </div>
 
-        <div class="lm-step hidden" id="lmStep2">
-          <label class="field__label" for="lmTown">Town</label>
-          <select id="lmTown" class="select" onchange="lmOnTownChange()">
-            <option value="">Select town…</option>
-          </select>
+      <!-- COL 3: Suburbs -->
+      <div style="display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;" id="lmSuburbColHead">Suburbs</div>
+        <div style="padding:8px;border-bottom:1px solid var(--border);flex-shrink:0;">
+          <input type="text" id="lmSuburbSearch" class="input" placeholder="Search suburbs…" oninput="lmFilterSubs(this.value)" style="font-size:12px;padding:5px 8px;width:100%;box-sizing:border-box;" />
         </div>
-
-        <div class="lm-step hidden" id="lmStep3">
-          <label class="field__label" for="lmAreaName">Area Name</label>
-          <input type="text" id="lmAreaName" class="input" maxlength="50" placeholder="e.g. Northern Suburbs" />
+        <div id="lmSuburbList" style="flex:1;overflow-y:auto;padding:4px;">
+          <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">Select a town first</div>
         </div>
+      </div>
 
-        <div class="lm-step hidden" id="lmStep4">
-          <label class="field__label">Select Suburbs</label>
-          <div id="lmSuburbsChecklist" class="lm-checklist"></div>
+      <!-- COL 4: Areas -->
+      <div style="display:flex;flex-direction:column;overflow:hidden;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">Areas</div>
+        <div id="lmAreaPills" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border);min-height:46px;align-items:center;flex-shrink:0;">
+          <span style="font-size:12px;color:var(--text-muted);font-style:italic;">No areas yet</span>
         </div>
-
-        <div class="lm-step hidden" id="lmStep5">
-          <div style="display:flex; align-items:center; gap:var(--space-3);">
-            <button type="button" class="btn btn--primary btn--sm" id="lmSaveBtn" onclick="lmSaveArea()">Save Area</button>
-            <span id="lmSaveMsg" class="save-msg hidden"></span>
+        <div style="display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--border);flex-shrink:0;">
+          <input type="text" id="lmNewAreaInput" class="input" placeholder="New area name…" maxlength="40" onkeydown="if(event.key==='Enter')lmCreateArea()" style="flex:1;font-size:12px;padding:5px 8px;" />
+          <button class="btn btn--primary btn--sm" onclick="lmCreateArea()">+ Create</button>
+        </div>
+        <div id="lmDropZone" style="flex:1;overflow-y:auto;padding:8px;"
+          ondragover="lmOnDragOver(event)"
+          ondragleave="lmOnDragLeave(event)"
+          ondrop="lmOnDrop(event)">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:12px;text-align:center;gap:8px;padding:16px;">
+            <div style="font-size:28px;opacity:0.2;">+</div>
+            Create or select an area above,<br>then drag suburbs here
           </div>
         </div>
-      </div>
-
-      <!-- Section 2: Existing areas -->
-      <div class="admin-card">
-        <div class="admin-card__title">Existing Areas</div>
-        <div id="lmAreasList">
-          <div class="lm-no-areas">Loading areas…</div>
+        <div style="padding:10px;border-top:1px solid var(--border);flex-shrink:0;">
+          <button class="btn btn--primary btn--sm" id="lmSaveBtn" onclick="lmSaveArea()" disabled style="width:100%;">Save area</button>
+          <span id="lmSaveMsg" class="save-msg hidden" style="display:block;margin-top:6px;text-align:center;"></span>
         </div>
       </div>
+    </div>
+  </div>
 
-    </div><!-- /panelLocation -->
+</div><!-- /panelLocation -->
 
   </div><!-- /admin-content -->
 
@@ -831,7 +937,9 @@
     // ════════════════════════════════════════════
     const NAV_ITEM_IDS = {
       Therapists: 'navTherapists', Spas: 'navSpas',
-      Subscriptions: 'navSubscriptions', DbSummary: 'navDbSummary', Settings: 'navSettings', ChangeLog: 'navChangeLog'
+      Subscriptions: 'navSubscriptions', DbSummary: 'navDbSummary', Settings: 'navSettings', ChangeLog: 'navChangeLog',
+      SupplierStatus: 'navSupplierStatus',
+      Terms: 'navTerms'
     };
 
     function setActiveNavItem(name) {
@@ -843,9 +951,10 @@
     }
 
     function showScreen(name) {
-      ['Landing', 'Therapists', 'Spas', 'Subscriptions', 'Settings', 'ChangeLog', 'DbSummary', 'SupplierDetail'].forEach(s => {
+      ['Landing', 'Therapists', 'Spas', 'Subscriptions', 'Settings', 'ChangeLog', 'DbSummary', 'SupplierDetail', 'Terms'].forEach(s => {
         document.getElementById('screen' + s).classList.toggle('hidden', s !== name);
       });
+      document.getElementById('sectionSupplierStatus').classList.toggle('hidden', name !== 'SupplierStatus');
     }
 
     window.goToScreen = function(name) {
@@ -853,12 +962,24 @@
       setActiveNavItem(name);
       if (name === 'Therapists')         { populateTherapistFilters(); renderTherapistsTable(); }
       else if (name === 'Spas')          { populateSpaFilters();       renderSpasTable(); }
-      else if (name === 'Subscriptions') { renderSubscriptionsTable(); }
+      else if (name === 'Subscriptions') { populateSubFilters(); renderSubscriptionsTable(); }
       else if (name === 'DbSummary')     { renderCounts(); }
       else if (name === 'ChangeLog')     { loadChangeLogs(); }
+      else if (name === 'SupplierStatus') { /* panel ready on render */ }
+      else if (name === 'Terms') { loadTermsDocs(); }
     };
 
-    window.goBack = function() { showScreen('Landing'); setActiveNavItem(''); };
+    window.goBack = function() {
+      const params = new URLSearchParams(window.location.search);
+      const from = params.get('from');
+      if (from === 'therapists') {
+        showScreen('Therapists');
+        setActiveNavItem('Therapists');
+      } else {
+        showScreen('Landing');
+        setActiveNavItem('');
+      }
+    };
 
     // ════════════════════════════════════════════
     // DATE HELPERS
@@ -920,6 +1041,8 @@
     let subscriptionData = {}; // supplierId -> { ...data, _ref }
     let allAreas         = [];
     let LOCATIONS        = null;
+    let lmTownsCache = {};
+    let lmSuburbsCache = {};
     let adminEmail       = 'hjcilliers@gmail.com';
 
     // ════════════════════════════════════════════
@@ -955,9 +1078,9 @@
     // ════════════════════════════════════════════
     async function loadSubscriptions() {
       try {
-        const snap = await getDocs(collectionGroup(db, 'subscriptions'));
+        const snap = await getDocs(collection(db, 'subscriptions'));
         snap.docs.forEach(d => {
-          const supplierId = d.ref.parent.parent.id;
+          const supplierId = d.data().supplierId;
           const existing   = subscriptionData[supplierId];
           const ts         = d.data().createdAt?.seconds || 0;
           const exTs       = existing?.createdAt?.seconds || 0;
@@ -1002,9 +1125,10 @@
     // STATUS / TYPE BADGE HELPERS
     // ════════════════════════════════════════════
     function statusBadge(status) {
-      const s   = (status || 'pending').toLowerCase();
-      const cls = { pending: 'sbadge--pending', active: 'sbadge--active', suspended: 'sbadge--suspended', review: 'sbadge--review', rejected: 'sbadge--rejected' }[s] || 'sbadge--pending';
-      return `<span class="sbadge ${cls}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
+      const s   = (status || 'not_paid').toLowerCase();
+      const cls = { pending: 'sbadge--pending', active: 'sbadge--active', suspended: 'sbadge--suspended', review: 'sbadge--review', rejected: 'sbadge--rejected', not_paid: 'sbadge--not_paid' }[s] || 'sbadge--not_paid';
+      const label = s === 'not_paid' ? 'Not Paid' : s.charAt(0).toUpperCase() + s.slice(1);
+      return `<span class="sbadge ${cls}">${label}</span>`;
     }
 
     function typeBadge(supplierType) {
@@ -1105,12 +1229,8 @@
     // ════════════════════════════════════════════
     // SUPPLIER DETAIL
     // ════════════════════════════════════════════
-    function openSupplierDetail(id) {
-      const s = allSuppliers.find(s => s.id === id);
-      if (!s) return;
-      showScreen('SupplierDetail');
-      setActiveNavItem('');
-      document.getElementById('supplierDetailCard').innerHTML = buildSupplierDetailHTML(id, s.data);
+    window.openSupplierDetail = function(id) {
+      window.location.href = 'admin-supplier.html?id=' + id + '&from=therapists';
     }
 
     function buildSupplierDetailHTML(id, d) {
@@ -1286,7 +1406,13 @@
         delete supplierLookup[id];
         if (s.data.uid) delete supplierLookup[s.data.uid];
         renderCounts();
-        showScreen('Landing');
+        const returnScreen = sessionStorage.getItem('adminReturnScreen');
+        if (returnScreen) {
+          sessionStorage.removeItem('adminReturnScreen');
+          showScreen(returnScreen);
+        } else {
+          showScreen('Landing');
+        }
         setActiveNavItem('');
       } catch (err) {
         console.error('detailDelete error:', err);
@@ -1354,35 +1480,19 @@
       if (therapistFilters.status)   rows = rows.filter(s => (s.data.status || 'pending').toLowerCase() === therapistFilters.status);
 
       if (!rows.length) {
-        tbody.innerHTML = '<tr class="table-msg"><td colspan="13">No therapists match the current filters.</td></tr>';
+        tbody.innerHTML = '<tr class="table-msg"><td colspan="6">No therapists match the current filters.</td></tr>';
         return;
       }
 
       tbody.innerHTML = rows.map(({ id, data: d }) => {
-        const status     = (d.status || 'pending').toLowerCase();
-        const clickable  = status === 'pending' || status === 'review';
-        const rowClass   = clickable ? 'row--clickable' : '';
-        const rowClick   = clickable ? `onclick="rowGoToVetting('${id}')"` : '';
-        const approveBtn = (status === 'pending' || status === 'suspended')
-          ? `<button class="act-btn act-btn--approve" onclick="event.stopPropagation();approveSupplier('${id}')">Approve</button>` : '';
-        const suspendBtn = status === 'active'
-          ? `<button class="act-btn act-btn--suspend" onclick="event.stopPropagation();suspendSupplier('${id}')">Suspend</button>` : '';
-        const deleteBtn  = `<button class="act-btn act-btn--delete" onclick="event.stopPropagation();deleteSupplier('${id}')">Delete</button>`;
-        return `<tr id="trow-${id}" class="${rowClass}" ${rowClick}>
-          <td>${escHtml(d.supplierNumber || '—')}</td>
-          <td>${escHtml(d.firstName      || '—')}</td>
-          <td>${escHtml(d.lastName       || '—')}</td>
-          <td>${escHtml(d.displayName    || '—')}</td>
-          <td>${escHtml(d.gender         || '—')}</td>
-          <td>${escHtml(d.province       || '—')}</td>
-          <td>${escHtml(d.suburb         || '—')}</td>
-          <td>${escHtml(d.cellNumber     || '—')}</td>
-          <td>${statusBadge(d.status)}</td>
-          <td>${fmtDate(d.createdAt)}</td>
-          <td>${escHtml(d.subscriptionStatus || '—')}</td>
-          <td>${fmtDate(d.subscriptionExpiry)}</td>
-          <td><div class="act-btns">${approveBtn}${suspendBtn}${deleteBtn}</div></td>
-        </tr>`;
+        return `<tr id="trow-${id}" class="row--clickable" onclick="openSupplierDetail('${id}')">
+  <td>${escHtml(d.supplierNumber || '—')}</td>
+  <td>${escHtml(d.firstName || '—')}</td>
+  <td>${escHtml(d.lastName || '—')}</td>
+  <td>${escHtml(d.cellNumber || '—')}</td>
+  <td>${statusBadge(d.status || 'pending')}</td>
+  <td>${escHtml(d.subscriptionStatus || '—')}</td>
+</tr>`;
       }).join('');
     }
 
@@ -1491,9 +1601,39 @@
     // SUBSCRIPTIONS TABLE
     // ════════════════════════════════════════════
     let subSearch = '';
+    let subFilters = { text: '', province: '', town: '', status: '' };
+
+    function populateSubFilters() {
+      const provinces = [...new Set(allSuppliers.map(s => s.data.province).filter(Boolean))].sort();
+      const provSel = document.getElementById('subFilterProvince');
+      const curProv = provSel.value;
+      provSel.innerHTML = '<option value="">All Provinces</option>' +
+        provinces.map(p => `<option value="${escHtml(p)}"${p === curProv ? ' selected' : ''}>${escHtml(p)}</option>`).join('');
+      refreshSubTownFilter(curProv);
+    }
+
+    function refreshSubTownFilter(province) {
+      const scoped = province ? allSuppliers.filter(s => s.data.province === province) : allSuppliers;
+      const towns = [...new Set(scoped.map(s => s.data.suburb).filter(Boolean))].sort();
+      const townSel = document.getElementById('subFilterTown');
+      const curTown = townSel.value;
+      townSel.innerHTML = '<option value="">All Towns</option>' +
+        towns.map(t => `<option value="${escHtml(t)}"${t === curTown ? ' selected' : ''}>${escHtml(t)}</option>`).join('');
+    }
+
+    window.onSubProvinceChange = function() {
+      subFilters.province = document.getElementById('subFilterProvince').value;
+      refreshSubTownFilter(subFilters.province);
+      subFilters.town = '';
+      document.getElementById('subFilterTown').value = '';
+      renderSubscriptionsTable();
+    };
 
     window.onSubFilter = function() {
-      subSearch = document.getElementById('subSearchInput').value.trim().toLowerCase();
+      subFilters.text     = document.getElementById('subSearchInput').value.trim().toLowerCase();
+      subFilters.province = document.getElementById('subFilterProvince').value;
+      subFilters.town     = document.getElementById('subFilterTown').value;
+      subFilters.status   = document.getElementById('subFilterStatus').value;
       renderSubscriptionsTable();
     };
 
@@ -1506,8 +1646,8 @@
       const tbody = document.getElementById('subTableBody');
       let rows = [...allSuppliers];
 
-      if (subSearch) {
-        const q = subSearch;
+      if (subFilters.text) {
+        const q = subFilters.text;
         rows = rows.filter(({ data: d }) =>
           (d.supplierNumber || '').toLowerCase().includes(q) ||
           (d.displayName    || '').toLowerCase().includes(q) ||
@@ -1516,6 +1656,9 @@
           (d.tradingName    || '').toLowerCase().includes(q)
         );
       }
+      if (subFilters.province) rows = rows.filter(s => s.data.province === subFilters.province);
+      if (subFilters.town)     rows = rows.filter(s => s.data.suburb   === subFilters.town);
+      if (subFilters.status)   rows = rows.filter(s => (s.data.subscriptionStatus || '').toLowerCase() === subFilters.status);
 
       if (!rows.length) {
         tbody.innerHTML = '<tr class="table-msg"><td colspan="9">No suppliers match the search.</td></tr>';
@@ -1532,7 +1675,7 @@
           <td>${escHtml(d.supplierNumber || '—')}</td>
           <td>${name}</td>
           <td>${typeBadge(d.supplierType)}</td>
-          <td>${statusBadge(d.subscriptionStatus || d.status)}</td>
+          <td>${statusBadge(d.subscriptionStatus || 'not_paid')}</td>
           <td>${plan}</td>
           <td>${startDt}</td>
           <td>${fmtDate(d.subscriptionExpiry)}</td>
@@ -1559,6 +1702,15 @@
       panelRow.innerHTML = `<td colspan="9">
         <div class="adjust-panel">
           <div class="adjust-panel__grid">
+            <div class="adjust-panel__field">
+              <label>Subscription Status</label>
+              <select id="adj-status-${supplierId}" class="select">
+                <option value="">— no change —</option>
+                <option value="active">Active</option>
+                <option value="expired">Expired</option>
+                <option value="not_paid">Not Paid</option>
+              </select>
+            </div>
             <div class="adjust-panel__field">
               <label>Extend by</label>
               <select id="adj-extend-${supplierId}" class="select">
@@ -1599,6 +1751,7 @@
     };
 
     window.saveSubscriptionAdjust = async function(supplierId) {
+      const newSubStatus = document.getElementById(`adj-status-${supplierId}`).value;
       const extendBy  = parseInt(document.getElementById(`adj-extend-${supplierId}`).value)  || 0;
       const freeMonths = parseInt(document.getElementById(`adj-free-${supplierId}`).value)    || 0;
       const exactDate  = document.getElementById(`adj-exact-${supplierId}`).value;
@@ -1606,6 +1759,7 @@
       const msgEl      = document.getElementById(`adj-msg-${supplierId}`);
 
       if (!reason) { msgEl.textContent = 'Reason is required.'; msgEl.className = 'adj-save-msg adj-save-msg--err'; return; }
+      if (!newSubStatus && !exactDate && !freeMonths && !extendBy) { msgEl.textContent = 'Select at least one adjustment.'; msgEl.className = 'adj-save-msg adj-save-msg--err'; return; }
 
       const supplier = allSuppliers.find(s => s.id === supplierId);
       if (!supplier) return;
@@ -1629,14 +1783,23 @@
       const newValue = fmtDate(newExpiry);
 
       try {
-        await updateDoc(doc(db, 'suppliers', supplierId), { subscriptionExpiry: newExpiry, updatedAt: serverTimestamp() });
+        const updatePayload = { updatedAt: serverTimestamp() };
+        if (newExpiry) updatePayload.subscriptionExpiry = newExpiry;
+        if (newSubStatus) updatePayload.subscriptionStatus = newSubStatus;
+        await updateDoc(doc(db, 'suppliers', supplierId), updatePayload);
 
         const subRef = subscriptionData[supplierId]?._ref;
         if (subRef) await updateDoc(subRef, { expiryDate: newExpiry });
 
-        await writeChangeLog(supplierId, supplier.data, 'subscriptionExpiry', oldValue, newValue, reason);
-
-        supplier.data.subscriptionExpiry = newExpiry;
+        const changedFields = [];
+        if (newSubStatus) changedFields.push(`status: ${supplier.data.subscriptionStatus || 'not_paid'} → ${newSubStatus}`);
+        if (newExpiry) changedFields.push(`expiry: ${oldValue || '—'} → ${newValue}`);
+        if (extendBy) changedFields.push(`extended by: ${extendBy} month(s)`);
+        if (freeMonths) changedFields.push(`free months: ${freeMonths}`);
+        const summary = changedFields.join(' | ');
+        await writeChangeLog(supplierId, supplier.data, 'subscriptionAdjust', summary, '', reason);
+        if (newSubStatus) supplier.data.subscriptionStatus = newSubStatus;
+        if (newExpiry) supplier.data.subscriptionExpiry = newExpiry;
         closeAdjustPanel();
         renderSubscriptionsTable();
       } catch (err) {
@@ -2328,154 +2491,648 @@
     }
 
     // ════════════════════════════════════════════
-    // LOCATION MANAGER  (unchanged logic)
+    // LOCATION MANAGER
     // ════════════════════════════════════════════
+
+    let lmSelectedTown    = null;
+    let lmAreas           = {};   // { townKey: { areaName: [suburbs] } }
+    let lmActiveArea      = null;
+    let lmDraggingSuburb  = null;
 
     async function loadLocations() {
       try {
-        const res = await fetch('./locations.json');
-        LOCATIONS = await res.json();
-        lmPopulateProvinces();
+        const snap = await getDocs(collection(db, 'locations_provinces'));
+        LOCATIONS = { provinces: snap.docs.map(d => ({ id: d.id, name: d.data().name })) };
+        LOCATIONS.provinces.sort((a, b) => a.name.localeCompare(b.name));
       } catch (err) {
         console.error('loadLocations error:', err);
       }
     }
 
-    function lmPopulateProvinces() {
+    function lmBuildProvinceMenu() {
       if (!LOCATIONS) return;
-      const sel = document.getElementById('lmProvince');
-      sel.innerHTML = '<option value="">Select province…</option>';
-      LOCATIONS.provinces.forEach(p => {
-        const o = document.createElement('option');
-        o.value = p.name; o.textContent = p.name;
-        sel.appendChild(o);
-      });
+      const nav = document.querySelector('.nav-menu-group button[onclick="switchTab(\'Location\')"]');
     }
 
-    window.lmOnProvinceChange = function() {
-      const provinceName = document.getElementById('lmProvince').value;
-      ['lmStep2','lmStep3','lmStep4','lmStep5'].forEach(id => document.getElementById(id).classList.add('hidden'));
-      if (!provinceName || !LOCATIONS) return;
-      const prov = LOCATIONS.provinces.find(p => p.name === provinceName);
-      if (!prov) return;
-      const sel = document.getElementById('lmTown');
-      sel.innerHTML = '<option value="">Select town…</option>';
-      prov.areas.forEach(a => {
-        const o = document.createElement('option');
-        o.value = a.name; o.textContent = a.name;
-        sel.appendChild(o);
-      });
-      document.getElementById('lmStep2').classList.remove('hidden');
+    let lmCurrentProvince = null;
+
+    function lmRenderProvinceList() {
+      const list = document.getElementById('lmProvinceList');
+      if (!list) return;
+      const provinces = [
+        'Eastern Cape','Free State','Gauteng','KwaZulu-Natal',
+        'Limpopo','Mpumalanga','Northern Cape','North West','Western Cape'
+      ];
+      list.innerHTML = provinces.map(p => `
+        <div onclick="lmSelectProvince('${p}')"
+          style="padding:8px 10px;font-size:13px;cursor:pointer;border-radius:6px;margin-bottom:2px;
+          color:${lmCurrentProvince===p?'#6c63ff':'var(--text)'};
+          background:${lmCurrentProvince===p?'rgba(108,99,255,0.12)':'transparent'};
+          font-weight:${lmCurrentProvince===p?'600':'400'};"
+          onmouseover="if('${lmCurrentProvince}'!=='${p}')this.style.background='rgba(108,99,255,0.05)'"
+          onmouseout="if('${lmCurrentProvince}'!=='${p}')this.style.background='transparent'"
+        >${p}</div>`).join('');
+    }
+
+    window.lmSelectProvince = async function(provinceName) {
+      lmCurrentProvince = provinceName;
+      lmSelectedTown    = null;
+      lmActiveArea      = null;
+      lmAreas[provinceName] = lmAreas[provinceName] || {};
+      document.getElementById('lmProvinceHeading').textContent = provinceName;
+      lmRenderProvinceList();
+      document.getElementById('lmTownSearch').value = '';
+
+      if (!lmTownsCache[provinceName]) {
+        const prov = LOCATIONS.provinces.find(p => p.name === provinceName);
+        if (prov) {
+          const snap = await getDocs(query(
+            collection(db, 'locations_towns'),
+            where('provinceId', '==', prov.id),
+            orderBy('name', 'asc')
+          ));
+          lmTownsCache[provinceName] = snap.docs.map(d => ({
+            id: d.id, name: d.data().name, townId: d.data().townId
+          }));
+        }
+      }
+
+      lmFilterTowns('');
+      lmRenderSuburbList();
+      lmRenderAreaPills();
+      lmRenderDropZone();
     };
 
-    window.lmOnTownChange = function() {
-      const provinceName = document.getElementById('lmProvince').value;
-      const townName     = document.getElementById('lmTown').value;
-      ['lmStep3','lmStep4','lmStep5'].forEach(id => document.getElementById(id).classList.add('hidden'));
-      if (!townName || !LOCATIONS) return;
-      document.getElementById('lmAreaName').value = '';
-      lmRefreshSuburbChecklist(provinceName, townName);
-      ['lmStep3','lmStep4','lmStep5'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+    window.lmOpenProvince = async function(provinceName) {
+      switchTab('Location');
+      document.getElementById('lmProvinceScreen').classList.add('hidden');
+      document.getElementById('lmManagerScreen').classList.remove('hidden');
+      await new Promise(r => setTimeout(r, 50));
+      lmRenderProvinceList();
+      if (provinceName) await lmSelectProvince(provinceName);
+      else {
+        lmFilterTowns('');
+        lmRenderSuburbList();
+        lmRenderAreaPills();
+        lmRenderDropZone();
+      }
     };
 
-    function lmRefreshSuburbChecklist(provinceName, townName) {
-      const prov    = LOCATIONS?.provinces.find(p => p.name === provinceName);
-      const town    = prov?.areas.find(a => a.name === townName);
-      const allSubs = town?.suburbs || [];
-      const assigned = new Set();
-      allAreas.filter(a => a.data.province === provinceName && a.data.town === townName)
-              .forEach(a => (a.data.suburbs || []).forEach(s => assigned.add(s)));
-      const available = allSubs.filter(s => !assigned.has(s));
-      const container = document.getElementById('lmSuburbsChecklist');
-      if (!available.length) {
-        container.innerHTML = '<p style="font-size:var(--text-sm);color:var(--text-muted);grid-column:1/-1;">All suburbs in this town are already assigned to existing areas.</p>';
+    window.lmBackToAdmin = function() {
+      switchTab('General');
+    };
+
+    window.lmFilterTowns = function(q) {
+      const list = document.getElementById('lmTownList');
+      if (!lmCurrentProvince) {
+        list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">Select a province first</div>';
         return;
       }
-      container.innerHTML = available.map(s =>
-        `<label class="lm-check-item"><input type="checkbox" name="lmSuburb" value="${escHtml(s)}" />${escHtml(s)}</label>`
+      const towns = lmTownsCache[lmCurrentProvince] || [];
+      const filtered = q
+        ? towns.filter(t => t.name.toLowerCase().includes(q.toLowerCase()))
+        : towns;
+      list.innerHTML = filtered.map(t =>
+        `<div class="lm-town-item${lmSelectedTown === t.name ? ' lm-town-active' : ''}"
+          onclick="lmSelectTown('${escHtml(t.name)}')"
+          style="padding:8px 10px;font-size:13px;color:var(--text);cursor:pointer;border-radius:6px;margin-bottom:2px;${lmSelectedTown === t.name ? 'background:rgba(108,99,255,0.12);color:#6c63ff;font-weight:600;' : ''}"
+          onmouseover="if('${lmSelectedTown}' !== '${escHtml(t.name)}') this.style.background='rgba(108,99,255,0.05)'"
+          onmouseout="if('${lmSelectedTown}' !== '${escHtml(t.name)}') this.style.background=''"
+        >${escHtml(t.name)}</div>`
+      ).join('');
+    };
+
+    window.lmSelectTown = async function(townName) {
+      lmSelectedTown = townName;
+      lmActiveArea   = null;
+      if (!lmAreas[lmCurrentProvince]) lmAreas[lmCurrentProvince] = {};
+      if (!lmAreas[lmCurrentProvince][townName]) lmAreas[lmCurrentProvince][townName] = {};
+      document.getElementById('lmSuburbColHead').textContent = townName + ' suburbs';
+      document.getElementById('lmSuburbSearch').value = '';
+      lmFilterTowns(document.getElementById('lmTownSearch').value);
+
+      // Load suburbs from Firestore if not cached
+      const cacheKey = `${lmCurrentProvince}__${townName}`;
+      if (!lmSuburbsCache[cacheKey]) {
+        const town = (lmTownsCache[lmCurrentProvince] || []).find(t => t.name === townName);
+        if (town) {
+          const snap = await getDocs(query(
+            collection(db, 'locations_suburbs'),
+            where('townId', '==', town.id),
+            orderBy('name', 'asc')
+          ));
+          lmSuburbsCache[cacheKey] = snap.docs.map(d => d.data().name);
+        }
+      }
+
+      lmRenderSuburbList();
+      lmLoadAreasForTown(townName);
+    };
+
+    async function lmLoadAreasForTown(townName) {
+      try {
+        const q    = query(collection(db, 'locations_areas'),
+          where('provinceName', '==', lmCurrentProvince),
+          where('townName',     '==', townName));
+        const snap = await getDocs(q);
+        if (!lmAreas[lmCurrentProvince]) lmAreas[lmCurrentProvince] = {};
+        if (!lmAreas[lmCurrentProvince][townName]) lmAreas[lmCurrentProvince][townName] = {};
+        snap.docs.forEach(d => {
+          lmAreas[lmCurrentProvince][townName][d.data().areaName] = {
+            suburbs: d.data().suburbs || [],
+            firestoreId: d.id
+          };
+        });
+        lmActiveArea = null;
+        lmRenderAreaPills();
+        lmRenderDropZone();
+        lmRenderSuburbList();
+      } catch (err) {
+        console.error('lmLoadAreasForTown error:', err);
+      }
+    }
+
+    function lmGetAssignedSuburbs() {
+      if (!lmCurrentProvince || !lmSelectedTown) return new Set();
+      const townAreas = lmAreas[lmCurrentProvince]?.[lmSelectedTown] || {};
+      const assigned  = new Set();
+      Object.values(townAreas).forEach(a => (a.suburbs || []).forEach(s => assigned.add(s)));
+      return assigned;
+    }
+
+    window.lmFilterSubs = function(q) { lmRenderSuburbList(q); };
+
+    function lmRenderSuburbList(q) {
+      const list = document.getElementById('lmSuburbList');
+      if (!lmSelectedTown) {
+        list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">Select a town first</div>';
+        return;
+      }
+      const cacheKey = `${lmCurrentProvince}__${lmSelectedTown}`;
+      const allSubs = lmSuburbsCache[cacheKey] || [];
+      const assigned = lmGetAssignedSuburbs();
+      const filtered = q
+        ? allSubs.filter(s => s.toLowerCase().includes(q.toLowerCase()))
+        : allSubs;
+
+      list.innerHTML = filtered.map(s => {
+        const isAssigned = assigned.has(s);
+        const areaLabel  = isAssigned ? lmGetAreaForSub(s) : '';
+        return `<div
+          draggable="${!isAssigned}"
+          ondragstart="${isAssigned ? '' : `lmDragStart(event,'${escHtml(s)}')`}"
+          style="padding:6px 10px;font-size:12px;color:${isAssigned ? 'var(--text-muted)' : 'var(--text)'};
+            cursor:${isAssigned ? 'default' : 'grab'};border-radius:6px;margin-bottom:3px;
+            background:${isAssigned ? 'transparent' : 'var(--bg)'};
+            border:1px solid ${isAssigned ? 'transparent' : 'var(--border)'};
+            display:flex;align-items:center;gap:6px;font-style:${isAssigned ? 'italic' : 'normal'};"
+          onmouseover="if(!${isAssigned}) this.style.borderColor='rgba(108,99,255,0.4)'"
+          onmouseout="if(!${isAssigned}) this.style.borderColor='var(--border)'"
+        >
+          ${!isAssigned ? `<div style="display:flex;flex-direction:column;gap:2px;width:10px;flex-shrink:0;">
+            <span style="display:block;height:1.5px;background:var(--border);border-radius:1px;"></span>
+            <span style="display:block;height:1.5px;background:var(--border);border-radius:1px;"></span>
+            <span style="display:block;height:1.5px;background:var(--border);border-radius:1px;"></span>
+          </div>` : `<span style="width:10px;text-align:center;font-size:10px;color:rgba(108,99,255,0.6);">✓</span>`}
+          ${escHtml(s)}
+          ${isAssigned ? `<span style="margin-left:auto;font-size:10px;color:rgba(108,99,255,0.6);">(${escHtml(areaLabel)})</span>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    function lmGetAreaForSub(s) {
+      const townAreas = lmAreas[lmCurrentProvince]?.[lmSelectedTown] || {};
+      for (const [name, data] of Object.entries(townAreas)) {
+        if ((data.suburbs || []).includes(s)) return name;
+      }
+      return '';
+    }
+
+    window.lmCreateArea = function() {
+      const inp  = document.getElementById('lmNewAreaInput');
+      const name = inp.value.trim();
+      if (!name) { inp.focus(); return; }
+      if (!lmSelectedTown) { lmShowMsg('Select a town first', false); return; }
+      const townAreas = lmAreas[lmCurrentProvince][lmSelectedTown];
+      if (townAreas[name]) { lmShowMsg('Area already exists', false); return; }
+      if (Object.keys(townAreas).length >= 5) { lmShowMsg('Max 5 areas per town', false); return; }
+      townAreas[name] = { suburbs: [], firestoreId: null };
+      lmActiveArea    = name;
+      inp.value       = '';
+      lmRenderAreaPills();
+      lmRenderDropZone();
+      lmUpdateSaveBtn();
+    };
+
+    function lmRenderAreaPills() {
+      const el = document.getElementById('lmAreaPills');
+      if (!lmSelectedTown) {
+        el.innerHTML = '<span style="font-size:12px;color:var(--text-muted);font-style:italic;">Select a town first</span>';
+        return;
+      }
+      const townAreas = lmAreas[lmCurrentProvince]?.[lmSelectedTown] || {};
+      const names     = Object.keys(townAreas);
+      if (!names.length) {
+        el.innerHTML = '<span style="font-size:12px;color:var(--text-muted);font-style:italic;">No areas yet</span>';
+        return;
+      }
+      el.innerHTML = names.map(a => {
+        const count   = (townAreas[a].suburbs || []).length;
+        const isActive = lmActiveArea === a;
+        return `<div onclick="lmSelectArea('${escHtml(a)}')" style="
+          display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;
+          font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;
+          border:1px solid ${isActive ? 'rgba(108,99,255,0.4)' : 'var(--border)'};
+          background:${isActive ? 'rgba(108,99,255,0.12)' : 'var(--bg)'};
+          color:${isActive ? '#6c63ff' : 'var(--text-muted)'};">
+          ${escHtml(a)}
+          <span style="font-size:10px;opacity:0.6;">(${count})</span>
+          <span onclick="event.stopPropagation();lmDeleteArea('${escHtml(a)}')"
+            style="font-size:14px;opacity:0.6;line-height:1;cursor:pointer;"
+            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">×</span>
+        </div>`;
+      }).join('');
+    }
+
+    window.lmSelectArea = function(name) {
+      lmActiveArea = name;
+      lmRenderAreaPills();
+      lmRenderDropZone();
+      lmUpdateSaveBtn();
+    };
+
+    window.lmDeleteArea = async function(name) {
+      if (!confirm(`Delete area "${name}"? Suburbs will return to the pool.`)) return;
+      const townAreas = lmAreas[lmCurrentProvince][lmSelectedTown];
+      const firestoreId = townAreas[name]?.firestoreId;
+      try {
+        if (firestoreId) await deleteDoc(doc(db, 'locations_areas', firestoreId));
+        delete townAreas[name];
+        if (lmActiveArea === name) lmActiveArea = null;
+        lmRenderAreaPills();
+        lmRenderDropZone();
+        lmRenderSuburbList();
+        lmUpdateSaveBtn();
+      } catch (err) {
+        console.error('lmDeleteArea error:', err);
+        alert('Failed to delete area.');
+      }
+    };
+
+    function lmRenderDropZone() {
+      const zone = document.getElementById('lmDropZone');
+      if (!lmActiveArea) {
+        zone.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+          height:100%;color:var(--text-muted);font-size:12px;text-align:center;gap:8px;padding:16px;">
+          <div style="font-size:28px;opacity:0.2;">+</div>
+          Create or select an area above,<br>then drag suburbs here
+        </div>`;
+        return;
+      }
+      const townAreas = lmAreas[lmCurrentProvince]?.[lmSelectedTown] || {};
+      const subs      = townAreas[lmActiveArea]?.suburbs || [];
+      if (!subs.length) {
+        zone.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+          height:100%;color:var(--text-muted);font-size:12px;text-align:center;gap:8px;padding:16px;">
+          <div style="font-size:28px;opacity:0.2;">+</div>
+          Drag suburbs from the middle column into this area
+        </div>`;
+        return;
+      }
+      zone.innerHTML = subs.map(s =>
+        `<div style="padding:5px 10px;font-size:12px;border-radius:6px;margin-bottom:3px;
+          background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.25);
+          color:#e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+          ${escHtml(s)}
+          <span onclick="lmRemoveSub('${escHtml(s)}')"
+            style="cursor:pointer;opacity:0.6;font-size:14px;line-height:1;"
+            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">×</span>
+        </div>`
       ).join('');
     }
 
+    window.lmRemoveSub = function(s) {
+      const townAreas = lmAreas[lmCurrentProvince][lmSelectedTown];
+      townAreas[lmActiveArea].suburbs = townAreas[lmActiveArea].suburbs.filter(x => x !== s);
+      lmRenderDropZone();
+      lmRenderSuburbList();
+      lmRenderAreaPills();
+      lmUpdateSaveBtn();
+    };
+
+    window.lmDragStart = function(e, s) {
+      lmDraggingSuburb = s;
+      e.dataTransfer.effectAllowed = 'move';
+    };
+
+    window.lmOnDragOver = function(e) {
+      e.preventDefault();
+      if (lmActiveArea) document.getElementById('lmDropZone').style.outline = '1.5px dashed rgba(108,99,255,0.5)';
+    };
+
+    window.lmOnDragLeave = function(e) {
+      document.getElementById('lmDropZone').style.outline = '';
+    };
+
+    window.lmOnDrop = function(e) {
+      e.preventDefault();
+      document.getElementById('lmDropZone').style.outline = '';
+      if (!lmDraggingSuburb || !lmActiveArea) return;
+      const townAreas = lmAreas[lmCurrentProvince][lmSelectedTown];
+      if (!townAreas[lmActiveArea].suburbs.includes(lmDraggingSuburb)) {
+        townAreas[lmActiveArea].suburbs.push(lmDraggingSuburb);
+        townAreas[lmActiveArea].suburbs.sort();
+      }
+      lmRenderDropZone();
+      lmRenderSuburbList();
+      lmRenderAreaPills();
+      lmUpdateSaveBtn();
+      lmDraggingSuburb = null;
+    };
+
     window.lmSaveArea = async function() {
-      const province = document.getElementById('lmProvince').value;
-      const town     = document.getElementById('lmTown').value;
-      const areaName = document.getElementById('lmAreaName').value.trim();
-      const selected = Array.from(document.querySelectorAll('input[name="lmSuburb"]:checked')).map(cb => cb.value);
-      const msgEl    = document.getElementById('lmSaveMsg');
-      const btn      = document.getElementById('lmSaveBtn');
-      msgEl.className = 'save-msg hidden';
-      if (!province || !town) { msgEl.textContent = 'Please select a province and town.'; msgEl.className = 'save-msg save-msg--err'; return; }
-      if (!areaName)          { msgEl.textContent = 'Please enter an area name.';         msgEl.className = 'save-msg save-msg--err'; return; }
-      if (!selected.length)   { msgEl.textContent = 'Please select at least one suburb.'; msgEl.className = 'save-msg save-msg--err'; return; }
-      btn.disabled = true; btn.textContent = 'Saving…';
+      if (!lmActiveArea || !lmSelectedTown) return;
+      const townAreas = lmAreas[lmCurrentProvince][lmSelectedTown];
+      const areaData  = townAreas[lmActiveArea];
+      const btn       = document.getElementById('lmSaveBtn');
+      const msgEl     = document.getElementById('lmSaveMsg');
+      if (!areaData.suburbs.length) { lmShowMsg('Add at least one suburb first', false); return; }
+      btn.disabled    = true;
+      btn.textContent = 'Saving…';
       try {
-        const ref = await addDoc(collection(db, 'areas'), { province, town, areaName, suburbs: selected, createdAt: serverTimestamp() });
-        allAreas.push({ id: ref.id, data: { province, town, areaName, suburbs: selected } });
-        renderAreasList();
-        document.getElementById('lmAreaName').value = '';
-        lmRefreshSuburbChecklist(province, town);
-        msgEl.textContent = 'Area created successfully.'; msgEl.className = 'save-msg save-msg--ok';
-        setTimeout(() => { msgEl.className = 'save-msg hidden'; }, 3000);
+        if (areaData.firestoreId) {
+          await updateDoc(doc(db, 'locations_areas', areaData.firestoreId), {
+            suburbs: areaData.suburbs, updatedAt: serverTimestamp()
+          });
+        } else {
+          const town = (lmTownsCache[lmCurrentProvince] || []).find(t => t.name === lmSelectedTown);
+          const ref = await addDoc(collection(db, 'locations_areas'), {
+            areaName: lmActiveArea,
+            provinceName: lmCurrentProvince,
+            provinceId: LOCATIONS.provinces.find(p => p.name === lmCurrentProvince)?.id || '',
+            townName: lmSelectedTown,
+            townId: town ? town.id : null,
+            suburbs: areaData.suburbs,
+            createdAt: serverTimestamp()
+          });
+          townAreas[lmActiveArea].firestoreId = ref.id;
+        }
+        allAreas = allAreas.filter(a =>
+          !(a.data.province === lmCurrentProvince &&
+            a.data.town     === lmSelectedTown    &&
+            a.data.areaName === lmActiveArea));
+        allAreas.push({ id: townAreas[lmActiveArea].firestoreId, data: {
+          province: lmCurrentProvince, town: lmSelectedTown,
+          areaName: lmActiveArea, suburbs: areaData.suburbs
+        }});
+        lmShowMsg('Saved ✓', true);
       } catch (err) {
         console.error('lmSaveArea error:', err);
-        msgEl.textContent = 'Failed to save area. Please try again.'; msgEl.className = 'save-msg save-msg--err';
+        lmShowMsg('Failed to save', false);
       } finally {
-        btn.disabled = false; btn.textContent = 'Save Area';
+        btn.disabled    = false;
+        btn.textContent = 'Save area';
       }
     };
+
+    function lmUpdateSaveBtn() {
+      const btn = document.getElementById('lmSaveBtn');
+      if (!btn) return;
+      const townAreas = lmAreas[lmCurrentProvince]?.[lmSelectedTown] || {};
+      const hasData   = lmActiveArea && (townAreas[lmActiveArea]?.suburbs || []).length > 0;
+      btn.disabled    = !hasData;
+    }
+
+    function lmShowMsg(msg, ok) {
+      const el = document.getElementById('lmSaveMsg');
+      if (!el) return;
+      el.textContent = msg;
+      el.className   = ok ? 'save-msg save-msg--ok' : 'save-msg save-msg--err';
+      setTimeout(() => { el.className = 'save-msg hidden'; }, 3000);
+    }
 
     async function loadAreasList() {
       try {
-        const snap = await getDocs(collection(db, 'areas'));
-        allAreas = snap.docs.map(d => ({ id: d.id, data: d.data() }));
-        renderAreasList();
+        const snap = await getDocs(collection(db, 'locations_areas'));
+        allAreas   = snap.docs.map(d => ({ id: d.id, data: d.data() }));
       } catch (err) {
         console.error('loadAreasList error:', err);
-        document.getElementById('lmAreasList').innerHTML = '<div class="lm-no-areas">Failed to load areas.</div>';
+      }
+     };
+
+    // ════════════════════════════════════════════
+    // TERMS & CONDITIONS
+    // ════════════════════════════════════════════
+    let termsEditingId = null;
+
+    const TERMS_STARTER_DOCS = [
+      { title: 'Supplier Terms & Conditions', body: '' },
+      { title: 'Privacy Policy', body: '' },
+      { title: 'Cookie Policy', body: '' }
+    ];
+
+    async function loadTermsDocs() {
+      const container = document.getElementById('termsDocList');
+      container.innerHTML = '<div class="placeholder-msg">Loading…</div>';
+      try {
+        const snap = await getDocs(collection(db, 'termsDocuments'));
+        let docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (!docs.length) {
+          await Promise.all(TERMS_STARTER_DOCS.map(d =>
+            addDoc(collection(db, 'termsDocuments'), { title: d.title, body: d.body, createdAt: serverTimestamp(), updatedAt: serverTimestamp() })
+          ));
+          const snap2 = await getDocs(collection(db, 'termsDocuments'));
+          docs = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+        container.innerHTML = docs.map(d => `
+          <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3);background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);">
+            <div style="flex:1;font-size:var(--text-sm);font-weight:600;color:var(--text);">${escHtml(d.title)}</div>
+            <div style="font-size:var(--text-xs);color:var(--text-muted);">${d.updatedAt ? fmtDate(d.updatedAt) : '—'}</div>
+            <button class="back-btn" onclick="termsOpenDoc('${d.id}','${escHtml(d.title).replace(/'/g,"\\'")}')">Open</button>
+          </div>`).join('');
+        document.getElementById('termsEditorCard').classList.add('hidden');
+      } catch (err) {
+        console.error('loadTermsDocs error:', err);
+        container.innerHTML = '<div class="placeholder-msg" style="color:#f87171;">Failed to load documents.</div>';
       }
     }
 
-    function renderAreasList() {
-      const container = document.getElementById('lmAreasList');
-      if (!allAreas.length) { container.innerHTML = '<div class="lm-no-areas">No areas created yet.</div>'; return; }
-      const groups = {};
-      allAreas.forEach(({ id, data: d }) => {
-        const key = `${d.province}|||${d.town}`;
-        if (!groups[key]) groups[key] = { province: d.province, town: d.town, areas: [] };
-        groups[key].areas.push({ id, data: d });
-      });
-      container.innerHTML = Object.values(groups).map(g => `
-        <div class="lm-areas-group">
-          <div class="lm-group-title">${escHtml(g.province)} — ${escHtml(g.town)}</div>
-          ${g.areas.map(({ id, data: d }) => `
-            <div class="lm-area-row">
-              <div class="lm-area-info">
-                <div class="lm-area-name">${escHtml(d.areaName)}</div>
-                <div class="lm-area-suburbs">${(d.suburbs || []).map(escHtml).join(', ')}</div>
-              </div>
-              <button class="act-btn act-btn--delete" onclick="lmDeleteArea('${id}')">Delete</button>
-            </div>`).join('')}
-        </div>`).join('');
-    }
+    window.termsOpenDoc = async function(id, title) {
+      termsEditingId = id;
+      const snap = await getDoc(doc(db, 'termsDocuments', id));
+      if (!snap.exists()) return;
+      document.getElementById('termsDocTitle').value = snap.data().title || '';
+      document.getElementById('termsDocBody').value  = snap.data().body  || '';
+      document.getElementById('termsEditorCard').classList.remove('hidden');
+      document.getElementById('termsEditorCard').scrollIntoView({ behavior: 'smooth' });
+    };
 
-    window.lmDeleteArea = async function(id) {
-      const area = allAreas.find(a => a.id === id);
-      if (!area) return;
-      if (!confirm(`Delete area "${area.data.areaName}"? All suburbs will return to the unassigned pool.`)) return;
+    window.termsAddDoc = function() {
+      termsEditingId = null;
+      document.getElementById('termsDocTitle').value = '';
+      document.getElementById('termsDocBody').value  = '';
+      document.getElementById('termsEditorCard').classList.remove('hidden');
+      document.getElementById('termsEditorCard').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.termsSaveDoc = async function() {
+      const title  = document.getElementById('termsDocTitle').value.trim();
+      const body   = document.getElementById('termsDocBody').value;
+      const msgEl  = document.getElementById('termsSaveMsg');
+      if (!title) { msgEl.textContent = 'Title required.'; msgEl.className = 'save-msg save-msg--err'; return; }
       try {
-        await deleteDoc(doc(db, 'areas', id));
-        allAreas = allAreas.filter(a => a.id !== id);
-        renderAreasList();
-        const currentProvince = document.getElementById('lmProvince').value;
-        const currentTown     = document.getElementById('lmTown').value;
-        if (currentProvince === area.data.province && currentTown === area.data.town) {
-          lmRefreshSuburbChecklist(currentProvince, currentTown);
+        if (termsEditingId) {
+          await updateDoc(doc(db, 'termsDocuments', termsEditingId), { title, body, updatedAt: serverTimestamp() });
+        } else {
+          await addDoc(collection(db, 'termsDocuments'), { title, body, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
         }
+        msgEl.textContent = 'Saved ✓';
+        msgEl.className   = 'save-msg save-msg--ok';
+        setTimeout(() => { msgEl.className = 'save-msg hidden'; }, 2000);
+        loadTermsDocs();
       } catch (err) {
-        console.error('lmDeleteArea error:', err);
-        alert('Failed to delete area. Please try again.');
+        console.error('termsSaveDoc error:', err);
+        msgEl.textContent = 'Failed to save.';
+        msgEl.className   = 'save-msg save-msg--err';
       }
     };
+
+    window.termsCancelEdit = function() {
+      document.getElementById('termsEditorCard').classList.add('hidden');
+      termsEditingId = null;
+    };
+
+    // ════════════════════════════════════════════
+    // SUPPLIER STATUS — BULK UPDATE
+    // ════════════════════════════════════════════
+    let bulkMatchedIds = [];
+
+    document.getElementById('bulkPreviewBtn').addEventListener('click', async () => {
+      const fromStatus = document.getElementById('bulkFromStatus').value;
+      const previewMsg = document.getElementById('bulkPreviewMsg');
+      const updateBtn  = document.getElementById('bulkUpdateBtn');
+      previewMsg.textContent = 'Searching…';
+      previewMsg.style.color = 'var(--text-muted)';
+      updateBtn.disabled = true;
+      updateBtn.style.opacity = '0.45';
+      bulkMatchedIds = [];
+      try {
+        const q    = query(collection(db, 'suppliers'), where('status', '==', fromStatus));
+        const snap = await getDocs(q);
+        bulkMatchedIds = snap.docs.map(d => d.id);
+        previewMsg.textContent = `${bulkMatchedIds.length} supplier${bulkMatchedIds.length !== 1 ? 's' : ''} with status "${fromStatus}"`;
+        previewMsg.style.color = bulkMatchedIds.length > 0 ? 'var(--text)' : 'var(--text-muted)';
+        if (bulkMatchedIds.length > 0) {
+          updateBtn.disabled = false;
+          updateBtn.style.opacity = '1';
+        }
+      } catch (err) {
+        previewMsg.textContent = 'Error: ' + err.message;
+        previewMsg.style.color = '#f87171';
+      }
+    });
+
+    document.getElementById('bulkUpdateBtn').addEventListener('click', async () => {
+      const toStatus   = document.getElementById('bulkToStatus').value;
+      const fromStatus = document.getElementById('bulkFromStatus').value;
+      const resultMsg  = document.getElementById('bulkResultMsg');
+      const updateBtn  = document.getElementById('bulkUpdateBtn');
+      if (!bulkMatchedIds.length) return;
+      if (!confirm(`Update ${bulkMatchedIds.length} supplier${bulkMatchedIds.length !== 1 ? 's' : ''} from "${fromStatus}" → "${toStatus}"?`)) return;
+      updateBtn.disabled = true;
+      updateBtn.style.opacity = '0.45';
+      resultMsg.textContent = 'Updating…';
+      resultMsg.style.color = 'var(--text-muted)';
+      try {
+        await Promise.all(bulkMatchedIds.map(id =>
+          updateDoc(doc(db, 'suppliers', id), { status: toStatus, updatedAt: serverTimestamp() })
+        ));
+        resultMsg.textContent = `Done — ${bulkMatchedIds.length} record${bulkMatchedIds.length !== 1 ? 's' : ''} updated to "${toStatus}".`;
+        resultMsg.style.color = '#34d399';
+        bulkMatchedIds = [];
+        document.getElementById('bulkPreviewMsg').textContent = '';
+      } catch (err) {
+        resultMsg.textContent = 'Error: ' + err.message;
+        resultMsg.style.color = '#f87171';
+        updateBtn.disabled = false;
+        updateBtn.style.opacity = '1';
+      }
+    });
+
+    // ════════════════════════════════════════════
+    // SUPPLIER STATUS — SINGLE SEARCH
+    // ════════════════════════════════════════════
+    async function runSingleSearch() {
+      const term = document.getElementById('singleSearchInput').value.trim().toLowerCase();
+      const container = document.getElementById('singleSearchResults');
+      if (!term) { container.innerHTML = '<div class="placeholder-msg">Enter a search term.</div>'; return; }
+      container.innerHTML = '<div class="placeholder-msg">Searching…</div>';
+      try {
+        const snap = await getDocs(collection(db, 'suppliers'));
+        const results = snap.docs.filter(d => {
+          const data = d.data();
+          return [
+            data.supplierNumber, data.displayName,
+            data.firstName, data.lastName, data.phone
+          ].some(v => v && String(v).toLowerCase().includes(term));
+        });
+        if (!results.length) {
+          container.innerHTML = '<div class="placeholder-msg">No suppliers found.</div>';
+          return;
+        }
+        container.innerHTML = results.map(d => {
+          const s = d.data();
+          const name = s.displayName || [s.firstName, s.lastName].filter(Boolean).join(' ') || '—';
+          const statusOpts = ['pending','active','suspended','rejected'].map(v =>
+            `<option value="${v}"${s.status === v ? ' selected' : ''}>${v.charAt(0).toUpperCase()+v.slice(1)}</option>`
+          ).join('');
+          return `
+          <div class="admin-card" style="padding:var(--space-3) var(--space-4);" data-docid="${d.id}">
+            <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:var(--text-sm);font-weight:700;color:var(--text);">${name}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:2px;">
+                  ${s.supplierNumber || '—'} &nbsp;·&nbsp; ${s.phone || '—'}
+                </div>
+              </div>
+              <select class="select single-status-select" style="width:130px;">${statusOpts}</select>
+              <button class="back-btn single-save-btn" style="white-space:nowrap;">Save</button>
+              <span class="single-save-msg" style="font-size:var(--text-xs);font-weight:600;"></span>
+            </div>
+          </div>`;
+        }).join('');
+
+        container.querySelectorAll('.single-save-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const card   = btn.closest('[data-docid]');
+            const docId  = card.dataset.docid;
+            const select = card.querySelector('.single-status-select');
+            const msg    = card.querySelector('.single-save-msg');
+            btn.disabled = true;
+            msg.textContent = 'Saving…';
+            msg.style.color = 'var(--text-muted)';
+            try {
+              await updateDoc(doc(db, 'suppliers', docId), { status: select.value, updatedAt: serverTimestamp() });
+              msg.textContent = 'Saved';
+              msg.style.color = '#34d399';
+            } catch (err) {
+              msg.textContent = 'Error';
+              msg.style.color = '#f87171';
+              console.error(err);
+            } finally {
+              btn.disabled = false;
+            }
+          });
+        });
+      } catch (err) {
+        container.innerHTML = `<div class="placeholder-msg" style="color:#f87171;">Error: ${err.message}</div>`;
+      }
+    }
+
+    document.getElementById('singleSearchBtn').addEventListener('click', runSingleSearch);
+    document.getElementById('singleSearchInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') runSingleSearch();
+    });
 
     init();
 
