@@ -3,1750 +3,1008 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Dashboard — MassageMap</title>
+  <title>My Profile — MassageMap</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    body { padding-top: 0; padding-bottom: var(--space-8); }
+    body { padding-top: 0; padding-bottom: 80px; }
 
-    /* ── Login ── */
-    .login-wrap { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: var(--space-5); }
-    .login-card { width: 100%; max-width: 400px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-6); }
-    .login-logo { font-size: var(--text-xl); font-weight: 700; letter-spacing: -0.3px; color: var(--text); margin-bottom: var(--space-6); text-align: center; }
-    .login-logo span { color: var(--accent); }
-    .login-title { font-size: var(--text-lg); font-weight: 700; color: var(--text); margin-bottom: var(--space-1); }
-    .login-sub { font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-5); }
-    .otp-row { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
-    .otp-input { flex: 1; letter-spacing: 4px; font-size: var(--text-lg); text-align: center; }
-    .otp-status { font-size: var(--text-sm); color: var(--text-muted); margin-top: var(--space-2); }
-    .reg-links { display: flex; gap: var(--space-3); margin-top: var(--space-3); flex-wrap: wrap; }
+    .dash-topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: #1a7a6e;
+      display: flex; align-items: center;
+      padding: 0 var(--space-4); height: 52px;
+    }
+    .dash-topbar__hamburger {
+      width: 36px; height: 36px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 5px; cursor: pointer; flex-shrink: 0;
+    }
+    .dash-topbar__hamburger span { display: block; width: 20px; height: 2px; background: #fff; border-radius: 2px; }
+    .dash-topbar__title { flex: 1; text-align: center; font-size: var(--text-base); font-weight: 600; color: #fff; }
+    .dash-topbar__spacer { width: 36px; flex-shrink: 0; }
 
-    /* ── Fixed welcome header ── */
-    .dash-welcome-header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--bg-card); border-bottom: 1px solid var(--border); padding: var(--space-3) var(--space-4); }
-    .dash-welcome-header__inner { max-width: 560px; margin: 0 auto; display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
-    .dash-welcome-header__left { flex: 1; min-width: 0; }
-    .dash-welcome-header__name { font-size: var(--text-base); font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .dash-welcome-header__name span { color: #6c63ff; }
-    .dash-welcome-header__right { flex-shrink: 0; text-align: right; }
-    .dash-welcome-header__member { font-size: var(--text-xs); color: var(--text-muted); margin-top: 3px; }
+    .dash-namebar {
+      background: #fff; border-bottom: 1px solid var(--border);
+      padding: var(--space-3); text-align: center;
+      font-size: var(--text-base); color: #1a1a2e; font-weight: 500;
+    }
 
-    /* ── Dashboard body ── */
-    .dash-body { max-width: 560px; margin: 0 auto; padding: var(--space-5) var(--space-4); padding-top: 96px; display: flex; flex-direction: column; gap: var(--space-4); }
+    .dash-content { padding: var(--space-5) var(--space-4); max-width: 560px; margin: 0 auto; }
 
-    /* ── Cards ── */
-    .dash-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-5); }
-    .dash-card__title { font-size: var(--text-base); font-weight: 700; color: var(--text); margin-bottom: var(--space-1); }
-    .dash-card__sub { font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-4); }
+    .dash-signout {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 56px; background: #c9a84c; border: none;
+      color: #fff; font-family: var(--font-sans); font-size: var(--text-base);
+      font-weight: 600; cursor: pointer; z-index: 40;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .dash-signout:hover { background: #b8953f; }
 
-    /* ── Status badge ── */
-    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: var(--text-xs); font-weight: 600; margin-top: var(--space-2); }
-    .status-badge--pending   { background: rgba(251,191,36,0.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
-    .status-badge--active    { background: rgba(52,211,153,0.15);  color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
-    .status-badge--suspended { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+    .save-feedback { font-size: var(--text-xs); font-weight: 600; color: var(--green); margin-top: var(--space-2); text-align: center; display: none; }
+    .save-error    { font-size: var(--text-xs); color: #ef4444; margin-top: var(--space-2); text-align: center; display: none; }
 
-    /* ── Field stack & section footer ── */
-    .field-stack { display: flex; flex-direction: column; gap: var(--space-3); }
-    .section-footer { margin-top: var(--space-4); display: flex; align-items: center; gap: var(--space-3); }
-    .helper-note { font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-1); }
-    .form-section-label { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: var(--space-2); margin-top: var(--space-3); }
+    .btn--gps {
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      height: 40px; padding: 0 var(--space-4);
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      color: var(--text-muted); font-family: var(--font-sans); font-size: var(--text-sm);
+      font-weight: 500; cursor: pointer; transition: border-color var(--ease), color var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn--gps:hover { border-color: var(--accent); color: var(--text); }
+    .gps-confirm { font-size: var(--text-xs); color: var(--green); margin-top: var(--space-1); }
 
-    /* ── Hours grid ── */
+    /* ── Shared form components (mirrors register.html) ── */
+    .field-stack { display: flex; flex-direction: column; gap: var(--space-4); }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    @media (max-width: 360px) { .field-row { grid-template-columns: 1fr; } }
+    .form-section-label {
+      font-size: var(--text-xs); font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: var(--space-2);
+    }
+    .toggle-wrap { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+    .toggle-wrap__label { font-size: var(--text-base); color: var(--text); flex: 1; }
+    .toggle { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle__track {
+      position: absolute; inset: 0; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 13px; cursor: pointer; transition: background var(--ease), border-color var(--ease);
+    }
+    .toggle__track::after {
+      content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+      border-radius: 50%; background: var(--text-muted); transition: transform var(--ease), background var(--ease);
+    }
+    .toggle input:checked + .toggle__track { background: var(--accent); border-color: var(--accent); }
+    .toggle input:checked + .toggle__track::after { transform: translateX(22px); background: #fff; }
+
+    .check-group { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+    .check-group--1col { grid-template-columns: 1fr; }
+    .check-group--3col { grid-template-columns: 1fr 1fr 1fr; }
+    @media (max-width: 400px) { .check-group--3col { grid-template-columns: 1fr 1fr; } }
+    .check-item {
+      display: flex; align-items: center; gap: var(--space-2);
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: var(--space-2) var(--space-3); cursor: pointer;
+      transition: border-color var(--ease), background var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .check-item:hover { border-color: rgba(108, 99, 255, 0.4); background: rgba(108, 99, 255, 0.05); }
+    .check-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+    .check-item__label { font-size: var(--text-sm); color: var(--text); cursor: pointer; line-height: 1.3; }
+    .check-item:has(input:checked) { border-color: var(--accent); background: rgba(108, 99, 255, 0.08); }
+    .check-item:has(input:disabled) { opacity: 0.65; cursor: default; }
+
+    .radio-group { display: flex; flex-direction: column; gap: var(--space-2); }
+    .radio-group--row { flex-direction: row; flex-wrap: wrap; }
+    .radio-item {
+      display: flex; align-items: center; gap: var(--space-3); background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px; padding: var(--space-3) var(--space-4);
+      cursor: pointer; transition: border-color var(--ease), background var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .radio-item:hover { border-color: rgba(108, 99, 255, 0.4); }
+    .radio-item input[type="radio"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+    .radio-item__label { font-size: var(--text-base); color: var(--text); cursor: pointer; }
+    .radio-item:has(input:checked) { border-color: var(--accent); background: rgba(108, 99, 255, 0.08); }
+    .radio-item--flex { flex: 1; min-width: 100px; }
+
+    .input--locked { background: rgba(255,255,255,0.03); color: var(--text-muted); cursor: not-allowed; }
+    .textarea--sm { min-height: 80px; }
+    .char-count { font-size: var(--text-xs); color: var(--text-muted); text-align: right; }
+    .hidden { display: none !important; }
+    .conditional-field { margin-top: var(--space-1); }
+
     .hours-grid { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    .hours-row { display: flex; align-items: center; gap: var(--space-2); padding: 9px var(--space-3); border-bottom: 1px solid var(--border); background: var(--bg); }
+    .hours-row {
+      display: flex; align-items: center; gap: var(--space-2);
+      padding: 9px var(--space-3); border-bottom: 1px solid var(--border); background: var(--bg);
+    }
     .hours-row:last-child { border-bottom: none; }
     .hours-row:nth-child(even) { background: rgba(255,255,255,0.015); }
     .hours-row__day { width: 36px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); flex-shrink: 0; }
     .hours-row__times { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
     .hours-row__sep { color: var(--text-muted); font-size: var(--text-xs); flex-shrink: 0; }
-    .select--sm { flex: 1; min-width: 0; height: 30px; padding: 0 4px; font-size: 12px; font-family: var(--font-sans); background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 4px center; padding-right: 18px; }
+    .select--sm {
+      flex: 1; min-width: 0; height: 30px; padding: 0 4px; font-size: 12px; font-family: var(--font-sans);
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: pointer;
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 4px center; padding-right: 18px;
+    }
     .select--sm:disabled { opacity: 0.3; cursor: not-allowed; }
+    .select--sm:focus { outline: none; border-color: var(--accent); }
 
-    /* ── Toggle ── */
-    .toggle { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
-    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
-    .toggle__track { position: absolute; inset: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 13px; cursor: pointer; transition: background var(--ease), border-color var(--ease); }
-    .toggle__track::after { content: ''; position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; border-radius: 50%; background: var(--text-muted); transition: transform var(--ease), background var(--ease); }
-    .toggle input:checked + .toggle__track { background: var(--accent); border-color: var(--accent); }
-    .toggle input:checked + .toggle__track::after { transform: translateX(22px); background: #fff; }
-
-    /* ── Check group ── */
-    .check-group { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
-    .check-group--3col { grid-template-columns: 1fr 1fr 1fr; }
-    @media (max-width: 400px) { .check-group--3col { grid-template-columns: 1fr 1fr; } }
-    .check-item { display: flex; align-items: center; gap: var(--space-2); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: var(--space-2) var(--space-3); cursor: pointer; transition: border-color var(--ease), background var(--ease); -webkit-tap-highlight-color: transparent; }
-    .check-item:hover { border-color: rgba(108,99,255,0.4); background: rgba(108,99,255,0.05); }
-    .check-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
-    .check-item__label { font-size: var(--text-sm); color: var(--text); cursor: pointer; line-height: 1.3; }
-    .check-item:has(input:checked) { border-color: var(--accent); background: rgba(108,99,255,0.08); }
-
-    /* ── Radio item ── */
-    .radio-group { display: flex; flex-direction: column; gap: var(--space-2); }
-    .radio-item { display: flex; align-items: center; gap: var(--space-3); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: var(--space-2) var(--space-3); cursor: pointer; transition: border-color var(--ease), background var(--ease); -webkit-tap-highlight-color: transparent; }
-    .radio-item:hover { border-color: rgba(108,99,255,0.4); }
-    .radio-item input[type="radio"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
-    .radio-item__label { font-size: var(--text-base); color: var(--text); cursor: pointer; }
-    .radio-item:has(input:checked) { border-color: var(--accent); background: rgba(108,99,255,0.08); }
-
-    /* ── Photo slots ── */
     .photo-slots { display: flex; flex-direction: column; gap: var(--space-3); }
     .photo-slot { border: 1px dashed var(--border); border-radius: var(--radius); padding: var(--space-4); background: var(--bg); }
     .photo-slot__row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
-    .photo-slot__btn { display: inline-flex; align-items: center; gap: var(--space-2); height: 36px; padding: 0 var(--space-4); background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-family: var(--font-sans); font-size: var(--text-sm); font-weight: 500; cursor: pointer; transition: border-color var(--ease), color var(--ease); flex-shrink: 0; }
+    .photo-slot__btn {
+      display: inline-flex; align-items: center; gap: var(--space-2); height: 36px;
+      padding: 0 var(--space-4); background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-muted); font-family: var(--font-sans);
+      font-size: var(--text-sm); font-weight: 500; cursor: pointer;
+      transition: border-color var(--ease), color var(--ease); flex-shrink: 0;
+    }
     .photo-slot__btn:hover { border-color: var(--accent); color: var(--text); }
     .photo-slot input[type="file"] { display: none; }
     .photo-slot__filename { font-size: var(--text-sm); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
-    .photo-slot__current { font-size: var(--text-sm); color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
-    .photo-slot__delete { flex-shrink: 0; height: 28px; padding: 0 10px; background: none; border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; color: #ef4444; font-family: var(--font-sans); font-size: var(--text-xs); font-weight: 600; cursor: pointer; transition: background var(--ease), border-color var(--ease); -webkit-tap-highlight-color: transparent; }
-    .photo-slot__delete:hover { background: rgba(239,68,68,0.1); border-color: #ef4444; }
-    .qual-add-btn { display: flex; align-items: center; gap: var(--space-2); background: none; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--text-muted); font-family: var(--font-sans); font-size: var(--text-sm); font-weight: 500; padding: var(--space-3) var(--space-4); cursor: pointer; width: 100%; transition: border-color var(--ease), color var(--ease); -webkit-tap-highlight-color: transparent; }
-    .qual-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .photo-slot__delete {
+      flex-shrink: 0; width: 28px; height: 28px;
+      background: none; border: 1px solid rgba(255,255,255,0.25); border-radius: 6px;
+      color: #fff; font-size: var(--text-sm); font-weight: 700;
+      cursor: pointer; transition: background var(--ease);
+      -webkit-tap-highlight-color: transparent;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .photo-slot__delete:hover { background: rgba(255,255,255,0.15); }
+    .photo-preview { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); flex-shrink: 0; }
 
-    /* ── Amber note ── */
-    .note--amber { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.25); border-radius: 8px; padding: var(--space-3); font-size: var(--text-sm); color: #fbbf24; margin-top: var(--space-2); }
+    .acc-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: var(--space-3); overflow: hidden; }
+    .acc-header { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-5); cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .acc-num { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: var(--text-xs); font-weight: 700; color: var(--text-muted); transition: background var(--ease), border-color var(--ease), color var(--ease); }
+    .acc-num--done { background: var(--green); border-color: var(--green); color: #fff; }
+    .acc-info { flex: 1; min-width: 0; }
+    .acc-name { font-size: var(--text-base); font-weight: 600; color: var(--text); }
+    .acc-status { font-size: var(--text-xs); color: var(--text-muted); margin-top: 2px; }
+    .acc-chevron { color: var(--text-muted); transition: transform 0.22s ease; flex-shrink: 0; }
+    .acc-chevron--open { transform: rotate(180deg); }
+    .acc-body { padding: var(--space-5); border-top: 1px solid var(--border); }
+    .acc-body.hidden { display: none !important; }
 
-    /* ── Spinner ── */
     .btn--loading { position: relative; pointer-events: none; opacity: 0.7; }
-    .btn--loading::after { content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; animation: spin 0.7s linear infinite; }
+    .btn--loading::after {
+      content: ''; position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      animation: spin 0.7s linear infinite;
+    }
     @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
-
-    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <div id="recaptcha-container"></div>
-
-  <!-- ══════════════════════════════════
-       LOGIN SCREEN
-  ══════════════════════════════════ -->
-  <div id="loginScreen" class="hidden">
-    <div class="login-wrap">
-      <div class="login-card">
-
-        <div class="login-logo">Massage<span>Map</span></div>
-        <div class="login-title">Supplier Login</div>
-        <div class="login-sub">Enter your cell number to access your dashboard.</div>
-
-        <div class="field" id="cellField" style="margin-bottom: var(--space-4);">
-          <label class="field__label" for="loginCell">Cell Number</label>
-          <input type="tel" id="loginCell" class="input" placeholder="e.g. 0821234567" autocomplete="tel" />
-        </div>
-
-        <button type="button" class="btn btn--primary btn--full" id="sendOtpBtn" onclick="sendLoginOtp()">Send OTP</button>
-
-        <div id="otpSection" class="hidden" style="margin-top: var(--space-4);">
-          <div class="otp-status" id="otpStatusMsg"></div>
-          <div class="otp-row">
-            <input type="text" id="loginOtpInput" class="input otp-input" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*" />
-            <button type="button" class="btn btn--primary" id="verifyOtpBtn" onclick="verifyLoginOtp()">Verify</button>
-          </div>
-          <button type="button" class="btn btn--secondary btn--sm" style="margin-top: var(--space-3);" onclick="sendLoginOtp()">Resend OTP</button>
-        </div>
-
-        <div id="loginError" class="hidden" style="margin-top: var(--space-3); font-size: var(--text-sm); color: #f87171;"></div>
-        <div id="regLinks" class="reg-links hidden">
-          <a href="register.html"     class="btn btn--secondary btn--sm">Register as Therapist</a>
-          <a href="register-spa.html" class="btn btn--secondary btn--sm">Register as Spa</a>
-        </div>
-
-      </div>
-    </div>
+<div class="dash-topbar">
+  <div class="dash-topbar__hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
   </div>
+  <div class="dash-topbar__title">My Profile</div>
+  <div class="dash-topbar__spacer"></div>
+</div>
 
-  <!-- ══════════════════════════════════
-       DASHBOARD SCREEN
-  ══════════════════════════════════ -->
-  <div id="dashboardScreen" class="hidden">
+<div class="dash-namebar" id="nameBar">Loading…</div>
 
-    <!-- Fixed welcome header -->
-    <div class="dash-welcome-header">
-      <div class="dash-welcome-header__inner">
-        <div class="dash-welcome-header__left">
-          <div class="dash-welcome-header__name">Welcome back, <span id="welcomeName"></span>!</div>
-          <div id="statusBadge" class="status-badge"></div>
-        </div>
-        <div class="dash-welcome-header__right">
-          <div class="dash-welcome-header__member" id="membershipNumber"></div>
-        </div>
-      </div>
-    </div>
+<div class="dash-content" id="dashContent">
+  <div style="text-align:center; padding:var(--space-8); color:var(--text-muted);">Loading profile…</div>
+</div>
 
-    <div class="dash-body">
+<button class="dash-signout" id="signOutBtn">Sign Out</button>
 
-      <!-- ── Profile card ── -->
-      <div class="dash-card">
-        <div class="dash-card__title">Your Profile</div>
-        <div class="dash-card__sub">Updates save immediately to your listing.</div>
-        <div class="field-stack">
-          <div class="field">
-            <label class="field__label" for="editDisplayName">Display Name</label>
-            <input type="text" id="editDisplayName" class="input" placeholder="e.g. Sarah M." />
-          </div>
-          <div class="field hidden" id="dashGenderField">
-            <div class="form-section-label" style="margin-bottom:var(--space-2);">Gender</div>
-            <div class="radio-group radio-group--row" id="dashGenderGroup">
-              <label class="radio-item radio-item--flex"><input type="radio" name="dashGender" value="female" /><span class="radio-item__label">Female</span></label>
-              <label class="radio-item radio-item--flex"><input type="radio" name="dashGender" value="male" /><span class="radio-item__label">Male</span></label>
-              <label class="radio-item radio-item--flex"><input type="radio" name="dashGender" value="non-binary" /><span class="radio-item__label">Non-binary</span></label>
-            </div>
-          </div>
-          <div class="field" id="dashAboutMeField">
-            <label class="field__label" for="editAboutMe">
-              About Me / Bio
-              <span id="aboutMeCount" style="font-weight:400; margin-left:var(--space-2);">0 / 300</span>
-            </label>
-            <textarea id="editAboutMe" class="textarea" rows="4" maxlength="300"
-              placeholder="Tell clients about yourself…"
-              oninput="document.getElementById('aboutMeCount').textContent = this.value.length + ' / 300'"></textarea>
-          </div>
-          <div class="field hidden" id="dashAboutSpaField">
-            <label class="field__label" for="editAboutSpa">
-              About the Spa / Bio
-              <span id="aboutSpaCount" style="font-weight:400; margin-left:var(--space-2);">0 / 300</span>
-            </label>
-            <textarea id="editAboutSpa" class="textarea" rows="4" maxlength="300"
-              placeholder="What makes your spa special…"
-              oninput="document.getElementById('aboutSpaCount').textContent = this.value.length + ' / 300'"></textarea>
-          </div>
-          <div class="field">
-            <label class="field__label" for="editSpecials">
-              Specials / Promotions
-              <span id="specialsCount" style="font-weight:400; margin-left: var(--space-2);">0 / 300</span>
-            </label>
-            <textarea id="editSpecials" class="textarea" rows="3" maxlength="300"
-              placeholder="Any current specials or promotions…"
-              oninput="document.getElementById('specialsCount').textContent = this.value.length + ' / 300'"></textarea>
-          </div>
-          <div class="field">
-            <label class="field__label" for="editWhatsapp">
-              WhatsApp Number <span style="font-weight:400; color: var(--text-muted);">(optional)</span>
-            </label>
-            <input type="tel" id="editWhatsapp" class="input" placeholder="e.g. 0821234567" />
-          </div>
-          <div class="toggle-wrap">
-            <div class="toggle-wrap__label">Show WhatsApp button on listing</div>
-            <label class="toggle">
-              <input type="checkbox" id="dashShowWhatsapp" />
-              <span class="toggle__track"></span>
-            </label>
-          </div>
-          <div class="field">
-            <label class="field__label" for="editEmail" id="emailLabel">Email Address</label>
-            <input type="email" id="editEmail" class="input" placeholder="e.g. you@example.com" />
-          </div>
-          <div class="field hidden" id="dashExperienceField">
-            <label class="field__label" for="editExperienceYears">Years of Experience</label>
-            <select class="select" id="editExperienceYears">
-              <option value="">Select…</option>
-              <option value="0-1">Less than 1 year</option>
-              <option value="1-3">1–3 years</option>
-              <option value="3-5">3–5 years</option>
-              <option value="5+">5+ years</option>
-            </select>
-          </div>
-          <div class="field hidden" id="dashQualificationsField">
-            <label class="field__label" for="editQualifications">Qualifications
-              <span style="font-weight:400; color:var(--text-muted);">(optional)</span>
-            </label>
-            <input type="text" id="editQualifications" class="input"
-              placeholder="e.g. ITEC Diploma in Massage, 2019" />
-          </div>
-          <div class="field" id="dashAssociationsField">
-            <div class="form-section-label">Professional Associations
-              <span style="font-weight:400; text-transform:none; letter-spacing:0;
-              color:var(--text-muted);">(optional)</span>
-            </div>
-            <div class="check-group check-group--1col">
-              <label class="check-item"><input type="checkbox" name="dashAssociation" value="AHPCSA" /><span class="check-item__label">AHPCSA</span></label>
-              <label class="check-item"><input type="checkbox" name="dashAssociation" value="MTASA" /><span class="check-item__label">MTASA</span></label>
-              <label class="check-item"><input type="checkbox" name="dashAssociation" value="SAAHIP" /><span class="check-item__label">SAAHIP</span></label>
-              <label class="check-item"><input type="checkbox" name="dashAssociation" value="SPAASA" /><span class="check-item__label">SPAASA</span></label>
-            </div>
-          </div>
-          <div class="field" id="dashContactPrefsField">
-            <div class="form-section-label">Contact Preferences</div>
-            <div class="check-group" id="dashContactPrefsGroup">
-              <label class="check-item" id="dashContactPrefSmsItem">
-                <input type="checkbox" id="dashContactPrefSms"
-                  value="sms" checked disabled />
-                <span class="check-item__label">SMS</span>
-              </label>
-              <label class="check-item" id="dashContactPrefPhoneItem"
-                style="display:none;">
-                <input type="checkbox" id="dashContactPrefPhone" value="phone" />
-                <span class="check-item__label">Phone</span>
-              </label>
-              <label class="check-item">
-                <input type="checkbox" id="dashContactPrefEmail" value="email" />
-                <span class="check-item__label">Email</span>
-              </label>
-              <label class="check-item">
-                <input type="checkbox" id="dashContactPrefWhatsapp" value="whatsapp" />
-                <span class="check-item__label">WhatsApp</span>
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="section-footer">
-          <button type="button" class="btn btn--primary btn--sm" id="saveProfileBtn" onclick="saveProfile()">Save Profile</button>
-          <span id="profileMsg" class="hidden" style="font-size: var(--text-sm);"></span>
-        </div>
-      </div>
+<script src="config.js"></script>
+<script type="module">
+  import { app, db } from './firebase-config.js';
+  import { getAuth, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+  import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
+  import { collection, doc, setDoc, getDoc, query, where, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
-      <!-- ── Business Contact card (spa only) ── -->
-      <div class="dash-card hidden" id="dashBusinessContactCard">
-        <div class="dash-card__title">Business Contact</div>
-        <div class="dash-card__sub">Contact details shown on your public listing.</div>
-        <div class="field-stack">
-          <div class="field">
-            <label class="field__label" for="editSpaPhone">Spa Landline
-              <span style="font-weight:400; color:var(--text-muted);">(optional)</span>
-            </label>
-            <input type="tel" id="editSpaPhone" class="input" placeholder="e.g. 011 123 4567" />
-          </div>
-          <div class="toggle-wrap">
-            <div class="toggle-wrap__label">Show landline on listing</div>
-            <label class="toggle">
-              <input type="checkbox" id="dashSpaPhoneVisible" />
-              <span class="toggle__track"></span>
-            </label>
-          </div>
-          <div class="field">
-            <label class="field__label" for="editSpaMobile">Spa Mobile
-              <span style="font-weight:400; color:var(--text-muted);">(optional)</span>
-            </label>
-            <input type="tel" id="editSpaMobile" class="input" placeholder="e.g. 082 123 4567" />
-          </div>
-          <div class="toggle-wrap">
-            <div class="toggle-wrap__label">Show mobile on listing</div>
-            <label class="toggle">
-              <input type="checkbox" id="dashSpaMobileVisible" />
-              <span class="toggle__track"></span>
-            </label>
-          </div>
-        </div>
-        <div class="section-footer">
-          <button type="button" class="btn btn--primary btn--sm"
-            id="saveBusinessContactBtn" onclick="saveBusinessContact()">Save Contact</button>
-          <span id="businessContactMsg" class="hidden"
-            style="font-size:var(--text-sm);"></span>
-        </div>
-      </div>
+  const auth    = getAuth(app);
+  const storage = getStorage(app);
 
-      <!-- ── Location card ── -->
-      <div class="dash-card">
-        <div class="dash-card__title">Your Location</div>
-        <div class="dash-card__sub">Update your location if you have moved or relocated.</div>
-        <div class="field-stack">
-          <div class="field">
-            <label class="field__label" for="editProvince">Province</label>
-            <select id="editProvince" class="select" onchange="onEditProvinceChange()">
-              <option value="">Select province…</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="field__label" for="editArea">City / Town</label>
-            <select id="editArea" class="select" onchange="onEditAreaChange()" disabled>
-              <option value="">Select city/town…</option>
-            </select>
-          </div>
-          <div class="field hidden" id="editLocationAreaField">
-            <label class="field__label" for="editLocationArea">Area</label>
-            <select id="editLocationArea" class="select" onchange="onEditLocationAreaChange()" disabled>
-              <option value="">Select area…</option>
-            </select>
-          </div>
-          <div class="field" id="editSuburbField">
-            <label class="field__label" for="editSuburb">Suburb</label>
-            <select id="editSuburb" class="select" disabled>
-              <option value="">Select suburb…</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="field__label" for="editAddressLine1">
-              Full Street Address <span style="font-weight:400; color: var(--text-muted);">(optional)</span>
-            </label>
-            <input type="text" id="editAddressLine1" class="input" placeholder="e.g. 12 Main Street, Sandton" />
-            <p class="helper-note">Your address is never shown publicly — admin only.</p>
-          </div>
-          <div class="toggle-wrap">
-            <div>
-              <div class="toggle-wrap__label">Show full address publicly</div>
-              <div style="font-size:var(--text-xs); color:var(--text-muted); margin-top:2px;">
-                Off = suburb only shown (recommended for therapists)</div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="dashAddressVisible" />
-              <span class="toggle__track"></span>
-            </label>
-          </div>
-        </div>
-        <div class="section-footer">
-          <button type="button" class="btn btn--primary btn--sm" id="saveLocationBtn" onclick="saveLocation()">Save Location</button>
-          <span id="locationMsg" class="hidden" style="font-size: var(--text-sm);"></span>
-        </div>
-      </div>
+  let offeringsCache = [];
+  let SECTION_COUNT  = 8;
+  let capturedGpsLat = null;
+  let capturedGpsLng = null;
+  let isSpa          = false;
 
-      <!-- ── Services card ── -->
-      <div class="dash-card">
-        <div class="dash-card__title">Your Services</div>
-        <div class="dash-card__sub">Updates save immediately to your listing.</div>
-
-        <div id="dashMassageStylesField">
-          <div class="form-section-label" style="margin-top:0;">Massage Styles</div>
-          <div id="dashMassageStylesGroup" class="check-group check-group--3col">
-            <div class="loading-options">Loading...</div>
-          </div>
-        </div>
-
-        <div id="dashTraditionsField" style="margin-top:var(--space-4);">
-          <div class="form-section-label">Traditions</div>
-          <div id="dashTraditionsGroup" class="check-group check-group--3col">
-            <div class="loading-options">Loading...</div>
-          </div>
-        </div>
-
-        <div id="dashTreatmentsField" style="margin-top:var(--space-4);">
-          <div class="form-section-label">Treatments</div>
-          <div id="dashTreatmentsGroup" class="check-group check-group--3col">
-            <div class="loading-options">Loading...</div>
-          </div>
-        </div>
-
-        <div id="dashClassificationField" style="margin-top:var(--space-4);">
-          <div class="form-section-label">Classification</div>
-          <div id="dashClassificationGroup" class="check-group">
-            <div class="loading-options">Loading...</div>
-          </div>
-        </div>
-
-        <div id="dashServiceOfferingsField" style="margin-top:var(--space-4);">
-          <div class="form-section-label">Service Offerings</div>
-          <div id="dashServiceOfferingsGroup" class="check-group check-group--3col">
-            <div class="loading-options">Loading...</div>
-          </div>
-        </div>
-
-        <div id="dashPremisesField" class="hidden" style="margin-bottom:var(--space-4);">
-          <div class="form-section-label" style="margin-top:0;">Premises Type</div>
-          <div class="radio-group radio-group--row">
-            <label class="radio-item radio-item--flex">
-              <input type="radio" name="dashPremisesType" value="home" />
-              <span class="radio-item__label">Home</span>
-            </label>
-            <label class="radio-item radio-item--flex">
-              <input type="radio" name="dashPremisesType" value="business" />
-              <span class="radio-item__label">Business</span>
-            </label>
-          </div>
-        </div>
-
-        <div id="dashAmenitiesField" style="margin-bottom:var(--space-4);">
-          <div class="form-section-label" style="margin-top:0;">Amenities</div>
-          <div id="dashAmenitiesGroup" class="check-group">
-            <div class="loading-options">Loading...</div>
-          </div>
-        </div>
-
-        <div class="form-section-label">Genders Served</div>
-        <div class="radio-group">
-          <label class="radio-item"><input type="radio" name="dashGenderServed" value="ladies" /><span class="radio-item__label">Ladies only</span></label>
-          <label class="radio-item"><input type="radio" name="dashGenderServed" value="gents" /><span class="radio-item__label">Gentlemen only</span></label>
-          <label class="radio-item"><input type="radio" name="dashGenderServed" value="both" /><span class="radio-item__label">Both</span></label>
-        </div>
-
-        <div class="section-footer">
-          <button type="button" class="btn btn--primary btn--sm" id="saveServicesBtn" onclick="saveServices()">Save Services</button>
-          <span id="servicesMsg" class="hidden" style="font-size: var(--text-sm);"></span>
-        </div>
-      </div>
-
-      <!-- ── Availability card ── -->
-      <div class="dash-card">
-        <div class="dash-card__title">Your Availability</div>
-
-        <!-- Mobile massage — individual only -->
-        <div id="dashMobileSection" class="field-stack" style="margin-bottom: var(--space-3);">
-          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
-            <input type="checkbox" id="dashMobileAvailable" onchange="onDashMobileToggle()" style="width:16px; height:16px; accent-color:var(--accent); flex-shrink:0;" />
-            <span style="font-size:var(--text-base); color:var(--text);">Mobile massage available</span>
-          </label>
-          <div class="field hidden" id="dashTravelKmField">
-            <label class="field__label" for="dashWillingToTravelKm">Willing to travel up to</label>
-            <select class="select" id="dashWillingToTravelKm">
-              <option value="5">5 km</option>
-              <option value="10">10 km</option>
-              <option value="20">20 km</option>
-              <option value="30">30 km</option>
-              <option value="50">50 km+</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Weekly hours -->
-        <div class="form-section-label" style="margin-top:0;">Working Hours</div>
-        <div class="hours-grid" id="dashWeeklyHoursGrid"></div>
-
-        <!-- Available outside hours — individual only -->
-        <div id="dashOutsideHoursSection" style="margin-top: var(--space-3);">
-          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
-            <input type="checkbox" id="dashAvailableOutsideHours" style="width:16px; height:16px; accent-color:var(--accent); flex-shrink:0;" />
-            <span style="font-size:var(--text-sm); color:var(--text);">Available outside listed hours — customer must make arrangements</span>
-          </label>
-        </div>
-
-        <div class="section-footer">
-          <button type="button" class="btn btn--primary btn--sm" id="saveAvailabilityBtn" onclick="saveAvailability()">Save Availability</button>
-          <span id="availabilityMsg" class="hidden" style="font-size: var(--text-sm);"></span>
-        </div>
-      </div>
-
-      <!-- ── Photos card ── -->
-      <div class="dash-card">
-        <div class="dash-card__title">Your Photos</div>
-        <div class="dash-card__sub">You can upload up to 5 photos.</div>
-        <p id="dashSpaPhotoNote" class="helper-note hidden" style="margin-bottom: var(--space-3); margin-top: -var(--space-2);">We recommend including an exterior photo of your spa.</p>
-
-        <!-- Profile photos (dynamic) -->
-        <div id="dashPhotoContainer"></div>
-        <input type="file" id="dashPhotoFileInput" accept="image/*" class="hidden" />
-
-        <div class="section-footer">
-          <button type="button" class="btn btn--primary btn--sm" id="savePhotosBtn" onclick="savePhotos()">Save Photos</button>
-          <span id="photosMsg" class="hidden" style="font-size: var(--text-sm);"></span>
-        </div>
-      </div>
-
-      <!-- ── Sign out at bottom ── -->
-      <button type="button" class="btn btn--secondary btn--full" style="border-radius: var(--radius);" onclick="signOutAndRedirect()">Sign Out</button>
-
-    </div>
-  </div>
-
-  <script src="config.js"></script>
-  <script type="module">
-    import { app, db } from './firebase-config.js';
-    import {
-      getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut
-    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-    import {
-      getStorage, ref as storageRef, uploadBytes, getDownloadURL
-    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
-    import {
-      collection, query, where, getDocs, orderBy, doc, updateDoc, addDoc, serverTimestamp
-    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
-
-    const auth    = getAuth(app);
-    const storage = getStorage(app);
-
-    // ── Cached offerings
-    let dashOfferingsCache = [];
-
-    async function loadDashOfferings() {
+  // ════════════════════════════════════════
+  // PAGE LOAD — session lookup
+  // ════════════════════════════════════════
+  let sessionEntry = null;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('mm_session_')) {
       try {
-        const snap = await getDocs(
-          query(collection(db, 'offerings'), where('launchActive', '==', true))
-        );
-        dashOfferingsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderDashGroup('massageStyles',    'dashMassageStylesGroup',    'dashMassageStyles');
-        renderDashGroup('traditions',       'dashTraditionsGroup',       'dashTraditions');
-        renderDashGroup('treatments',       'dashTreatmentsGroup',       'dashTreatments');
-        renderDashGroup('classification',   'dashClassificationGroup',   'dashClassification');
-        renderDashGroup('serviceOfferings', 'dashServiceOfferingsGroup', 'dashServiceOfferings');
-        renderDashGroup('amenities',        'dashAmenitiesGroup',        'dashAmenities');
-      } catch (err) {
-        console.error('Failed to load dash offerings:', err);
-      }
-    }
-
-    function renderDashGroup(category, containerId, inputName) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      const items = dashOfferingsCache
-        .filter(o => o.category === category &&
-          (category === 'amenities' || (o.visibleTo &&
-          (o.visibleTo.includes('therapist') || o.visibleTo.includes('spa')))))
-        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-      if (items.length === 0) {
-        container.innerHTML = '<div class="loading-options" style="color:var(--text-muted);">No options available.</div>';
-        return;
-      }
-      container.innerHTML = items.map(item => `
-        <label class="check-item">
-          <input type="checkbox" name="${inputName}" value="${item.name}" />
-          <span class="check-item__label">${item.name}</span>
-        </label>
-      `).join('');
-    }
-
-    // ── State ──
-    let confirmationResult  = null;
-    let appVerifier         = null;
-    let supplierDocId       = null;
-    let supplierData        = null;
-    let currentPhotos         = [];  // array of { url, storagePath }
-    let pendingUploads        = [];  // array of { file, localUrl }
-
-    let currentUid             = null;
-
-    // ════════════════════════════════════════════
-    let provincesCache = [];
-    let townsCache = {};
-    let suburbsCache = {};
-    let areasCache = {};
-
-    // ════════════════════════════════════════════
-    // DAYS / HOURS HELPERS
-    // ════════════════════════════════════════════
-    const DAYS       = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-    const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-
-    function timeOptions(defaultVal, isTo) {
-      const pad = n => String(n).padStart(2,'0');
-      let out = '';
-      const start = isTo ? 2 : 1;
-      const end   = isTo ? 24 : 23;
-      for (let h = start; h <= end; h++) {
-        const label = h === 24 ? '24:00' : pad(h) + ':00';
-        out += `<option value="${h}"${h === defaultVal ? ' selected' : ''}>${label}</option>`;
-      }
-      return out;
-    }
-
-    function buildDashHoursGrid() {
-      const container = document.getElementById('dashWeeklyHoursGrid');
-      container.innerHTML = '';
-      DAYS.forEach((day, i) => {
-        const isWeekday = i < 5;
-        const row = document.createElement('div');
-        row.className = 'hours-row';
-        row.innerHTML = `
-          <span class="hours-row__day">${DAY_LABELS[i]}</span>
-          <label class="toggle" style="width:48px; height:26px; flex-shrink:0;">
-            <input type="checkbox" id="dash-day-${day}" ${isWeekday ? 'checked' : ''}
-              onchange="onDashDayToggle('${day}')" style="opacity:0; width:0; height:0; position:absolute;" />
-            <span class="toggle__track"></span>
-          </label>
-          <div class="hours-row__times" id="dash-dayTimes-${day}" style="${isWeekday ? '' : 'opacity:0.3;'}">
-            <select class="select--sm" id="dash-dayFrom-${day}" ${isWeekday ? '' : 'disabled'}>${timeOptions(9, false)}</select>
-            <span class="hours-row__sep">–</span>
-            <select class="select--sm" id="dash-dayTo-${day}" ${isWeekday ? '' : 'disabled'}>${timeOptions(17, true)}</select>
-          </div>
-        `;
-        container.appendChild(row);
-      });
-    }
-
-    window.onDashDayToggle = function(day) {
-      const checked = document.getElementById('dash-day-' + day).checked;
-      const timesEl = document.getElementById('dash-dayTimes-' + day);
-      timesEl.style.opacity = checked ? '1' : '0.3';
-      timesEl.querySelectorAll('select').forEach(s => { s.disabled = !checked; });
-    };
-
-    window.onDashMobileToggle = function() {
-      const on = document.getElementById('dashMobileAvailable').checked;
-      document.getElementById('dashTravelKmField').classList.toggle('hidden', !on);
-    };
-
-    buildDashHoursGrid();
-
-    // ════════════════════════════════════════════
-    // SESSION TOKEN HELPERS (30-day localStorage)
-    // ════════════════════════════════════════════
-    function sessionKey(phone) {
-      return 'mm_session_' + phone;
-    }
-
-    function getValidSession(phone) {
-      try {
-        const raw = localStorage.getItem(sessionKey(phone));
-        if (!raw) return null;
-        const session = JSON.parse(raw);
-        if (!session.expiry || Date.now() > session.expiry) {
-          localStorage.removeItem(sessionKey(phone));
-          return null;
-        }
-        return session;
-      } catch (_) { return null; }
-    }
-
-    function storeSession(phone, displayName, supplierType) {
-      const session = {
-        displayName,
-        supplierType,
-        expiry: Date.now() + 30 * 24 * 60 * 60 * 1000
-      };
-      localStorage.setItem(sessionKey(phone), JSON.stringify(session));
-    }
-
-    // ════════════════════════════════════════════
-    // PAGE LOAD
-    // ════════════════════════════════════════════
-    (async () => {
-      let foundPhone = null;
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('mm_session_')) {
-          const phone = key.slice('mm_session_'.length);
-          if (getValidSession(phone)) { foundPhone = phone; break; }
-        }
-      }
-
-      if (foundPhone) {
-        const snap = await getDocs(query(collection(db, 'suppliers'), where('cellNumber', '==', foundPhone)));
-        if (!snap.empty) {
-          await loadDashboard(foundPhone);
-        } else {
-          localStorage.removeItem(sessionKey(foundPhone));
-          document.getElementById('loginScreen').classList.remove('hidden');
-        }
-      } else {
-        document.getElementById('loginScreen').classList.remove('hidden');
-      }
-    })();
-
-    // ════════════════════════════════════════════
-    // PHONE AUTH
-    // ════════════════════════════════════════════
-    function formatPhoneNumber(raw) {
-      const digits = raw.replace(/\D/g, '');
-      if (digits.startsWith('27') && digits.length === 11) return '+' + digits;
-      if (digits.startsWith('0')  && digits.length === 10) return '+27' + digits.slice(1);
-      return '+' + digits;
-    }
-
-    function initRecaptchaVerifier() {
-      if (appVerifier) { try { appVerifier.clear(); } catch(_) {} }
-      appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-    }
-
-    window.sendLoginOtp = async function() {
-      const raw   = document.getElementById('loginCell').value.trim();
-      const errEl = document.getElementById('loginError');
-      errEl.classList.add('hidden');
-      document.getElementById('regLinks').classList.add('hidden');
-      if (!raw) {
-        errEl.textContent = 'Please enter your cell number.';
-        errEl.classList.remove('hidden');
-        return;
-      }
-
-      const phone = formatPhoneNumber(raw);
-      const btn   = document.getElementById('sendOtpBtn');
-      btn.classList.add('btn--loading');
-      btn.textContent = 'Sending…';
-
-      try {
-        initRecaptchaVerifier();
-        confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
-        document.getElementById('cellField').classList.add('hidden');
-        document.getElementById('otpSection').classList.remove('hidden');
-        document.getElementById('otpStatusMsg').textContent = `OTP sent to ${phone}. Enter the 6-digit code.`;
-        btn.textContent = 'Resend OTP';
-        btn.classList.remove('btn--loading');
-      } catch (err) {
-        console.error('OTP send error:', err);
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Send OTP';
-        let msg = 'Could not send OTP. Please check the number and try again.';
-        if (err.code === 'auth/invalid-phone-number') msg = 'Invalid phone number format.';
-        if (err.code === 'auth/too-many-requests')    msg = 'Too many attempts. Please wait a few minutes.';
-        errEl.textContent = msg;
-        errEl.classList.remove('hidden');
-        try { appVerifier.clear(); } catch(_) {}
-        appVerifier = null;
-      }
-    };
-
-    window.verifyLoginOtp = async function() {
-      const code  = document.getElementById('loginOtpInput').value.trim();
-      const errEl = document.getElementById('loginError');
-      errEl.classList.add('hidden');
-      document.getElementById('regLinks').classList.add('hidden');
-      if (code.length !== 6) {
-        errEl.textContent = 'Please enter all 6 digits.';
-        errEl.classList.remove('hidden');
-        return;
-      }
-      if (!confirmationResult) {
-        errEl.textContent = 'Please send OTP first.';
-        errEl.classList.remove('hidden');
-        return;
-      }
-
-      const btn = document.getElementById('verifyOtpBtn');
-      btn.classList.add('btn--loading');
-      btn.textContent = 'Verifying…';
-
-      try {
-        await confirmationResult.confirm(code);
-        currentUid = auth.currentUser?.uid || null;
-        const phone = formatPhoneNumber(document.getElementById('loginCell').value.trim());
-
-        const snap = await getDocs(query(collection(db, 'suppliers'), where('cellNumber', '==', phone)));
-        if (!snap.empty) {
-          const sdoc = snap.docs[0];
-          storeSession(phone, sdoc.data().displayName || '', sdoc.data().supplierType || 'individual');
-          await loadDashboard(phone);
-        } else {
-          btn.classList.remove('btn--loading');
-          btn.textContent = 'Verify';
-          document.getElementById('otpSection').classList.add('hidden');
-          errEl.textContent = 'No account found for this number. Please register first.';
-          errEl.classList.remove('hidden');
-          document.getElementById('regLinks').classList.remove('hidden');
-        }
-      } catch (err) {
-        console.error('OTP verify error:', err);
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Verify';
-        let msg = 'Incorrect code. Please try again.';
-        if (err.code === 'auth/code-expired') msg = 'OTP expired. Please request a new one.';
-        errEl.textContent = msg;
-        errEl.classList.remove('hidden');
-      }
-    };
-
-    // ════════════════════════════════════════════
-    // LOAD DASHBOARD
-    // ════════════════════════════════════════════
-    async function loadDashboard(phone) {
-      const snap = await getDocs(query(collection(db, 'suppliers'), where('cellNumber', '==', phone)));
-      if (snap.empty) {
-        document.getElementById('loginError').textContent = 'No supplier account found. Please register first.';
-        document.getElementById('loginError').classList.remove('hidden');
-        document.getElementById('regLinks').classList.remove('hidden');
-        document.getElementById('loginScreen').classList.remove('hidden');
-        return;
-      }
-      const sdoc    = snap.docs[0];
-      supplierDocId = sdoc.id;
-      supplierData  = sdoc.data();
-      await populateDashboard(supplierData);
-      loadDashOfferings();
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('dashboardScreen').classList.remove('hidden');
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }
-
-    // ════════════════════════════════════════════
-    // POPULATE DASHBOARD
-    // ════════════════════════════════════════════
-    async function populateDashboard(data) {
-      const isSpa = (data.supplierType || 'individual') === 'spa';
-
-      // ── Welcome header ──
-      document.getElementById('welcomeName').textContent      = data.displayName || 'there';
-      document.getElementById('membershipNumber').textContent = data.supplierNumber || '';
-
-      const badge  = document.getElementById('statusBadge');
-      const status = (data.status || 'pending').toLowerCase();
-      badge.className = 'status-badge';
-      if (status === 'active') {
-        badge.classList.add('status-badge--active');
-        badge.textContent = 'Active';
-      } else if (status === 'suspended') {
-        badge.classList.add('status-badge--suspended');
-        badge.textContent = 'Suspended';
-      } else {
-        badge.classList.add('status-badge--pending');
-        badge.textContent = 'Pending approval';
-      }
-
-      // ── Profile card ──
-      document.getElementById('editDisplayName').value = data.displayName || '';
-
-      // Gender (therapist only)
-      if (!isSpa) {
-        document.getElementById('dashGenderField').classList.remove('hidden');
-        const genderVal = data.gender || '';
-        const gr = document.querySelector(`input[name="dashGender"][value="${genderVal}"]`);
-        if (gr) gr.checked = true;
-      }
-
-      const aboutMe = data.aboutMe || '';
-      document.getElementById('editAboutMe').value = aboutMe;
-      document.getElementById('aboutMeCount').textContent = aboutMe.length + ' / 300';
-
-      if (isSpa) {
-        document.getElementById('dashAboutMeField').classList.add('hidden');
-        document.getElementById('dashAboutSpaField').classList.remove('hidden');
-        const aboutSpa = data.aboutSpa || '';
-        document.getElementById('editAboutSpa').value = aboutSpa;
-        document.getElementById('aboutSpaCount').textContent = aboutSpa.length + ' / 300';
-      }
-
-      const specials = data.specialsText || '';
-      document.getElementById('editSpecials').value = specials;
-      document.getElementById('specialsCount').textContent = specials.length + ' / 300';
-
-      document.getElementById('editWhatsapp').value = data.whatsappNumber || '';
-      document.getElementById('dashShowWhatsapp').checked = !!data.showWhatsapp;
-      document.getElementById('editEmail').value    = data.email || '';
-
-      const emailLabel = document.getElementById('emailLabel');
-      if (isSpa) {
-        emailLabel.innerHTML = 'Email Address';
-      } else {
-        emailLabel.innerHTML = 'Email Address <span style="font-weight:400; color: var(--text-muted);">(optional)</span>';
-      }
-
-      if (!isSpa) {
-        document.getElementById('dashExperienceField').classList.remove('hidden');
-        document.getElementById('editExperienceYears').value = data.experienceYears || '';
-        document.getElementById('dashQualificationsField').classList.remove('hidden');
-        document.getElementById('editQualifications').value = data.qualifications || '';
-      }
-
-      const associations = Array.isArray(data.associationMembership)
-        ? data.associationMembership : [];
-      document.querySelectorAll('input[name="dashAssociation"]').forEach(cb => {
-        cb.checked = associations.includes(cb.value);
-      });
-
-      // ── Contact preferences ──
-      const contactPrefs = data.contactPreferences || [];
-      if (isSpa) {
-        document.getElementById('dashContactPrefSmsItem').style.display = 'none';
-        document.getElementById('dashContactPrefPhoneItem').style.display = '';
-        document.getElementById('dashContactPrefPhone').checked =
-          contactPrefs.includes('phone');
-      } else {
-        document.getElementById('dashContactPrefSms').checked = true;
-      }
-      document.getElementById('dashContactPrefEmail').checked =
-        contactPrefs.includes('email');
-      document.getElementById('dashContactPrefWhatsapp').checked =
-        contactPrefs.includes('whatsapp');
-
-      // ── Business Contact card (spa only) ──
-      if (isSpa) {
-        document.getElementById('dashBusinessContactCard').classList.remove('hidden');
-        document.getElementById('editSpaPhone').value        = data.spaPhone   || '';
-        document.getElementById('dashSpaPhoneVisible').checked = !!data.spaPhoneVisible;
-        document.getElementById('editSpaMobile').value       = data.spaMobile  || '';
-        document.getElementById('dashSpaMobileVisible').checked = !!data.spaMobileVisible;
-      }
-
-      // ── Location card ──
-      await populateProvinces();
-      if (data.province) {
-        document.getElementById('editProvince').value = data.province;
-        await onEditProvinceChange();
-        if (data.area) {
-          document.getElementById('editArea').value = data.area;
-          await onEditAreaChange();
-          if (data.locationArea) {
-            document.getElementById('editLocationArea').value = data.locationArea;
-            await onEditLocationAreaChange();
-          }
-        }
-      }
-      if (data.suburb) document.getElementById('editSuburb').value = data.suburb;
-      document.getElementById('editAddressLine1').value = data.addressLine1 || '';
-      document.getElementById('dashAddressVisible').checked = !!data.addressVisible;
-
-      // ── Services card ──
-      const massageStyles = data.massageStyles || [];
-      const traditions = data.traditions || [];
-      const treatments = data.treatments || [];
-      const classification = Array.isArray(data.classification) ? data.classification : (data.classification ? [data.classification] : []);
-      const serviceOfferings = data.serviceOfferings || [];
-
-      await loadDashOfferings();
-
-      document.querySelectorAll('input[name="dashMassageStyles"]').forEach(cb => {
-        cb.checked = massageStyles.includes(cb.value);
-      });
-      document.querySelectorAll('input[name="dashTraditions"]').forEach(cb => {
-        cb.checked = traditions.includes(cb.value);
-      });
-      document.querySelectorAll('input[name="dashTreatments"]').forEach(cb => {
-        cb.checked = treatments.includes(cb.value);
-      });
-      document.querySelectorAll('input[name="dashClassification"]').forEach(cb => {
-        cb.checked = classification.includes(cb.value);
-      });
-      document.querySelectorAll('input[name="dashServiceOfferings"]').forEach(cb => {
-        cb.checked = serviceOfferings.includes(cb.value);
-      });
-
-      if (data.genderServed) {
-        const r = document.querySelector(`input[name="dashGenderServed"][value="${data.genderServed}"]`);
-        if (r) r.checked = true;
-      }
-
-      // ── Premises (therapist only) ──
-      if (!isSpa) {
-        document.getElementById('dashPremisesField').classList.remove('hidden');
-        const pt = data.premisesType || '';
-        const pr = document.querySelector(`input[name="dashPremisesType"][value="${pt}"]`);
-        if (pr) pr.checked = true;
-      }
-      // ── Amenities (both) ──
-      const savedAmenities = data.amenities || [];
-      document.querySelectorAll('#dashAmenitiesGroup input[type="checkbox"]').forEach(cb => {
-        cb.checked = savedAmenities.includes(cb.value);
-      });
-
-      // ── Availability card ──
-      if (isSpa) {
-        document.getElementById('dashMobileSection').classList.add('hidden');
-        document.getElementById('dashOutsideHoursSection').classList.add('hidden');
-      } else {
-        const mobileAvail = !!data.mobileAvailable;
-        document.getElementById('dashMobileAvailable').checked = mobileAvail;
-        if (mobileAvail) {
-          document.getElementById('dashTravelKmField').classList.remove('hidden');
-          if (data.willingToTravelKm) document.getElementById('dashWillingToTravelKm').value = String(data.willingToTravelKm);
-        }
-        document.getElementById('dashAvailableOutsideHours').checked = !!data.availableOutsideHours;
-      }
-
-      if (data.weeklyHours) {
-        DAYS.forEach(day => {
-          const d = data.weeklyHours[day];
-          if (!d) return;
-          const cb      = document.getElementById('dash-day-' + day);
-          const timesEl = document.getElementById('dash-dayTimes-' + day);
-          const fromEl  = document.getElementById('dash-dayFrom-' + day);
-          const toEl    = document.getElementById('dash-dayTo-'   + day);
-          if (cb) cb.checked = !!d.available;
-          if (timesEl) timesEl.style.opacity = d.available ? '1' : '0.3';
-          if (fromEl) { fromEl.value = d.from ?? 9;  fromEl.disabled = !d.available; }
-          if (toEl)   { toEl.value   = d.to   ?? 17; toEl.disabled   = !d.available; }
-        });
-      }
-
-      // ── Photos card ──
-      if (isSpa) document.getElementById('dashSpaPhotoNote').classList.remove('hidden');
-
-      const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
-      currentPhotos  = rawPhotos.map(p => typeof p === 'string' ? { url: p, storagePath: null } : p).filter(p => p?.url);
-      pendingUploads = [];
-      buildPhotoSlots();
-
-
-    }
-
-    // ════════════════════════════════════════════
-    // LOCATIONS CASCADE — reads from Firestore
-    // ════════════════════════════════════════════
-    async function populateProvinces() {
-      const sel = document.getElementById('editProvince');
-      sel.innerHTML = '<option value="">Select province…</option>';
-      try {
-        const snap = await getDocs(query(collection(db, 'locations_provinces'), orderBy('name', 'asc')));
-        provincesCache = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
-        provincesCache.forEach(p => {
-          const o = document.createElement('option');
-          o.value = p.id; o.textContent = p.name;
-          sel.appendChild(o);
-        });
-      } catch (err) {
-        console.error('Failed to load provinces:', err);
-      }
-    }
-
-    window.onEditProvinceChange = async function() {
-      const pid      = document.getElementById('editProvince').value;
-      const areaEl   = document.getElementById('editArea');
-      const suburbEl = document.getElementById('editSuburb');
-      areaEl.innerHTML   = '<option value="">Select city/town…</option>';
-      suburbEl.innerHTML = '<option value="">Select suburb…</option>';
-      areaEl.disabled = true; suburbEl.disabled = true;
-      if (!pid) return;
-      if (!townsCache[pid]) {
-        try {
-          const snap = await getDocs(query(
-            collection(db, 'locations_towns'),
-            where('provinceId', '==', pid),
-            orderBy('name', 'asc')
-          ));
-          townsCache[pid] = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
-        } catch (err) {
-          console.error('Failed to load towns:', err);
-          return;
-        }
-      }
-      townsCache[pid].forEach(t => {
-        const o = document.createElement('option');
-        o.value = t.id; o.textContent = t.name;
-        areaEl.appendChild(o);
-      });
-      areaEl.disabled = false;
-    };
-
-    window.onEditAreaChange = async function() {
-      const tid                = document.getElementById('editArea').value;
-      const suburbEl           = document.getElementById('editSuburb');
-      const locationAreaEl      = document.getElementById('editLocationArea');
-      const locationAreaField   = document.getElementById('editLocationAreaField');
-      const suburbField        = document.getElementById('editSuburbField');
-
-      suburbEl.innerHTML      = '<option value="">Select suburb…</option>';
-      locationAreaEl.innerHTML = '<option value="">Select area…</option>';
-      suburbEl.disabled       = true;
-      locationAreaEl.disabled  = true;
-      locationAreaField.classList.add('hidden');
-      suburbField.classList.remove('hidden');
-
-      if (!tid) return;
-
-      if (!suburbsCache[tid]) {
-        try {
-          const snap = await getDocs(query(
-            collection(db, 'locations_suburbs'),
-            where('townId', '==', tid),
-            orderBy('name', 'asc')
-          ));
-          suburbsCache[tid] = snap.docs.map(d => d.data().name);
-        } catch (err) {
-          console.error('Failed to load suburbs:', err);
-          return;
-        }
-      }
-
-      if (!areasCache[tid]) {
-        try {
-          const snap = await getDocs(query(
-            collection(db, 'locations_areas'),
-            where('townId', '==', tid)
-          ));
-          areasCache[tid] = snap.docs.map(d => ({ id: d.id, name: d.data().areaName, suburbs: d.data().suburbs || [] }));
-        } catch (err) {
-          console.error('Failed to load areas:', err);
-          areasCache[tid] = [];
-        }
-      }
-
-      if (areasCache[tid].length > 0) {
-        const noneOpt = document.createElement('option');
-        noneOpt.value = 'none'; noneOpt.textContent = 'My suburb is not in these areas';
-        locationAreaEl.appendChild(noneOpt);
-        areasCache[tid].forEach(a => {
-          const o = document.createElement('option');
-          o.value = a.id; o.textContent = a.name;
-          locationAreaEl.appendChild(o);
-        });
-        locationAreaEl.disabled = false;
-        locationAreaField.classList.remove('hidden');
-        suburbField.classList.add('hidden');
-      } else {
-        suburbsCache[tid].forEach(s => {
-          const o = document.createElement('option');
-          o.value = s; o.textContent = s;
-          suburbEl.appendChild(o);
-        });
-        suburbEl.disabled = false;
-      }
-    };
-
-    window.onEditLocationAreaChange = async function() {
-      const areaId      = document.getElementById('editLocationArea').value;
-      const suburbEl    = document.getElementById('editSuburb');
-      const suburbField = document.getElementById('editSuburbField');
-      const tid         = document.getElementById('editArea').value;
-      suburbEl.innerHTML = '<option value="">Select suburb…</option>';
-      suburbEl.disabled  = true;
-      suburbField.classList.add('hidden');
-      if (areaId === 'none') {
-        suburbField.classList.remove('hidden');
-        if (suburbsCache[tid]) {
-          suburbsCache[tid].forEach(s => {
-            const o = document.createElement('option');
-            o.value = s; o.textContent = s;
-            suburbEl.appendChild(o);
-          });
-          suburbEl.disabled = false;
-        }
-      }
-    };
-
-    populateProvinces();
-
-    // ════════════════════════════════════════════
-    // GEOCODING
-    // ════════════════════════════════════════════
-    async function geocodeAddress(address) {
-      const key = window.GOOGLE_MAPS_API_KEY;
-      if (!key) return null;
-      try {
-        const res  = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${key}`);
-        const json = await res.json();
-        if (json.status === 'OK' && json.results.length) {
-          const { lat, lng } = json.results[0].geometry.location;
-          return { lat, lng };
+        const parsed = JSON.parse(localStorage.getItem(key));
+        if (parsed && parsed.expiry && Date.now() < parsed.expiry) {
+          sessionEntry = { phone: key.replace('mm_session_', ''), ...parsed };
+          break;
         }
       } catch (_) {}
-      return null;
     }
+  }
+  if (!sessionEntry) { window.location.href = 'index.html'; throw new Error('no session'); }
 
-    // ════════════════════════════════════════════
-    // CHANGE LOG HELPER
-    // ════════════════════════════════════════════
-    function writeChangeLog(field) {
-      const uid = auth.currentUser?.uid;
-      addDoc(collection(db, 'suppliers', supplierDocId, 'changeLogs'), {
-        supplierId: uid,
-        field,
-        oldValue:  'dashboard update',
-        newValue:  'dashboard update',
-        changedAt: serverTimestamp(),
-        changedBy: 'supplier'
-      }).catch(() => {});
+  window.supplierPhone = sessionEntry.phone;
+
+  const supplierSnap = await getDoc(doc(db, 'suppliers', window.supplierPhone));
+  if (!supplierSnap.exists()) { window.location.href = 'index.html'; throw new Error('no supplier doc'); }
+  window.supplierData = supplierSnap.data();
+
+  isSpa = window.supplierData.supplierType === 'spa';
+  document.getElementById('nameBar').textContent = window.supplierData.displayName || window.supplierPhone;
+
+  await loadOfferings();
+
+  if (isSpa) { SECTION_COUNT = 9; renderSpa(); }
+  else        { SECTION_COUNT = 8; renderTherapist(); }
+
+  document.getElementById('signOutBtn').addEventListener('click', async () => {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('mm_session_')) localStorage.removeItem(k);
     }
+    try { await signOut(auth); } catch (_) {}
+    window.location.href = 'index.html';
+  });
 
-    // ════════════════════════════════════════════
-    // SAVE PROFILE
-    // ════════════════════════════════════════════
-    window.saveProfile = async function() {
-      const msgEl = document.getElementById('profileMsg');
-      msgEl.classList.add('hidden');
-      const btn = document.getElementById('saveProfileBtn');
-      btn.classList.add('btn--loading');
-      btn.textContent = 'Saving…';
+  // ════════════════════════════════════════
+  // OFFERINGS
+  // ════════════════════════════════════════
+  async function loadOfferings() {
+    try {
+      const snap = await getDocs(query(collection(db, 'offerings'), where('launchActive', '==', true)));
+      offeringsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) { console.error('loadOfferings:', err); }
+  }
 
-      if (!auth.currentUser) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Profile';
-        msgEl.textContent = 'Session expired, please log in again.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        setTimeout(() => {
-          document.getElementById('dashboardScreen').classList.add('hidden');
-          document.getElementById('loginScreen').classList.remove('hidden');
-        }, 2000);
-        return;
-      }
+  function renderCheckboxGroup(category, containerId, inputName, selectedValues = [], filterFn = null) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const items = offeringsCache
+      .filter(o => o.category === category && (filterFn ? filterFn(o) : true))
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    if (items.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:var(--text-sm);">No options available.</div>';
+      return;
+    }
+    container.innerHTML = items.map(item => `
+      <label class="check-item">
+        <input type="checkbox" name="${inputName}" value="${esc(item.name)}" ${selectedValues.includes(item.name) ? 'checked' : ''} />
+        <span class="check-item__label">${esc(item.name)}</span>
+      </label>
+    `).join('');
+  }
 
-      const isSpa = (supplierData?.supplierType || 'individual') === 'spa';
-      const displayName    = document.getElementById('editDisplayName').value.trim();
-      const specialsText   = document.getElementById('editSpecials').value.trim();
-      const whatsappNumber = document.getElementById('editWhatsapp').value.trim();
-      const email          = document.getElementById('editEmail').value.trim();
-
-      if (!displayName) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Profile';
-        msgEl.textContent = 'Display name is required.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        return;
-      }
-      if (isSpa && !email) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Profile';
-        msgEl.textContent = 'Email address is required for spa accounts.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        return;
-      }
-      if (isSpa && email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Profile';
-        msgEl.textContent = 'Please enter a valid email address.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        return;
-      }
-
-      try {
-        const gender = document.querySelector('input[name="dashGender"]:checked')?.value || null;
-        const aboutSpa = isSpa
-          ? document.getElementById('editAboutSpa').value.trim() : null;
-        const aboutMeVal = !isSpa
-          ? document.getElementById('editAboutMe').value.trim() : null;
-        const showWhatsapp = document.getElementById('dashShowWhatsapp').checked;
-        const experienceYears = !isSpa
-          ? document.getElementById('editExperienceYears').value || null : null;
-        const qualifications = !isSpa
-          ? document.getElementById('editQualifications').value.trim() || null : null;
-        const associationMembership = Array.from(
-          document.querySelectorAll('input[name="dashAssociation"]:checked')
-        ).map(cb => cb.value);
-
-        await updateDoc(doc(db, 'suppliers', supplierDocId), {
-          displayName,
-          gender:                isSpa ? null : gender,
-          aboutMe:               isSpa ? null : aboutMeVal,
-          aboutSpa:              isSpa ? aboutSpa : null,
-          specialsText,
-          whatsappNumber:        whatsappNumber || null,
-          showWhatsapp,
-          email:                 email || null,
-          experienceYears:       isSpa ? null : experienceYears,
-          qualifications:        isSpa ? null : qualifications,
-          associationMembership,
-          contactPreferences: isSpa
-            ? ['phone',
-               ...(document.getElementById('dashContactPrefWhatsapp').checked ? ['whatsapp'] : []),
-               ...(document.getElementById('dashContactPrefEmail').checked    ? ['email']    : [])]
-            : ['sms',
-               ...(document.getElementById('dashContactPrefWhatsapp').checked ? ['whatsapp'] : []),
-               ...(document.getElementById('dashContactPrefEmail').checked    ? ['email']    : [])],
-          updatedAt:             serverTimestamp()
-        });
-        writeChangeLog('Profile');
-
-        const sessionKeyFound = Object.keys(localStorage).find(k => k.startsWith('mm_session_'));
-        if (sessionKeyFound) {
-          const phoneNum = sessionKeyFound.slice('mm_session_'.length);
-          storeSession(phoneNum, displayName, supplierData?.supplierType || 'individual');
-        }
-
-        if (supplierData) supplierData.displayName = displayName;
-        document.getElementById('welcomeName').textContent = displayName;
-
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Profile';
-        msgEl.textContent = 'Profile updated successfully.';
-        msgEl.style.color = 'var(--green)';
-        msgEl.classList.remove('hidden');
-        setTimeout(() => msgEl.classList.add('hidden'), 3000);
-      } catch (err) {
-        console.error('saveProfile error:', err);
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Profile';
-        msgEl.textContent = 'Failed to save. Please try again.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-      }
-    };
-
-    // ════════════════════════════════════════════
-    // SAVE BUSINESS CONTACT
-    // ════════════════════════════════════════════
-    window.saveBusinessContact = async function() {
-      const msgEl = document.getElementById('businessContactMsg');
-      msgEl.classList.add('hidden');
-      const btn = document.getElementById('saveBusinessContactBtn');
-      btn.classList.add('btn--loading');
-      btn.textContent = 'Saving…';
-      if (!auth.currentUser) {
-        btn.classList.remove('btn--loading'); btn.textContent = 'Save Contact';
-        msgEl.textContent = 'Session expired, please log in again.';
-        msgEl.style.color = '#f87171'; msgEl.classList.remove('hidden');
-        return;
-      }
-      try {
-        await updateDoc(doc(db, 'suppliers', supplierDocId), {
-          spaPhone:         document.getElementById('editSpaPhone').value.trim() || null,
-          spaPhoneVisible:  document.getElementById('dashSpaPhoneVisible').checked,
-          spaMobile:        document.getElementById('editSpaMobile').value.trim() || null,
-          spaMobileVisible: document.getElementById('dashSpaMobileVisible').checked,
-          updatedAt:        serverTimestamp()
-        });
-        writeChangeLog('BusinessContact');
-        btn.classList.remove('btn--loading'); btn.textContent = 'Save Contact';
-        msgEl.textContent = 'Contact details updated.';
-        msgEl.style.color = 'var(--green)'; msgEl.classList.remove('hidden');
-        setTimeout(() => msgEl.classList.add('hidden'), 3000);
-      } catch (err) {
-        console.error('saveBusinessContact error:', err);
-        btn.classList.remove('btn--loading'); btn.textContent = 'Save Contact';
-        msgEl.textContent = 'Failed to save. Please try again.';
-        msgEl.style.color = '#f87171'; msgEl.classList.remove('hidden');
-      }
-    };
-
-    // ════════════════════════════════════════════
-    // SAVE LOCATION
-    // ════════════════════════════════════════════
-    window.saveLocation = async function() {
-      const msgEl = document.getElementById('locationMsg');
-      msgEl.classList.add('hidden');
-      const btn = document.getElementById('saveLocationBtn');
-      btn.classList.add('btn--loading');
-      btn.textContent = 'Saving…';
-
-      if (!auth.currentUser) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Location';
-        msgEl.textContent = 'Session expired, please log in again.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        setTimeout(() => {
-          document.getElementById('dashboardScreen').classList.add('hidden');
-          document.getElementById('loginScreen').classList.remove('hidden');
-        }, 2000);
-        return;
-      }
-
-      const province     = document.getElementById('editProvince').value;
-      const area         = document.getElementById('editArea').value;
-      const locationArea  = document.getElementById('editLocationArea')?.value || '';
-      const suburb       = document.getElementById('editSuburb').value;
-      const address      = document.getElementById('editAddressLine1').value.trim();
-      const locationAreaVisible = !document.getElementById('editLocationAreaField')?.classList.contains('hidden');
-
-      if (!province || !area) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Location';
-        msgEl.textContent = 'Province and city/town are required.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        return;
-      }
-      if (locationAreaVisible && !locationArea) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Location';
-        msgEl.textContent = 'Please select an area.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        return;
-      }
-      if (!locationAreaVisible && !suburb) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Location';
-        msgEl.textContent = 'Please select a suburb.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        return;
-      }
-
-      try {
-        const geoQuery = [suburb || locationArea, area, province, 'South Africa'].filter(Boolean).join(', ');
-        const coords   = await geocodeAddress(geoQuery);
-
-        const update = {
-          province,
-          area,
-          locationArea: locationArea && locationArea !== 'none' ? locationArea : null,
-          suburb:      suburb || null,
-          addressLine1:   address || null,
-          addressVisible: document.getElementById('dashAddressVisible').checked,
-          updatedAt:   serverTimestamp()
-        };
-        if (coords) { update.gpsLat = coords.lat; update.gpsLng = coords.lng; }
-
-        await updateDoc(doc(db, 'suppliers', supplierDocId), update);
-        writeChangeLog('Location');
-
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Location';
-        msgEl.textContent = 'Location updated successfully.';
-        msgEl.style.color = 'var(--green)';
-        msgEl.classList.remove('hidden');
-        setTimeout(() => msgEl.classList.add('hidden'), 3000);
-      } catch (err) {
-        console.error('saveLocation error:', err);
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Location';
-        msgEl.textContent = 'Failed to save. Please try again.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-      }
-    };
-
-    // ════════════════════════════════════════════
-    // SAVE SERVICES
-    // ════════════════════════════════════════════
-    window.saveServices = async function() {
-      const isSpa = (supplierData?.supplierType || 'individual') === 'spa';
-      const msgEl = document.getElementById('servicesMsg');
-      msgEl.classList.add('hidden');
-      const btn = document.getElementById('saveServicesBtn');
-      btn.classList.add('btn--loading');
-      btn.textContent = 'Saving…';
-
-      if (!auth.currentUser) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Services';
-        msgEl.textContent = 'Session expired, please log in again.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        setTimeout(() => {
-          document.getElementById('dashboardScreen').classList.add('hidden');
-          document.getElementById('loginScreen').classList.remove('hidden');
-        }, 2000);
-        return;
-      }
-
-      const massageStyles    = Array.from(document.querySelectorAll('input[name="dashMassageStyles"]:checked')).map(cb => cb.value);
-      const traditions       = Array.from(document.querySelectorAll('input[name="dashTraditions"]:checked')).map(cb => cb.value);
-      const treatments       = Array.from(document.querySelectorAll('input[name="dashTreatments"]:checked')).map(cb => cb.value);
-      const classification   = Array.from(document.querySelectorAll('input[name="dashClassification"]:checked')).map(cb => cb.value);
-      const serviceOfferings = Array.from(document.querySelectorAll('input[name="dashServiceOfferings"]:checked')).map(cb => cb.value);
-      const genderServed    = document.querySelector('input[name="dashGenderServed"]:checked')?.value || null;
-
-      if (massageStyles.length === 0) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Services';
-        msgEl.textContent = 'Please select at least one massage style.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        return;
-      }
-
-      try {
-        await updateDoc(doc(db, 'suppliers', supplierDocId), {
-          massageStyles,
-          traditions,
-          treatments,
-          classification,
-          serviceOfferings,
-          genderServed,
-          premisesType: !isSpa
-            ? (document.querySelector('input[name="dashPremisesType"]:checked')?.value || null)
-            : null,
-          amenities: Array.from(
-            document.querySelectorAll('#dashAmenitiesGroup input[type="checkbox"]:checked')
-          ).map(cb => cb.value),
-          updatedAt: serverTimestamp()
-        });
-        writeChangeLog('Services');
-
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Services';
-        msgEl.textContent = 'Services updated successfully.';
-        msgEl.style.color = 'var(--green)';
-        msgEl.classList.remove('hidden');
-        setTimeout(() => msgEl.classList.add('hidden'), 3000);
-      } catch (err) {
-        console.error('saveServices error:', err);
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Services';
-        msgEl.textContent = 'Failed to save. Please try again.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-      }
-    };
-
-    // ════════════════════════════════════════════
-    // SAVE AVAILABILITY
-    // ════════════════════════════════════════════
-    window.saveAvailability = async function() {
-      const msgEl = document.getElementById('availabilityMsg');
-      msgEl.classList.add('hidden');
-      const btn = document.getElementById('saveAvailabilityBtn');
-      btn.classList.add('btn--loading');
-      btn.textContent = 'Saving…';
-
-      if (!auth.currentUser) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Availability';
-        msgEl.textContent = 'Session expired, please log in again.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        setTimeout(() => {
-          document.getElementById('dashboardScreen').classList.add('hidden');
-          document.getElementById('loginScreen').classList.remove('hidden');
-        }, 2000);
-        return;
-      }
-
-      const weeklyHours = {};
-      DAYS.forEach(day => {
-        const available = document.getElementById('dash-day-' + day).checked;
-        weeklyHours[day] = {
-          available,
-          from: available ? parseInt(document.getElementById('dash-dayFrom-' + day).value) : null,
-          to:   available ? parseInt(document.getElementById('dash-dayTo-'   + day).value) : null
-        };
-      });
-
-      const update = { weeklyHours, updatedAt: serverTimestamp() };
-
-      const isSpa = (supplierData?.supplierType || 'individual') === 'spa';
-      if (!isSpa) {
-        const mobileAvailable     = document.getElementById('dashMobileAvailable').checked;
-        const willingToTravelKm   = mobileAvailable ? parseInt(document.getElementById('dashWillingToTravelKm').value) : null;
-        const availableOutsideHours = document.getElementById('dashAvailableOutsideHours').checked;
-        update.mobileAvailable      = mobileAvailable;
-        update.willingToTravelKm    = willingToTravelKm;
-        update.availableOutsideHours = availableOutsideHours;
-      }
-
-      try {
-        await updateDoc(doc(db, 'suppliers', supplierDocId), update);
-        writeChangeLog('Availability');
-
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Availability';
-        msgEl.textContent = 'Availability updated successfully.';
-        msgEl.style.color = 'var(--green)';
-        msgEl.classList.remove('hidden');
-        setTimeout(() => msgEl.classList.add('hidden'), 3000);
-      } catch (err) {
-        console.error('saveAvailability error:', err);
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Availability';
-        msgEl.textContent = 'Failed to save. Please try again.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-      }
-    };
-
-    // ════════════════════════════════════════════
-    // PHOTO DISPLAY HELPERS
-    // ════════════════════════════════════════════
-    function buildPhotoSlots() {
-      const container = document.getElementById('dashPhotoContainer');
-      if (!container) return;
-      container.innerHTML = '';
-
-      const items = [
-        ...currentPhotos.map( (p, i) => ({ src: p.url,      isExisting: true,  idx: i })),
-        ...pendingUploads.map((p, i) => ({ src: p.localUrl,  isExisting: false, idx: i }))
-      ];
-
-      if (items.length > 0) {
-        // Main preview (first item, 100% width)
-        const mainWrap = document.createElement('div');
-        mainWrap.style.cssText = 'position:relative; border-radius:var(--radius); overflow:hidden; margin-bottom:var(--space-2); aspect-ratio:16/9;';
-        const mainImg = document.createElement('img');
-        mainImg.src   = items[0].src;
-        mainImg.alt   = 'Photo 1';
-        mainImg.style.cssText = 'width:100%; height:100%; object-fit:cover; display:block;';
-        mainWrap.appendChild(mainImg);
-        mainWrap.appendChild(makePhotoRemoveBtn(items[0]));
-        container.appendChild(mainWrap);
-
-        // Thumbnail row (items 1+)
-        if (items.length > 1) {
-          const thumbRow = document.createElement('div');
-          thumbRow.style.cssText = 'display:flex; gap:var(--space-2); overflow-x:auto; padding-bottom:4px; margin-bottom:var(--space-2);';
-          for (let i = 1; i < items.length; i++) {
-            const tw = document.createElement('div');
-            tw.style.cssText = 'position:relative; flex-shrink:0; width:72px; height:72px; border-radius:8px; overflow:hidden;';
-            const img = document.createElement('img');
-            img.src   = items[i].src;
-            img.alt   = 'Photo ' + (i + 1);
-            img.style.cssText = 'width:100%; height:100%; object-fit:cover; display:block;';
-            tw.appendChild(img);
-            tw.appendChild(makePhotoRemoveBtn(items[i]));
-            thumbRow.appendChild(tw);
-          }
-          container.appendChild(thumbRow);
-        }
-      }
-
-      // Add photo button (visible when < 5 total)
-      if (items.length < 5) {
-        const addBtn = document.createElement('button');
-        addBtn.type      = 'button';
-        addBtn.className = 'qual-add-btn';
-        addBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add photo';
-        addBtn.onclick   = () => document.getElementById('dashPhotoFileInput').click();
-        container.appendChild(addBtn);
+  // ════════════════════════════════════════
+  // ACCORDION
+  // ════════════════════════════════════════
+  function accordionToggle(n) {
+    for (let i = 1; i <= SECTION_COUNT; i++) {
+      const body    = document.getElementById('accBody'    + i);
+      const chevron = document.getElementById('accChevron' + i);
+      if (!body) continue;
+      if (i === n) {
+        const isOpen = !body.classList.contains('hidden');
+        body.classList.toggle('hidden', isOpen);
+        if (chevron) chevron.classList.toggle('acc-chevron--open', !isOpen);
+      } else {
+        body.classList.add('hidden');
+        if (chevron) chevron.classList.remove('acc-chevron--open');
       }
     }
+  }
+  window.accordionToggle = accordionToggle;
 
-    function makePhotoRemoveBtn(item) {
-      const btn = document.createElement('button');
-      btn.type        = 'button';
-      btn.textContent = '✕';
-      btn.style.cssText = 'position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%; background:transparent; border:none; color:#fff; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; padding:0; font-family:var(--font-sans); text-shadow:0 0 4px rgba(0,0,0,0.9),0 1px 3px rgba(0,0,0,0.7);';
-      btn.onclick = () => {
-        if (item.isExisting) {
-          currentPhotos.splice(item.idx, 1);
-        } else {
-          URL.revokeObjectURL(pendingUploads[item.idx].localUrl);
-          pendingUploads.splice(item.idx, 1);
-        }
-        buildPhotoSlots();
-      };
-      return btn;
+  function showSectionSaved(n) {
+    const numEl = document.getElementById('accNum' + n);
+    if (numEl) { numEl.textContent = '✓'; numEl.classList.add('acc-num--done'); }
+    const fb = document.getElementById('saveFeedback' + n);
+    if (fb) { fb.style.display = 'block'; setTimeout(() => { fb.style.display = 'none'; }, 3000); }
+  }
+
+  async function saveSection(n, data) {
+    const btn   = document.getElementById('saveBtn' + n);
+    const errEl = document.getElementById('saveError' + n);
+    const label = btn ? btn.dataset.label : 'Save';
+    if (btn) { btn.classList.add('btn--loading'); btn.textContent = 'Saving…'; }
+    if (errEl) errEl.style.display = 'none';
+    try {
+      await setDoc(doc(db, 'suppliers', window.supplierPhone), { ...data, lastUpdated: new Date() }, { merge: true });
+      showSectionSaved(n);
+    } catch (err) {
+      console.error('saveSection ' + n + ':', err);
+      if (errEl) { errEl.textContent = 'Save failed. Please try again.'; errEl.style.display = 'block'; }
+    } finally {
+      if (btn) { btn.classList.remove('btn--loading'); btn.textContent = label; }
     }
+  }
 
-    document.getElementById('dashPhotoFileInput').addEventListener('change', function() {
-      if (!this.files.length) return;
-      if (currentPhotos.length + pendingUploads.length >= 5) return;
-      const file     = this.files[0];
-      const localUrl = URL.createObjectURL(file);
-      pendingUploads.push({ file, localUrl });
-      buildPhotoSlots();
-      this.value = '';
+  // ════════════════════════════════════════
+  // WEEKLY HOURS GRID
+  // ════════════════════════════════════════
+  const DAYS       = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+  const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  function timeOptions(defaultVal, isTo) {
+    const pad   = n => String(n).padStart(2, '0');
+    const start = isTo ? 2  : 1;
+    const end   = isTo ? 24 : 23;
+    let out = '';
+    for (let h = start; h <= end; h++) {
+      const label = h === 24 ? '24:00' : pad(h) + ':00';
+      out += `<option value="${h}"${h === defaultVal ? ' selected' : ''}>${label}</option>`;
+    }
+    return out;
+  }
+
+  function buildWeeklyHoursGrid(containerId, existingHours = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    DAYS.forEach((day, i) => {
+      const saved     = existingHours[day] || {};
+      const available = saved.available !== undefined ? saved.available : (i < 5);
+      const fromVal   = saved.from || 9;
+      const toVal     = saved.to   || 17;
+      const row       = document.createElement('div');
+      row.className   = 'hours-row';
+      row.innerHTML   = `
+        <span class="hours-row__day">${DAY_LABELS[i]}</span>
+        <label class="toggle" style="width:40px;height:22px;flex-shrink:0;">
+          <input type="checkbox" id="day-${day}" ${available ? 'checked' : ''}
+            onchange="onDayToggle('${day}')" style="opacity:0;width:0;height:0;position:absolute;" />
+          <span class="toggle__track" style="border-radius:11px;"></span>
+        </label>
+        <div class="hours-row__times" id="dayTimes-${day}" style="${available ? '' : 'opacity:0.3;'}">
+          <select class="select--sm" id="dayFrom-${day}" ${available ? '' : 'disabled'}>${timeOptions(fromVal, false)}</select>
+          <span class="hours-row__sep">–</span>
+          <select class="select--sm" id="dayTo-${day}" ${available ? '' : 'disabled'}>${timeOptions(toVal, true)}</select>
+        </div>
+      `;
+      container.appendChild(row);
     });
+  }
 
+  window.onDayToggle = function(day) {
+    const checked = document.getElementById('day-' + day).checked;
+    const timesEl = document.getElementById('dayTimes-' + day);
+    timesEl.style.opacity = checked ? '1' : '0.3';
+    timesEl.querySelectorAll('select').forEach(s => { s.disabled = !checked; });
+  };
 
-    // ════════════════════════════════════════════
-    // SAVE PHOTOS
-    // ════════════════════════════════════════════
-    window.savePhotos = async function() {
-      const msgEl = document.getElementById('photosMsg');
-      msgEl.classList.add('hidden');
-      const btn = document.getElementById('savePhotosBtn');
-      btn.classList.add('btn--loading');
-      btn.textContent = 'Uploading…';
+  function collectWeeklyHours() {
+    const weeklyHours = {};
+    DAYS.forEach(day => {
+      const cb = document.getElementById('day-' + day);
+      if (!cb) return;
+      const available = cb.checked;
+      weeklyHours[day] = {
+        available,
+        from: available ? parseInt(document.getElementById('dayFrom-' + day).value) : null,
+        to:   available ? parseInt(document.getElementById('dayTo-'   + day).value) : null
+      };
+    });
+    return weeklyHours;
+  }
 
-      if (!auth.currentUser) {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Photos';
-        msgEl.textContent = 'Session expired, please log in again.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
-        setTimeout(() => {
-          document.getElementById('dashboardScreen').classList.add('hidden');
-          document.getElementById('loginScreen').classList.remove('hidden');
-        }, 2000);
-        return;
-      }
+  // ════════════════════════════════════════
+  // PHOTO HELPERS
+  // ════════════════════════════════════════
+  window.onPhotoChange = function(input, slotIndex) {
+    if (!input.files.length) return;
+    const nameEl = document.getElementById('photoName' + slotIndex);
+    if (nameEl) { nameEl.textContent = input.files[0].name; nameEl.classList.remove('hidden'); }
+    const delEl = document.getElementById('photoDelete' + slotIndex);
+    if (delEl) delEl.classList.remove('hidden');
+  };
 
-      const uploadUid = auth.currentUser?.uid || supplierData?.uid || supplierDocId;
+  window.deletePhotoSlot = function(slotIndex) {
+    const inp = document.getElementById('photo' + slotIndex);
+    if (inp) inp.value = '';
+    const nameEl = document.getElementById('photoName' + slotIndex);
+    if (nameEl) { nameEl.textContent = ''; nameEl.classList.add('hidden'); }
+    const delEl = document.getElementById('photoDelete' + slotIndex);
+    if (delEl) delEl.classList.add('hidden');
+    const previewEl = document.getElementById('photoPreview' + slotIndex);
+    if (previewEl) previewEl.classList.add('hidden');
+    window['_delPhoto' + slotIndex] = true;
+  };
 
-      try {
-        const photosArray = [...currentPhotos];
+  async function uploadPhoto(file, path) {
+    const ref = storageRef(storage, path);
+    await uploadBytes(ref, file);
+    return { storagePath: path, url: await getDownloadURL(ref) };
+  }
 
-        for (const pending of pendingUploads) {
-          const file = pending.file;
-          const path = `suppliers/${uploadUid}/photos/${Date.now()}-${file.name}`;
-          const ref  = storageRef(storage, path);
-          await uploadBytes(ref, file);
-          const url  = await getDownloadURL(ref);
-          photosArray.push({ url, storagePath: path });
-          URL.revokeObjectURL(pending.localUrl);
+  function buildPhotoSlotsHTML(existingPhotos = []) {
+    let html = '<div class="photo-slots">';
+    for (let i = 1; i <= 4; i++) {
+      const existing = existingPhotos[i];
+      const hasPhoto = existing && existing.url;
+      html += `
+        <div class="photo-slot" id="photoSlot${i}">
+          <div class="photo-slot__row">
+            ${hasPhoto
+              ? `<img class="photo-preview" id="photoPreview${i}" src="${esc(existing.url)}" alt="Photo ${i}" />`
+              : `<span id="photoPreview${i}" class="hidden"></span>`
+            }
+            <label class="photo-slot__btn" for="photo${i}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              ${hasPhoto ? 'Replace photo' : (i === 1 ? 'Upload photo' : 'Add photo')}
+            </label>
+            <input type="file" id="photo${i}" accept="image/*" onchange="onPhotoChange(this,${i})" />
+            <span class="photo-slot__filename hidden" id="photoName${i}"></span>
+            <button type="button" class="photo-slot__delete ${hasPhoto ? '' : 'hidden'}" id="photoDelete${i}" onclick="deletePhotoSlot(${i})">&#x2715;</button>
+          </div>
+        </div>
+      `;
+    }
+    html += '</div>';
+    return html;
+  }
+
+  window.savePhotos = async function(sectionNum) {
+    const btn   = document.getElementById('saveBtn' + sectionNum);
+    const errEl = document.getElementById('saveError' + sectionNum);
+    if (btn) { btn.classList.add('btn--loading'); btn.textContent = 'Saving…'; }
+    if (errEl) errEl.style.display = 'none';
+    try {
+      const existingPhotos = Array.isArray(window.supplierData.photos) ? [...window.supplierData.photos] : [];
+      for (let i = 1; i <= 4; i++) {
+        if (window['_delPhoto' + i]) { existingPhotos[i] = null; window['_delPhoto' + i] = false; continue; }
+        const fileInput = document.getElementById('photo' + i);
+        if (fileInput && fileInput.files[0]) {
+          const file   = fileInput.files[0];
+          const result = await uploadPhoto(file, `suppliers/${window.supplierPhone}/photos/${i}-${file.name}`);
+          existingPhotos[i] = { ...result, visibility: 'public' };
         }
-
-        const update = { photos: photosArray, updatedAt: serverTimestamp() };
-
-        await updateDoc(doc(db, 'suppliers', supplierDocId), update);
-        writeChangeLog('Photos');
-
-        pendingUploads = [];
-        currentPhotos  = photosArray;
-        buildPhotoSlots();
-
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Photos';
-        msgEl.textContent = 'Photos saved successfully.';
-        msgEl.style.color = 'var(--green)';
-        msgEl.classList.remove('hidden');
-        setTimeout(() => msgEl.classList.add('hidden'), 3000);
-      } catch (err) {
-        console.error('savePhotos error:', err);
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Save Photos';
-        msgEl.textContent = 'Failed to upload. Please try again.';
-        msgEl.style.color = '#f87171';
-        msgEl.classList.remove('hidden');
       }
-    };
+      await setDoc(doc(db, 'suppliers', window.supplierPhone), { photos: existingPhotos, lastUpdated: new Date() }, { merge: true });
+      window.supplierData.photos = existingPhotos;
+      showSectionSaved(sectionNum);
+    } catch (err) {
+      console.error('savePhotos:', err);
+      if (errEl) { errEl.textContent = 'Save failed. Please try again.'; errEl.style.display = 'block'; }
+    } finally {
+      if (btn) { btn.classList.remove('btn--loading'); btn.textContent = 'Save — Photos'; }
+    }
+  };
 
-    // ════════════════════════════════════════════
-    // SIGN OUT
-    // ════════════════════════════════════════════
-    window.signOutAndRedirect = async function() {
-      try { await signOut(auth); } catch(_) {}
-      window.location.href = 'index.html';
-    };
+  // ════════════════════════════════════════
+  // ACCORDION SECTION HTML BUILDER
+  // ════════════════════════════════════════
+  function accSection(n, title, bodyHTML, hasSave = true, saveLabel = 'Save') {
+    const chevron = `<svg class="acc-chevron" id="accChevron${n}" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+    const footer  = hasSave ? `
+      <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-5);"
+        id="saveBtn${n}" data-label="${saveLabel}" onclick="doSave(${n})">${saveLabel}</button>
+      <div class="save-feedback" id="saveFeedback${n}">✓ Saved</div>
+      <div class="save-error"    id="saveError${n}"></div>
+    ` : '';
+    return `
+      <div class="acc-section" id="accSec${n}">
+        <div class="acc-header" onclick="accordionToggle(${n})">
+          <div class="acc-num" id="accNum${n}">${n}</div>
+          <div class="acc-info">
+            <div class="acc-name">${title}</div>
+            <div class="acc-status" id="accStatus${n}"></div>
+          </div>
+          ${chevron}
+        </div>
+        <div class="acc-body hidden" id="accBody${n}">
+          ${bodyHTML}
+          ${footer}
+        </div>
+      </div>
+    `;
+  }
 
-    // ── Expose globals ──
-    window.sendLoginOtp          = window.sendLoginOtp;
-    window.verifyLoginOtp        = window.verifyLoginOtp;
-    window.saveProfile           = window.saveProfile;
-    window.saveBusinessContact   = window.saveBusinessContact;
-    window.saveLocation          = window.saveLocation;
-    window.saveServices          = window.saveServices;
-    window.saveAvailability      = window.saveAvailability;
-    window.savePhotos            = window.savePhotos;
-    window.onEditProvinceChange  = window.onEditProvinceChange;
-    window.onEditAreaChange      = window.onEditAreaChange;
-    window.onDashDayToggle       = window.onDashDayToggle;
-    window.onDashMobileToggle    = window.onDashMobileToggle;
+  // ════════════════════════════════════════
+  // doSave dispatcher
+  // ════════════════════════════════════════
+  window.doSave = function(n) {
+    if (isSpa) doSaveSpa(n); else doSaveTherapist(n);
+  };
 
+  // ════════════════════════════════════════
+  // renderTherapist — 8 sections
+  // ════════════════════════════════════════
+  function renderTherapist() {
+    const d = window.supplierData;
 
-  </script>
+    const s1 = `<div class="field-stack">
+      <div class="field-row">
+        <div class="field"><label class="field__label">First name</label>
+          <input class="input input--locked" value="${esc(d.firstName)}" readonly /></div>
+        <div class="field"><label class="field__label">Last name</label>
+          <input class="input input--locked" value="${esc(d.lastName)}" readonly /></div>
+      </div>
+      <div class="field"><label class="field__label">Display name</label>
+        <input class="input input--locked" value="${esc(d.displayName)}" readonly /></div>
+      <div class="field"><label class="field__label">Gender</label>
+        <input class="input input--locked" value="${esc(d.gender)}" readonly /></div>
+    </div>`;
+
+    const s2 = `<div class="field-stack">
+      <div class="field"><label class="field__label">Cell number</label>
+        <input class="input input--locked" value="${esc(window.supplierPhone)}" readonly /></div>
+      <div class="field"><label class="field__label">WhatsApp number <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+        <input class="input" id="t_whatsappNumber" type="tel" value="${esc(d.whatsappNumber)}" /></div>
+      <div class="toggle-wrap">
+        <div class="toggle-wrap__label">Show WhatsApp button on listing</div>
+        <label class="toggle"><input type="checkbox" id="t_showWhatsapp" ${d.showWhatsapp ? 'checked' : ''} /><span class="toggle__track"></span></label>
+      </div>
+      <div class="field"><label class="field__label">Email address <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+        <input class="input" id="t_email" type="email" value="${esc(d.email)}" /></div>
+      <div>
+        <div class="form-section-label">Contact preferences</div>
+        <div class="check-group">
+          <label class="check-item"><input type="checkbox" name="t_contactPref" value="sms" checked disabled /><span class="check-item__label">SMS</span></label>
+          <label class="check-item"><input type="checkbox" name="t_contactPref" value="email" id="t_cpEmail" ${(d.contactPreferences||[]).includes('email') ? 'checked' : ''} /><span class="check-item__label">Email</span></label>
+          <label class="check-item"><input type="checkbox" name="t_contactPref" value="whatsapp" id="t_cpWhatsapp" ${(d.contactPreferences||[]).includes('whatsapp') ? 'checked' : ''} /><span class="check-item__label">WhatsApp</span></label>
+        </div>
+      </div>
+    </div>`;
+
+    const s3 = `<div class="field-stack">
+      <div class="field"><label class="field__label">Province</label>
+        <input class="input input--locked" value="${esc(d.province)}" readonly /></div>
+      <div class="field"><label class="field__label">Suburb</label>
+        <input class="input input--locked" value="${esc(d.suburb)}" readonly /></div>
+      <div class="field"><label class="field__label">Full street address <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+        <input class="input" id="t_addressLine1" type="text" value="${esc(d.addressLine1)}" /></div>
+      <div class="toggle-wrap">
+        <div class="toggle-wrap__label">Show address on listing</div>
+        <label class="toggle"><input type="checkbox" id="t_addressVisible" ${d.addressVisible ? 'checked' : ''} /><span class="toggle__track"></span></label>
+      </div>
+    </div>`;
+
+    const s4 = `<div class="field-stack">
+      <div>
+        <div class="form-section-label">Premises type</div>
+        <div class="radio-group radio-group--row">
+          <label class="radio-item radio-item--flex"><input type="radio" name="t_premisesType" value="home" ${d.premisesType==='home'?'checked':''} /><span class="radio-item__label">Home Studio</span></label>
+          <label class="radio-item radio-item--flex"><input type="radio" name="t_premisesType" value="business" ${d.premisesType==='business'?'checked':''} /><span class="radio-item__label">Business Premises</span></label>
+        </div>
+      </div>
+      <div class="toggle-wrap">
+        <div class="toggle-wrap__label">Mobile massage available</div>
+        <label class="toggle"><input type="checkbox" id="t_mobileAvailable" ${d.mobileAvailable ? 'checked' : ''} onchange="onMobileToggle()" /><span class="toggle__track"></span></label>
+      </div>
+      <div class="field conditional-field ${d.mobileAvailable ? '' : 'hidden'}" id="travelKmField">
+        <label class="field__label">Willing to travel up to</label>
+        <select class="select" id="t_willingToTravelKm">
+          <option value="10"  ${d.willingToTravelKm==10  ?'selected':''}>10 km</option>
+          <option value="25"  ${d.willingToTravelKm==25  ?'selected':''}>25 km</option>
+          <option value="50"  ${d.willingToTravelKm==50  ?'selected':''}>50 km</option>
+          <option value="100" ${d.willingToTravelKm==100 ?'selected':''}>100 km</option>
+        </select>
+      </div>
+      <div>
+        <div class="form-section-label">Amenities</div>
+        <div id="t_amenitiesGroup" class="check-group">Loading…</div>
+      </div>
+    </div>`;
+
+    const aboutMeLen  = (d.aboutMe     || '').length;
+    const specialsLen = (d.specialsText || '').length;
+    const s5 = `<div class="field-stack">
+      <div>
+        <div class="form-section-label">Gender served</div>
+        <div class="radio-group radio-group--row">
+          <label class="radio-item radio-item--flex"><input type="radio" name="t_genderServed" value="female" ${d.genderServed==='female'?'checked':''} /><span class="radio-item__label">Ladies</span></label>
+          <label class="radio-item radio-item--flex"><input type="radio" name="t_genderServed" value="male"   ${d.genderServed==='male'  ?'checked':''} /><span class="radio-item__label">Gents</span></label>
+          <label class="radio-item radio-item--flex"><input type="radio" name="t_genderServed" value="both"   ${d.genderServed==='both'  ?'checked':''} /><span class="radio-item__label">Both</span></label>
+        </div>
+      </div>
+      <div class="field"><label class="field__label">Years of experience</label>
+        <select class="select" id="t_experienceYears">
+          <option value="">Select…</option>
+          <option value="0-1" ${d.experienceYears==='0-1'?'selected':''}>Under 1 year</option>
+          <option value="1-3" ${d.experienceYears==='1-3'?'selected':''}>1–3 years</option>
+          <option value="3-5" ${d.experienceYears==='3-5'?'selected':''}>3–5 years</option>
+          <option value="5+"  ${d.experienceYears==='5+' ?'selected':''}>5+ years</option>
+        </select>
+      </div>
+      <div class="field"><label class="field__label">About me / bio <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+        <textarea class="textarea" id="t_aboutMe" maxlength="300" oninput="updateCharCount(this,'t_aboutMeCount')" style="min-height:96px;">${esc(d.aboutMe)}</textarea>
+        <div class="char-count" id="t_aboutMeCount">${aboutMeLen} / 300</div>
+      </div>
+      <div class="field"><label class="field__label">Qualifications <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+        <input class="input" id="t_qualifications" type="text" value="${esc(d.qualifications)}" placeholder="e.g. ITEC Diploma in Massage, 2019" /></div>
+      <div>
+        <div class="form-section-label">Professional associations <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">(optional)</span></div>
+        <div id="t_associationsGroup" class="check-group check-group--1col">Loading…</div>
+      </div>
+      <div class="field"><label class="field__label">Specials / promotions <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+        <textarea class="textarea textarea--sm" id="t_specialsText" maxlength="300" oninput="updateCharCount(this,'t_specialsCount')">${esc(d.specialsText)}</textarea>
+        <div class="char-count" id="t_specialsCount">${specialsLen} / 300</div>
+      </div>
+    </div>`;
+
+    const s6 = `<div class="field-stack">
+      <div>
+        <div class="form-section-label" style="margin-bottom:var(--space-3);">Working hours</div>
+        <div class="hours-grid" id="t_weeklyHoursGrid"></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:var(--space-3);cursor:pointer;">
+        <input type="checkbox" id="t_availableOutsideHours" ${d.availableOutsideHours ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;" />
+        <span style="font-size:var(--text-sm);color:var(--text);">Available outside listed hours — customer must make arrangements</span>
+      </label>
+    </div>`;
+
+    const s7 = `<div class="field-stack">
+      <div><div class="form-section-label">Massage styles</div>
+        <div id="t_massageStylesGroup" class="check-group check-group--3col">Loading…</div></div>
+      <div><div class="form-section-label">Traditions <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">(optional)</span></div>
+        <div id="t_traditionsGroup" class="check-group check-group--3col">Loading…</div></div>
+      <div><div class="form-section-label">Treatments</div>
+        <div id="t_treatmentsGroup" class="check-group check-group--3col">Loading…</div></div>
+      <div><div class="form-section-label">Classification</div>
+        <div id="t_classificationGroup" class="check-group">Loading…</div></div>
+      <div><div class="form-section-label">Service offerings <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">(optional)</span></div>
+        <div id="t_serviceOfferingsGroup" class="check-group check-group--3col">Loading…</div></div>
+    </div>`;
+
+    const s8 = buildPhotoSlotsHTML(d.photos || []);
+
+    document.getElementById('dashContent').innerHTML = [
+      accSection(1, 'Personal',                   s1, false),
+      accSection(2, 'Account',                    s2, true, 'Save — Account'),
+      accSection(3, 'Location',                   s3, true, 'Save — Location'),
+      accSection(4, 'Premises &amp; Facilities',  s4, true, 'Save — Premises &amp; Facilities'),
+      accSection(5, 'About',                      s5, true, 'Save — About'),
+      accSection(6, 'Availability',               s6, true, 'Save — Availability'),
+      accSection(7, 'Services',                   s7, true, 'Save — Services'),
+      accSection(8, 'Photos',                     s8, true, 'Save — Photos')
+    ].join('');
+
+    buildWeeklyHoursGrid('t_weeklyHoursGrid', d.weeklyHours || {});
+
+    const tFilter = o => o.visibleTo && (o.visibleTo.includes('therapist') || o.visibleTo.includes('both'));
+    renderCheckboxGroup('amenities',        't_amenitiesGroup',        't_amenities',        d.amenities            || []);
+    renderCheckboxGroup('associations',     't_associationsGroup',     't_associations',     d.associationMembership || []);
+    renderCheckboxGroup('massageStyles',    't_massageStylesGroup',    't_massageStyles',    d.massageStyles        || [], tFilter);
+    renderCheckboxGroup('traditions',       't_traditionsGroup',       't_traditions',       d.traditions           || [], tFilter);
+    renderCheckboxGroup('treatments',       't_treatmentsGroup',       't_treatments',       d.treatments           || [], tFilter);
+    renderCheckboxGroup('classification',   't_classificationGroup',   't_classification',   d.classification       || [], tFilter);
+    renderCheckboxGroup('serviceOfferings', 't_serviceOfferingsGroup', 't_serviceOfferings', d.serviceOfferings     || [], tFilter);
+  }
+
+  function doSaveTherapist(n) {
+    if (n === 1) return;
+    if (n === 8) { window.savePhotos(8); return; }
+    let data = {};
+    if (n === 2) {
+      const prefs = ['sms'];
+      if (document.getElementById('t_cpEmail')?.checked)    prefs.push('email');
+      if (document.getElementById('t_cpWhatsapp')?.checked) prefs.push('whatsapp');
+      data = {
+        whatsappNumber:     gv('t_whatsappNumber') || null,
+        showWhatsapp:       document.getElementById('t_showWhatsapp').checked,
+        email:              gv('t_email') || null,
+        contactPreferences: prefs
+      };
+    } else if (n === 3) {
+      data = {
+        addressLine1:   gv('t_addressLine1') || null,
+        addressVisible: document.getElementById('t_addressVisible').checked
+      };
+    } else if (n === 4) {
+      const mobile = document.getElementById('t_mobileAvailable').checked;
+      data = {
+        premisesType:      document.querySelector('input[name="t_premisesType"]:checked')?.value || null,
+        mobileAvailable:   mobile,
+        willingToTravelKm: mobile ? parseInt(document.getElementById('t_willingToTravelKm').value) : null,
+        amenities:         getChecked('t_amenities')
+      };
+    } else if (n === 5) {
+      data = {
+        genderServed:          document.querySelector('input[name="t_genderServed"]:checked')?.value || null,
+        experienceYears:       gv('t_experienceYears') || null,
+        aboutMe:               gv('t_aboutMe') || null,
+        qualifications:        gv('t_qualifications') || null,
+        associationMembership: getChecked('t_associations'),
+        specialsText:          gv('t_specialsText') || null
+      };
+    } else if (n === 6) {
+      data = {
+        weeklyHours:           collectWeeklyHours(),
+        availableOutsideHours: document.getElementById('t_availableOutsideHours').checked
+      };
+    } else if (n === 7) {
+      data = {
+        massageStyles:    getChecked('t_massageStyles'),
+        traditions:       getChecked('t_traditions'),
+        treatments:       getChecked('t_treatments'),
+        classification:   getChecked('t_classification'),
+        serviceOfferings: getChecked('t_serviceOfferings')
+      };
+    }
+    saveSection(n, data);
+  }
+
+  // ════════════════════════════════════════
+  // renderSpa — 9 sections
+  // ════════════════════════════════════════
+  function renderSpa() {
+    const d = window.supplierData;
+
+    const s1 = `<div class="field-stack">
+      <div class="field-row">
+        <div class="field"><label class="field__label">Owner first name</label>
+          <input class="input input--locked" value="${esc(d.ownerFirstName || d.firstName)}" readonly /></div>
+        <div class="field"><label class="field__label">Owner last name</label>
+          <input class="input input--locked" value="${esc(d.ownerLastName || d.lastName)}" readonly /></div>
+      </div>
+      <div class="field"><label class="field__label">Trading name</label>
+        <input class="input input--locked" value="${esc(d.displayName)}" readonly /></div>
+      <div class="field"><label class="field__label">Legal / registered name</label>
+        <input class="input input--locked" value="${esc(d.tradingName)}" readonly /></div>
+    </div>`;
+
+    const s2 = `<div class="field-stack">
+      <div class="field"><label class="field__label">Cell number</label>
+        <input class="input input--locked" value="${esc(window.supplierPhone)}" readonly /></div>
+      <div class="field"><label class="field__label">WhatsApp number <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+        <input class="input" id="sp_whatsappNumber" type="tel" value="${esc(d.whatsappNumber)}" /></div>
+      <div class="toggle-wrap">
+        <div class="toggle-wrap__label">Show WhatsApp button on listing</div>
+        <label class="toggle"><input type="checkbox" id="sp_showWhatsapp" ${d.showWhatsapp ? 'checked' : ''} /><span class="toggle__track"></span></label>
+      </div>
+      <div class="field"><label class="field__label">Email address</label>
+        <input class="input" id="sp_email" type="email" value="${esc(d.email)}" /></div>
+      <div>
+        <div class="form-section-label">Contact preferences</div>
+        <div class="check-group">
+          <label class="check-item"><input type="checkbox" name="sp_contactPref" value="phone" checked disabled /><span class="check-item__label">Phone</span></label>
+          <label class="check-item"><input type="checkbox" name="sp_contactPref" value="whatsapp" id="sp_cpWhatsapp" ${(d.contactPreferences||[]).includes('whatsapp') ? 'checked' : ''} /><span class="check-item__label">WhatsApp</span></label>
+          <label class="check-item"><input type="checkbox" name="sp_contactPref" value="email" id="sp_cpEmail" ${(d.contactPreferences||[]).includes('email') ? 'checked' : ''} /><span class="check-item__label">Email</span></label>
+        </div>
+      </div>
+    </div>`;
+
+    const s3 = `<div class="field-stack">
+      <div class="field"><label class="field__label">Business landline</label>
+        <input class="input" id="sp_spaPhone" type="tel" value="${esc(d.spaPhone)}" /></div>
+      <div class="toggle-wrap">
+        <div class="toggle-wrap__label">Show on listing</div>
+        <label class="toggle"><input type="checkbox" id="sp_spaPhoneVisible" ${d.spaPhoneVisible ? 'checked' : ''} /><span class="toggle__track"></span></label>
+      </div>
+      <div class="field"><label class="field__label">Business mobile</label>
+        <input class="input" id="sp_spaMobile" type="tel" value="${esc(d.spaMobile)}" /></div>
+      <div class="toggle-wrap">
+        <div class="toggle-wrap__label">Show on listing</div>
+        <label class="toggle"><input type="checkbox" id="sp_spaMobileVisible" ${d.spaMobileVisible ? 'checked' : ''} /><span class="toggle__track"></span></label>
+      </div>
+    </div>`;
+
+    const existingGps = (d.gpsLat && d.gpsLng) ? `GPS captured: ${Number(d.gpsLat).toFixed(5)}, ${Number(d.gpsLng).toFixed(5)}` : '';
+    capturedGpsLat = d.gpsLat || null;
+    capturedGpsLng = d.gpsLng || null;
+
+    const s4 = `<div class="field-stack">
+      <div class="field"><label class="field__label">Province</label>
+        <input class="input input--locked" value="${esc(d.province)}" readonly /></div>
+      <div class="field"><label class="field__label">Suburb</label>
+        <input class="input input--locked" value="${esc(d.suburb)}" readonly /></div>
+      <div class="field"><label class="field__label">Full street address</label>
+        <input class="input" id="sp_addressLine1" type="text" value="${esc(d.addressLine1)}" /></div>
+      <div class="toggle-wrap">
+        <div class="toggle-wrap__label">Show address on listing</div>
+        <label class="toggle"><input type="checkbox" id="sp_addressVisible" ${d.addressVisible !== false ? 'checked' : ''} /><span class="toggle__track"></span></label>
+      </div>
+      <div>
+        <button type="button" class="btn--gps" onclick="captureGps()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          Capture GPS location
+        </button>
+        <div class="gps-confirm" id="gpsConfirm">${gpsText(existingGps)}</div>
+      </div>
+    </div>`;
+
+    const s5 = `<div class="field-stack">
+      <div>
+        <div class="form-section-label">Amenities</div>
+        <div id="sp_amenitiesGroup" class="check-group">Loading…</div>
+      </div>
+    </div>`;
+
+    const aboutSpaLen = (d.aboutSpa    || '').length;
+    const specSpaLen  = (d.specialsText || '').length;
+    const s6 = `<div class="field-stack">
+      <div>
+        <div class="form-section-label">Gender served</div>
+        <div class="radio-group radio-group--row">
+          <label class="radio-item radio-item--flex"><input type="radio" name="sp_genderServed" value="female" ${d.genderServed==='female'?'checked':''} /><span class="radio-item__label">Ladies</span></label>
+          <label class="radio-item radio-item--flex"><input type="radio" name="sp_genderServed" value="male"   ${d.genderServed==='male'  ?'checked':''} /><span class="radio-item__label">Gents</span></label>
+          <label class="radio-item radio-item--flex"><input type="radio" name="sp_genderServed" value="both"   ${d.genderServed==='both'  ?'checked':''} /><span class="radio-item__label">Both</span></label>
+        </div>
+      </div>
+      <div class="field"><label class="field__label">About the spa <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+        <textarea class="textarea" id="sp_aboutSpa" maxlength="300" oninput="updateCharCount(this,'sp_aboutSpaCount')" style="min-height:96px;">${esc(d.aboutSpa)}</textarea>
+        <div class="char-count" id="sp_aboutSpaCount">${aboutSpaLen} / 300</div>
+      </div>
+      <div>
+        <div class="form-section-label">Professional associations <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">(optional)</span></div>
+        <div id="sp_associationsGroup" class="check-group check-group--1col">Loading…</div>
+      </div>
+      <div class="field"><label class="field__label">Specials / promotions <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+        <textarea class="textarea textarea--sm" id="sp_specialsText" maxlength="300" oninput="updateCharCount(this,'sp_specialsCount')">${esc(d.specialsText)}</textarea>
+        <div class="char-count" id="sp_specialsCount">${specSpaLen} / 300</div>
+      </div>
+    </div>`;
+
+    const s7 = `<div class="field-stack">
+      <div>
+        <div class="form-section-label" style="margin-bottom:var(--space-3);">Working hours</div>
+        <div class="hours-grid" id="sp_weeklyHoursGrid"></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:var(--space-3);cursor:pointer;">
+        <input type="checkbox" id="sp_availableOutsideHours" ${d.availableOutsideHours ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;" />
+        <span style="font-size:var(--text-sm);color:var(--text);">Available outside listed hours — customer must make arrangements</span>
+      </label>
+    </div>`;
+
+    const s8 = `<div class="field-stack">
+      <div><div class="form-section-label">Massage styles</div>
+        <div id="sp_massageStylesGroup" class="check-group check-group--3col">Loading…</div></div>
+      <div><div class="form-section-label">Traditions <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">(optional)</span></div>
+        <div id="sp_traditionsGroup" class="check-group check-group--3col">Loading…</div></div>
+      <div><div class="form-section-label">Treatments</div>
+        <div id="sp_treatmentsGroup" class="check-group check-group--3col">Loading…</div></div>
+      <div><div class="form-section-label">Classification</div>
+        <div id="sp_classificationGroup" class="check-group">Loading…</div></div>
+      <div><div class="form-section-label">Service offerings <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">(optional)</span></div>
+        <div id="sp_serviceOfferingsGroup" class="check-group check-group--3col">Loading…</div></div>
+    </div>`;
+
+    const s9 = buildPhotoSlotsHTML(d.photos || []);
+
+    document.getElementById('dashContent').innerHTML = [
+      accSection(1, 'Business Details',              s1, false),
+      accSection(2, 'Account',                       s2, true, 'Save — Account'),
+      accSection(3, 'Business Contact',              s3, true, 'Save — Business Contact'),
+      accSection(4, 'Location',                      s4, true, 'Save — Location'),
+      accSection(5, 'Premises &amp; Facilities',     s5, true, 'Save — Premises &amp; Facilities'),
+      accSection(6, 'About',                         s6, true, 'Save — About'),
+      accSection(7, 'Availability',                  s7, true, 'Save — Availability'),
+      accSection(8, 'Services',                      s8, true, 'Save — Services'),
+      accSection(9, 'Photos',                        s9, true, 'Save — Photos')
+    ].join('');
+
+    buildWeeklyHoursGrid('sp_weeklyHoursGrid', d.weeklyHours || {});
+
+    const spaFilter = o => o.visibleTo && (o.visibleTo.includes('spa') || o.visibleTo.includes('both'));
+    renderCheckboxGroup('amenities',        'sp_amenitiesGroup',        'sp_amenities',        d.amenities            || []);
+    renderCheckboxGroup('associations',     'sp_associationsGroup',     'sp_associations',     d.associationMembership || []);
+    renderCheckboxGroup('massageStyles',    'sp_massageStylesGroup',    'sp_massageStyles',    d.massageStyles        || [], spaFilter);
+    renderCheckboxGroup('traditions',       'sp_traditionsGroup',       'sp_traditions',       d.traditions           || [], spaFilter);
+    renderCheckboxGroup('treatments',       'sp_treatmentsGroup',       'sp_treatments',       d.treatments           || [], spaFilter);
+    renderCheckboxGroup('classification',   'sp_classificationGroup',   'sp_classification',   d.classification       || [], spaFilter);
+    renderCheckboxGroup('serviceOfferings', 'sp_serviceOfferingsGroup', 'sp_serviceOfferings', d.serviceOfferings     || [], spaFilter);
+  }
+
+  function doSaveSpa(n) {
+    if (n === 1) return;
+    if (n === 9) { window.savePhotos(9); return; }
+    let data = {};
+    if (n === 2) {
+      const prefs = ['phone'];
+      if (document.getElementById('sp_cpWhatsapp')?.checked) prefs.push('whatsapp');
+      if (document.getElementById('sp_cpEmail')?.checked)    prefs.push('email');
+      data = {
+        whatsappNumber:     gv('sp_whatsappNumber') || null,
+        showWhatsapp:       document.getElementById('sp_showWhatsapp').checked,
+        email:              gv('sp_email') || null,
+        contactPreferences: prefs
+      };
+    } else if (n === 3) {
+      data = {
+        spaPhone:         gv('sp_spaPhone')  || null,
+        spaPhoneVisible:  document.getElementById('sp_spaPhoneVisible').checked,
+        spaMobile:        gv('sp_spaMobile') || null,
+        spaMobileVisible: document.getElementById('sp_spaMobileVisible').checked
+      };
+    } else if (n === 4) {
+      data = {
+        addressLine1:   gv('sp_addressLine1') || null,
+        addressVisible: document.getElementById('sp_addressVisible').checked,
+        gpsLat:         capturedGpsLat,
+        gpsLng:         capturedGpsLng
+      };
+    } else if (n === 5) {
+      data = { amenities: getChecked('sp_amenities') };
+    } else if (n === 6) {
+      data = {
+        genderServed:          document.querySelector('input[name="sp_genderServed"]:checked')?.value || null,
+        aboutSpa:              gv('sp_aboutSpa')     || null,
+        associationMembership: getChecked('sp_associations'),
+        specialsText:          gv('sp_specialsText') || null
+      };
+    } else if (n === 7) {
+      data = {
+        weeklyHours:           collectWeeklyHours(),
+        availableOutsideHours: document.getElementById('sp_availableOutsideHours').checked
+      };
+    } else if (n === 8) {
+      data = {
+        massageStyles:    getChecked('sp_massageStyles'),
+        traditions:       getChecked('sp_traditions'),
+        treatments:       getChecked('sp_treatments'),
+        classification:   getChecked('sp_classification'),
+        serviceOfferings: getChecked('sp_serviceOfferings')
+      };
+    }
+    saveSection(n, data);
+  }
+
+  // ════════════════════════════════════════
+  // GPS
+  // ════════════════════════════════════════
+  window.captureGps = function() {
+    if (!navigator.geolocation) {
+      const el = document.getElementById('gpsConfirm');
+      if (el) el.textContent = 'Geolocation not supported on this device.';
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        capturedGpsLat = pos.coords.latitude;
+        capturedGpsLng = pos.coords.longitude;
+        const el = document.getElementById('gpsConfirm');
+        if (el) el.textContent = `GPS captured: ${capturedGpsLat.toFixed(5)}, ${capturedGpsLng.toFixed(5)}`;
+      },
+      () => {
+        const el = document.getElementById('gpsConfirm');
+        if (el) el.textContent = 'Could not get GPS location. Please try again.';
+      }
+    );
+  };
+
+  // ════════════════════════════════════════
+  // MOBILE TOGGLE (therapist only)
+  // ════════════════════════════════════════
+  window.onMobileToggle = function() {
+    const on    = document.getElementById('t_mobileAvailable')?.checked;
+    const field = document.getElementById('travelKmField');
+    if (field) field.classList.toggle('hidden', !on);
+  };
+
+  // ════════════════════════════════════════
+  // CHAR COUNTER
+  // ════════════════════════════════════════
+  window.updateCharCount = function(el, countId) {
+    const countEl = document.getElementById(countId);
+    if (countEl) countEl.textContent = el.value.length + ' / 300';
+  };
+
+  // ════════════════════════════════════════
+  // HELPERS
+  // ════════════════════════════════════════
+  function gv(id) {
+    return (document.getElementById(id)?.value || '').trim();
+  }
+
+  function getChecked(name) {
+    return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
+  }
+
+  function esc(val) {
+    if (val == null) return '';
+    return String(val).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function gpsText(existing) {
+    return existing || '';
+  }
+</script>
 </body>
 </html>
