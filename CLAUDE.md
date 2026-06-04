@@ -6,20 +6,22 @@
 - Never suggest Windows alternatives
 
 ## Project overview
-MassageMap is a three-sided massage therapy directory:
-- Public — browse therapists and spas by province, area, suburb, or map
-- Supplier — self-registration, profile management, subscription payments
-- Admin — approve, manage and monitor listings (hidden URL, never linked publicly)
+MassageMap is a three-sided massage therapy directory for the South African market:
+- Public — browse therapists and spas by province, area, suburb, or map. No login required.
+- Supplier — self-registration, profile management, subscription payments, dashboard
+- Admin — approve, manage and monitor listings (hidden URL, Johan only, never linked publicly)
 
 ## Tech stack
-- Frontend: HTML / CSS / JavaScript — vanilla only, no frameworks
+- Frontend: HTML / CSS / JavaScript — vanilla only, no frameworks, mobile-first
 - Database: Firebase Firestore — project ID: massage-directory-57e19, region: africa-south1
 - Auth: Firebase Phone Auth (OTP via SMS)
-- Storage: Firebase Storage (ID photos + profile photos)
-- Payments: PayFast (prepaid subscriptions: 1 / 3 / 6 / 12 months)
-- Email: Resend (transactional)
+- Storage: Firebase Storage — path: suppliers/{phone}/photos/{filename}
+- Payments: PayFast via Cloud Functions only — never client-side
+- Email: Resend — currently onboarding@resend.dev. Switch to notifications@massagemap.co.za after domain verification
+- SMS: BulkSMS — token auth, credentials in functions/.env
 - Maps: Google Maps JavaScript API — load on demand only, never eagerly
-- Admin notifications: Telegram Bot API
+- Admin notifications: Telegram Bot API + Resend — fires on registrationComplete: true only
+- Cloud Functions: Firebase Functions — ALWAYS us-central1. Never africa-south1 for functions.
 
 ## File structure
 - index.html — home screen, province grid
@@ -27,109 +29,133 @@ MassageMap is a three-sided massage therapy directory:
 - listings.html — therapist/spa listing cards
 - profile.html — full supplier profile
 - map.html — map view, all active suppliers
-- register.html — therapist registration (3-step form)
-- register-spa.html — spa registration
-- dashboard.html — supplier dashboard (therapist + spa, single file)
+- register.html — therapist registration (8-section accordion). Therapist only.
+- register-spa.html — spa registration (8-section accordion). Spa only.
+- dashboard.html — supplier dashboard. Single file. Detects supplierType, renders therapist (8 sections) or spa (9 sections) accordion.
 - subscribe.html — subscription selection
 - payment.html — PayFast payment screen
-- enquiry.html — customer enquiry form
-- info.html — info screen
-- admin.html — admin dashboard (hidden URL, desktop only)
-- style.css — shared design system, never duplicate styles here
-- config.js — API keys and tokens — GITIGNORED, never commit this file
-- locations.json — 9 provinces, 189 towns, 8,626 suburbs (IEC source)
-- seed.js — seed data script, run manually only
+- admin.html — admin dashboard (hidden URL, desktop only, never link publicly)
+- admin-supplier.html — admin supplier detail view
+- style.css — shared styles, never duplicate
+- functions/ — Firebase Cloud Functions (Node.js)
+- functions/.env — credentials (GITIGNORED, never commit)
+- backup/ — archived file versions, not live
 
-## Design system — never override these
-- Theme: dark
-- Background: #0f1117
-- Card background: #161b27
-- Accent colour: #6c63ff
-- Text colour: #e2e8f0
-- Green (active/verified): #10b981
-- Mobile-first: 375px base width
-- Buttons: pill/rounded, outlined with #6c63ff border
-- No bottom navigation bar
-- Admin screens: desktop only, left sidebar layout
+## Design system — LOCKED, never override
+- Background: #f8f5f0 off-white throughout. Dark mode permanently retired.
+- Primary colour: Teal #1a7a6e
+- Accent colour: Mustard gold #c9a84c
+- Font: System sans-serif — no Google Fonts
+- Mobile-first: 375px base width. Desktop is secondary.
+- Design language: Warm, trustworthy, local. Brand north star: The Trusted Referral.
+- Full design pass is Phase D — do not apply design changes outside of Phase D sessions
 
 ## Coding rules — always follow
 - Mobile-first on all public screens
-- Never hardcode API keys — always use config.js
-- Never commit config.js — it is in .gitignore
+- Never hardcode API keys — always use environment variables or Firebase config
+- Never commit functions/.env or service account keys
 - Google Maps API: load on demand only, never on page load
-- locations.json: fetch on demand, never hardcode location data
+- Location data: always read from Firestore collections, never hardcode
 - No frameworks — vanilla HTML/CSS/JS only
-- style.css is the single source of truth for all styles
-- Never duplicate CSS — always check style.css first
+- Never hardcode prices — always read priceIndividual and priceSpa from Firebase settings/config
+- Cloud Functions are the sole notification sender — no frontend notification calls ever
+- All offerings (massage styles, traditions, treatments, amenities, associations) read from offerings Firestore collection — never hardcode in HTML
 
-## Key locked decisions — never change without instruction
-- supplierType set from URL parameter only — no toggle on registration screen
-- Therapist registration: register.html | Spa registration: register-spa.html
-- Dashboard: single dashboard.html — shows/hides fields based on supplierType
-- Session: 30-day token — OTP only on first login or new device
-- Sign out clears Firebase Auth only — session token in localStorage survives
-- Supplier number format: MM-YYYY-NNNNN-T/S — permanent, never reused
-- Adult classification: shown on therapist listings, excluded from spas entirely
-- Four Hands massage type: REMOVED — do not add back
-- Spa: no mobile massage, no available outside hours, no qualifications, no affiliations
-- Spa premises type: Business only — hardcoded
-- Prices: never shown to customers on any public screen
-- Full street address: admin only, never shown publicly
+## Architecture — locked decisions, never change without instruction
+- supplierType values: individual (therapist) or spa. Never use 'therapist' as a value.
+- suppliers document ID: phone number (e.g. +27842500422) — LOCKED
+- supplierNumber format: T-YY-COUNTER for therapists, S-YY-COUNTER for spas. Starts at 1001. Never reused.
+- Registration flow: OTP → consent gate → Personal section → remaining sections → submit
+- pending_registrations collection: progressive saves via setDoc merge:true
+- registrationComplete: false = lightweight record. true = fully submitted. Cloud Function fires on false→true transition only.
+- onSupplierRegistered: onUpdate trigger. Guard exits immediately if registrationComplete !== true or was already true.
+- Location privacy — therapists: suburb or area centroid only. Never exact address. Never device GPS.
+- Location privacy — spas: exact street address. Device GPS button captures gpsLat/gpsLng.
+- locationArea field name: LOCKED. Previously massageArea — never use massageArea again.
+- visibleTo values in offerings: 'therapist', 'spa', 'both'. Never use 'individual' in visibleTo.
+- Tantric massage: in offerings visibleTo: ['therapist'] only. Always excluded from spa.
+- Adult classification: PERMANENTLY REMOVED. No age gate needed.
+- Four Hands massage: standard massage style — do not remove.
+- associationMembership: multi-select array for both therapist and spa. Reads from offerings category: associations.
+- amenities: dynamic from offerings category: amenities. Replaces old boolean fields.
+- auditLog collection: append-only. No update, no delete — ever. Legal record.
+- photos array: photos[0] = ID (admin only). photos[1] = card photo. photos[2]+ = additional.
+- Dashboard: one file (dashboard.html). No separate dashboard-spa.html.
 - admin.html: hidden URL — never link from any public page
-- Vetting: Approve / Reject / Investigate — all require mandatory reason text
-- Reject: silent status change, no email, supplier record kept forever (legal)
-- Photo delete button: white X, not red
-- Email: optional for therapists, required for spas
-- Map pins: Red teardrop T = therapist, Amber teardrop S = spa
-- GPS denied on map: show message and return to index.html — no fallback map
-- Bottom navigation bar: not used anywhere
+
+## Firestore collections
+- suppliers — all supplier data (therapists and spas)
+- pending_registrations — partial registrations, progressive saves
+- offerings — all massage styles, traditions, treatments, classifications, amenities, associations
+- locations_provinces — province data
+- locations_towns — town data
+- locations_suburbs — suburb data
+- locations_areas — admin-created area groupings
+- settings — app config (prices, counters, flags). Document: config.
+- auditLog — append-only admin action and event log
+- enquiries — customer enquiries
 
 ## Location hierarchy — locked
-- Province → Town → Suburb (from locations.json)
-- Areas: admin-created clusters of suburbs, stored in Firestore areas collection
-- Max 5 areas per town
-- Supplier registration: Area required if areas exist for town; Suburb required if no areas
-- Customer sees: Area name on listing, Suburb on profile and map
-
-## Firebase collections
-- suppliers — all supplier data
-- areas — admin-created area clusters
-- enquiries — customer enquiries
-- subscriptions — payment records
-- settings — admin-controlled app settings (prices etc)
-- changeLogs — admin action audit trail
+- Province → Town → locationArea (optional) → Suburb
+- locationArea: admin-created groupings within a town, stored in locations_areas
+- Therapist map: always shows suburb or area centroid — never exact address
+- Spa map: shows exact GPS pin
 
 ## Session and auth
-- Test number 1: 0800000001 / OTP: 123456 (therapist)
-- Test number 2: 0800000002 / OTP: 123456 (spa)
-- Phone Auth SMS quota: 10/day on dev — do not waste OTPs on testing
+- Session token: written to localStorage at OTP verification. Key: mm_session_{phone}. 30-day expiry.
+- OTP skip: if valid session token exists, skip OTP screen
+- Test phones: 0800000001–0800000004. OTP: 123456. Quota: 10/day in dev — do not waste.
+- Real test phones: 0842500422 (Johan), 0842500421 (spare)
+
+## Firebase rules
+- Location collections: admin-only write access. Never public write.
+- auditLog: admin-only write. Never public write.
+- Full security audit required before launch.
 
 ## Brief and git rules
 - Always write code changes as numbered steps
+- Each step must be clearly labelled: CLAUDE CODE terminal or ZSH TERMINAL — never ambiguous
+- Each brief block must have 1-3 lines explaining what it does
 - Git add and commit are allowed in briefs
 - Git push only at end of session or when Johan explicitly asks — never mid-session
 - Never include testing instructions in briefs
-- For complex precise changes: include exact code in the brief
-- For simple structural changes: numbered instructions are sufficient
-- Every brief must clearly state whether each step runs in CLAUDE CODE terminal or ZSH terminal. Never leave this ambiguous.
+- Briefs must never exceed ~50 lines — split into multiple briefs if longer
+- Never write code in claude.ai chat unless Johan explicitly approves after Claude requests it
 
-## Context File Rules — CRITICAL
-
-- The Master Context .docx file is Johan's tool to keep Claude accountable across sessions
-- Every new version ADDS to the previous version — nothing is dropped, summarised away, or reformatted
+## Context file rules — CRITICAL
+- The Master Context .docx is Johan's accountability record — priority above all else
+- Every new version ADDS to the previous — nothing dropped, summarised, or reformatted
 - Build history stays in full — every step, every session
-- ALL parked items from ALL previous sessions carry forward until explicitly closed by Johan
-- New session decisions, bugs, fixes, and parked items are APPENDED at the end
-- Never rewrite the context file in a shorter or cleaner format without explicit permission
-- The context file is a reference doc for Claude — but mainly it is Johan's accountability record which is the first priority.
+- All parked items carry forward until explicitly closed by Johan
+- New decisions, bugs, fixes, parked items appended at end only
+- Never rewrite in shorter format without explicit permission
 
-## Design skills — consult before any UI work
-- Emil Kowalski: motion and animation — /mnt/skills/user/emil-kowalski/SKILL.md
-- Impeccable: spacing and typography polish — /mnt/skills/user/impeccable/SKILL.md
-- Taste Skill: design quality judgment — /mnt/skills/user/taste-skill/SKILL.md
-Always consult these before writing any CSS or UI changes.
+## GitHub Issues
+- All known bugs, pending builds, and parked items are logged in GitHub Issues
+- Close the relevant issue when a fix is committed
+- At end of session: summarise issues closed or status-changed with issue number and title
 
-## Known bugs — do not patch in isolation
-- register-spa.html: location cascade broken — reads from deleted locations.json
-  Fix only as part of Phase D spa registration rebuild. Do not patch standalone.
-  
+## Design skills — consult before any UI work (Phase D)
+All skills are in .agents/skills/. Consult relevant skills before any CSS or UI changes.
+- impeccable — spacing and typography polish
+- emil-design-eng — motion and interaction
+- stitch-design-taste — design quality judgment
+- design-taste-frontend — frontend taste
+- high-end-visual-design — visual quality
+- gpt-taste — taste judgment
+- llm-council — pressure-test decisions (council this / pressure-test this)
+- imagegen-frontend-mobile — mobile image generation guidance
+- imagegen-frontend-web — web image generation guidance
+- image-to-code — image to code conversion
+- redesign-existing-projects — redesign guidance
+- brandkit — brand consistency
+- full-output-enforcement — output discipline
+- industrial-brutalist-ui — ANTI-REFERENCE: do not apply to MassageMap
+- minimalist-ui — ANTI-REFERENCE: do not apply to MassageMap
+
+## Known outstanding items — see GitHub Issues for full list
+- Dashboard end-to-end testing not yet done (all test records deleted 3 June 2026)
+- register-spa.html: premisesType + mobileAvailable showing for spa — fix pending (#1)
+- info.html missing — success screen redirect broken (#4)
+- suburb null on submit when locationArea selected (#3)
+- Admin email still going to personal address — fix in S7 (#6)
