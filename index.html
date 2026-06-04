@@ -295,8 +295,8 @@
       <a href="suburb.html?type=individual"   class="drawer__link">Find a therapist</a>
       <a href="suburb.html?type=spa"          class="drawer__link">Find a spa</a>
       <a href="map.html"                      class="drawer__link">Map view</a>
-      <a href="register.html?type=individual" class="drawer__link">Therapist — Register or Login</a>
-      <a href="register-spa.html?type=spa"     class="drawer__link">Spa — Register or Login</a>
+      <a href="register.html?type=individual" class="drawer__link" id="therapistLoginLink">Therapist — Register or Login</a>
+      <a href="register-spa.html?type=spa"     class="drawer__link" id="spaLoginLink">Spa — Register or Login</a>
       <a href="about.html"                    class="drawer__link">About MassageMap</a>
     </div>
   </nav>
@@ -392,6 +392,42 @@
     drawerClose.addEventListener('click', closeDrawer);
     drawerBackdrop.addEventListener('click', closeDrawer);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+  // Session check for drawer links
+  function getValidSession() {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('mm_session_')) {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key));
+          if (parsed && parsed.expiry && Date.now() < parsed.expiry) {
+            return parsed;
+          }
+        } catch (_) {}
+      }
+    }
+    return null;
+  }
+
+  document.getElementById('therapistLoginLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    const session = getValidSession();
+    if (session && session.supplierType === 'individual') {
+      window.location.href = 'dashboard.html';
+    } else {
+      window.location.href = 'register.html?type=individual';
+    }
+  });
+
+  document.getElementById('spaLoginLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    const session = getValidSession();
+    if (session && session.supplierType === 'spa') {
+      window.location.href = 'dashboard.html';
+    } else {
+      window.location.href = 'register-spa.html?type=spa';
+    }
+  });
   </script>
 
 </body>
