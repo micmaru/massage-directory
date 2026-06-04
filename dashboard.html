@@ -220,24 +220,35 @@
   // PAGE LOAD — session lookup
   // ════════════════════════════════════════
   let sessionEntry = null;
+  let supplierSnap = null;
+  const sessionKeys = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith('mm_session_')) {
-      try {
-        const parsed = JSON.parse(localStorage.getItem(key));
-        if (parsed && parsed.expiry && Date.now() < parsed.expiry) {
-          sessionEntry = { phone: key.replace('mm_session_', ''), ...parsed };
-          break;
-        }
-      } catch (_) {}
+    if (key && key.startsWith('mm_session_')) sessionKeys.push(key);
+  }
+  for (const key of sessionKeys) {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key));
+      if (!parsed || !parsed.expiry || Date.now() >= parsed.expiry) {
+        localStorage.removeItem(key);
+        continue;
+      }
+      const phone = key.replace('mm_session_', '');
+      const snap = await getDoc(doc(db, 'suppliers', phone));
+      if (!snap.exists()) {
+        localStorage.removeItem(key);
+        continue;
+      }
+      sessionEntry = { phone, ...parsed };
+      supplierSnap = snap;
+      break;
+    } catch (_) {
+      localStorage.removeItem(key);
     }
   }
   if (!sessionEntry) { window.location.href = 'index.html'; throw new Error('no session'); }
 
   window.supplierPhone = sessionEntry.phone;
-
-  const supplierSnap = await getDoc(doc(db, 'suppliers', window.supplierPhone));
-  if (!supplierSnap.exists()) { window.location.href = 'index.html'; throw new Error('no supplier doc'); }
   window.supplierData = supplierSnap.data();
 
   isSpa = window.supplierData.supplierType === 'spa';
