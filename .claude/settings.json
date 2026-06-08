@@ -1,9 +1,9 @@
 {
   "permissions": {
     "deny": [
-      "Read:functions/.env",
-      "Write:functions/.env",
-      "Bash:sudo:*"
+      "Bash:sudo:*",
+      "Read:.env",
+      "Write:.env"
     ]
   },
   "hooks": {
