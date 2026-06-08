@@ -28,5 +28,6 @@
         ]
       }
     ]
-  }
+  },
+  "skillListingBudgetFraction": 0.02
 }
