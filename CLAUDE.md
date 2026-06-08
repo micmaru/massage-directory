@@ -112,29 +112,6 @@ MassageMap is a three-sided massage therapy directory for the South African mark
 - auditLog: admin-only write. Never public write.
 - Full security audit required before launch.
 
-## Brief and git rules
-- Always write code changes as numbered steps
-- Each step must be clearly labelled: CLAUDE CODE terminal or ZSH TERMINAL — never ambiguous
-- Each brief block must have 1-3 lines explaining what it does
-- Git add and commit are allowed in briefs
-- Git push only at end of session or when Johan explicitly asks — never mid-session
-- Never include testing instructions in briefs
-- Briefs must never exceed ~50 lines — split into multiple briefs if longer
-- Never write code in claude.ai chat unless Johan explicitly approves after Claude requests it
-
-## Context file rules — CRITICAL
-- The Master Context .docx is Johan's accountability record — priority above all else
-- Every new version ADDS to the previous — nothing dropped, summarised, or reformatted
-- Build history stays in full — every step, every session
-- All parked items carry forward until explicitly closed by Johan
-- New decisions, bugs, fixes, parked items appended at end only
-- Never rewrite in shorter format without explicit permission
-
-## GitHub Issues
-- All known bugs, pending builds, and parked items are logged in GitHub Issues
-- Close the relevant issue when a fix is committed
-- At end of session: summarise issues closed or status-changed with issue number and title
-
 ## Design skills — consult before any UI work (Phase D)
 All skills are in .agents/skills/. Consult relevant skills before any CSS or UI changes.
 - impeccable — spacing and typography polish
