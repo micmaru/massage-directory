@@ -1,4 +1,11 @@
 {
+  "permissions": {
+    "deny": [
+      "Read:functions/.env",
+      "Write:functions/.env",
+      "Bash:sudo:*"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
