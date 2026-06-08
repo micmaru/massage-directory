@@ -1,9 +1,10 @@
 {
   "permissions": {
     "deny": [
-      "Bash:sudo:*",
-      "Read:.env",
-      "Write:.env"
+      "Bash(sudo:*)",
+      "Read(functions/.env)",
+      "Write(functions/.env)",
+      "Edit(functions/.env)"
     ]
   },
   "hooks": {
