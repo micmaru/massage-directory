@@ -138,4 +138,4 @@ All skills are in .agents/skills/. Consult relevant skills before any CSS or UI 
 - Admin email still going to personal address — fix in S7 (#6)
 
 ## Master Context
-Always read docs/MM-Master-Context-v49.md before any dev work.
+Always read docs/MM-Master-Context.md before any dev work.
