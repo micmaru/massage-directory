@@ -8,6 +8,18 @@
   <style>
     body { padding-top: 0; padding-bottom: 80px; }
 
+    /* ── Login ── */
+    .login-wrap { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: var(--space-5); }
+    .login-card { width: 100%; max-width: 400px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-6); }
+    .login-logo { font-size: var(--text-xl); font-weight: 700; letter-spacing: -0.3px; color: var(--text); margin-bottom: var(--space-6); text-align: center; }
+    .login-logo span { color: var(--accent); }
+    .login-title { font-size: var(--text-lg); font-weight: 700; color: var(--text); margin-bottom: var(--space-1); }
+    .login-sub { font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-5); }
+    .otp-row { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
+    .otp-input { flex: 1; letter-spacing: 4px; font-size: var(--text-lg); text-align: center; }
+    .otp-status { font-size: var(--text-sm); color: var(--text-muted); margin-top: var(--space-2); }
+    .reg-links { display: flex; gap: var(--space-3); margin-top: var(--space-3); flex-wrap: wrap; }
+
     .dash-topbar {
       position: sticky; top: 0; z-index: 50;
       background: #1a7a6e;
@@ -181,6 +193,50 @@
 </head>
 <body>
 
+<div id="recaptcha-container"></div>
+
+<!-- ══════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════ -->
+<div id="loginScreen" class="hidden">
+  <div class="login-wrap">
+    <div class="login-card">
+
+      <div class="login-logo">Massage<span>Map</span></div>
+      <div class="login-title">Supplier Login</div>
+      <div class="login-sub">Enter your cell number to access your dashboard.</div>
+
+      <div class="field" id="cellField" style="margin-bottom: var(--space-4);">
+        <label class="field__label" for="loginCell">Cell Number</label>
+        <input type="tel" id="loginCell" class="input" placeholder="e.g. 0821234567" autocomplete="tel" />
+      </div>
+
+      <button type="button" class="btn btn--primary btn--full" id="sendOtpBtn" onclick="sendLoginOtp()">Send OTP</button>
+
+      <div id="otpSection" class="hidden" style="margin-top: var(--space-4);">
+        <div class="otp-status" id="otpStatusMsg"></div>
+        <div class="otp-row">
+          <input type="text" id="loginOtpInput" class="input otp-input" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*" />
+          <button type="button" class="btn btn--primary" id="verifyOtpBtn" onclick="verifyLoginOtp()">Verify</button>
+        </div>
+        <button type="button" class="btn btn--secondary btn--sm" style="margin-top: var(--space-3);" onclick="sendLoginOtp()">Resend OTP</button>
+      </div>
+
+      <div id="loginError" class="hidden" style="margin-top: var(--space-3); font-size: var(--text-sm); color: #ef4444;"></div>
+      <div id="regLinks" class="reg-links hidden">
+        <a href="register.html"     class="btn btn--secondary btn--sm">Register as Therapist</a>
+        <a href="register-spa.html" class="btn btn--secondary btn--sm">Register as Spa</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     DASHBOARD SCREEN
+══════════════════════════════════ -->
+<div id="dashboardScreen" class="hidden">
+
 <div class="dash-topbar">
   <div class="dash-topbar__hamburger" aria-label="Menu">
     <span></span><span></span><span></span>
@@ -197,10 +253,12 @@
 
 <button class="dash-signout" id="signOutBtn">Sign Out</button>
 
+</div><!-- /dashboardScreen -->
+
 <script src="config.js"></script>
 <script type="module">
   import { app, db } from './firebase-config.js';
-  import { getAuth, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+  import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
   import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
   import { collection, doc, setDoc, getDoc, query, where, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
@@ -216,48 +274,191 @@
   const DAYS       = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
   const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
+  let appVerifier        = null;
+  let confirmationResult = null;
+
   // ════════════════════════════════════════
-  // PAGE LOAD — session lookup
+  // SESSION TOKEN HELPERS (30-day localStorage)
   // ════════════════════════════════════════
-  let sessionEntry = null;
-  let supplierSnap = null;
-  const sessionKeys = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith('mm_session_')) sessionKeys.push(key);
+  function sessionKey(phone) {
+    return 'mm_session_' + phone;
   }
-  for (const key of sessionKeys) {
+
+  function getValidSession(phone) {
     try {
-      const parsed = JSON.parse(localStorage.getItem(key));
-      if (!parsed || !parsed.expiry || Date.now() >= parsed.expiry) {
-        localStorage.removeItem(key);
-        continue;
+      const raw = localStorage.getItem(sessionKey(phone));
+      if (!raw) return null;
+      const session = JSON.parse(raw);
+      if (!session.expiry || Date.now() > session.expiry) {
+        localStorage.removeItem(sessionKey(phone));
+        return null;
       }
-      const phone = key.replace('mm_session_', '');
-      const snap = await getDoc(doc(db, 'suppliers', phone));
-      if (!snap.exists()) {
-        localStorage.removeItem(key);
-        continue;
-      }
-      sessionEntry = { phone, ...parsed };
-      supplierSnap = snap;
-      break;
-    } catch (_) {
-      continue;
-    }
+      return session;
+    } catch (_) { return null; }
   }
-  if (!sessionEntry) { window.location.href = 'index.html'; throw new Error('no session'); }
 
-  window.supplierPhone = sessionEntry.phone;
-  window.supplierData = supplierSnap.data();
+  function storeSession(phone, displayName, supplierType) {
+    const session = {
+      displayName,
+      supplierType,
+      expiry: Date.now() + 30 * 24 * 60 * 60 * 1000
+    };
+    localStorage.setItem(sessionKey(phone), JSON.stringify(session));
+  }
 
-  isSpa = window.supplierData.supplierType === 'spa';
-  document.getElementById('nameBar').textContent = window.supplierData.displayName || window.supplierPhone;
+  // ════════════════════════════════════════
+  // PAGE LOAD — session check
+  // ════════════════════════════════════════
+  (async () => {
+    let foundPhone = null;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('mm_session_')) {
+        const phone = key.slice('mm_session_'.length);
+        if (getValidSession(phone)) { foundPhone = phone; break; }
+      }
+    }
 
-  await loadOfferings();
+    if (foundPhone) {
+      const snap = await getDoc(doc(db, 'suppliers', foundPhone));
+      if (snap.exists()) {
+        await loadDashboard(foundPhone);
+      } else {
+        localStorage.removeItem(sessionKey(foundPhone));
+        document.getElementById('loginScreen').classList.remove('hidden');
+      }
+    } else {
+      document.getElementById('loginScreen').classList.remove('hidden');
+    }
+  })();
 
-  if (isSpa) { SECTION_COUNT = 9; renderSpa(); }
-  else        { SECTION_COUNT = 8; renderTherapist(); }
+  // ════════════════════════════════════════
+  // PHONE AUTH
+  // ════════════════════════════════════════
+  function formatPhoneNumber(raw) {
+    const digits = raw.replace(/\D/g, '');
+    if (digits.startsWith('27') && digits.length === 11) return '+' + digits;
+    if (digits.startsWith('0')  && digits.length === 10) return '+27' + digits.slice(1);
+    return '+' + digits;
+  }
+
+  function initRecaptchaVerifier() {
+    if (appVerifier) { try { appVerifier.clear(); } catch(_) {} }
+    appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+  }
+
+  window.sendLoginOtp = async function() {
+    const raw   = document.getElementById('loginCell').value.trim();
+    const errEl = document.getElementById('loginError');
+    errEl.classList.add('hidden');
+    document.getElementById('regLinks').classList.add('hidden');
+    if (!raw) {
+      errEl.textContent = 'Please enter your cell number.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    const phone = formatPhoneNumber(raw);
+    const btn   = document.getElementById('sendOtpBtn');
+    btn.classList.add('btn--loading');
+    btn.textContent = 'Sending…';
+
+    try {
+      initRecaptchaVerifier();
+      confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
+      document.getElementById('cellField').classList.add('hidden');
+      document.getElementById('otpSection').classList.remove('hidden');
+      document.getElementById('otpStatusMsg').textContent = `OTP sent to ${phone}. Enter the 6-digit code.`;
+      btn.textContent = 'Resend OTP';
+      btn.classList.remove('btn--loading');
+    } catch (err) {
+      console.error('OTP send error:', err);
+      btn.classList.remove('btn--loading');
+      btn.textContent = 'Send OTP';
+      let msg = 'Could not send OTP. Please check the number and try again.';
+      if (err.code === 'auth/invalid-phone-number') msg = 'Invalid phone number format.';
+      if (err.code === 'auth/too-many-requests')    msg = 'Too many attempts. Please wait a few minutes.';
+      errEl.textContent = msg;
+      errEl.classList.remove('hidden');
+      try { appVerifier.clear(); } catch(_) {}
+      appVerifier = null;
+    }
+  };
+
+  window.verifyLoginOtp = async function() {
+    const code  = document.getElementById('loginOtpInput').value.trim();
+    const errEl = document.getElementById('loginError');
+    errEl.classList.add('hidden');
+    document.getElementById('regLinks').classList.add('hidden');
+    if (code.length !== 6) {
+      errEl.textContent = 'Please enter all 6 digits.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (!confirmationResult) {
+      errEl.textContent = 'Please send OTP first.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    const btn = document.getElementById('verifyOtpBtn');
+    btn.classList.add('btn--loading');
+    btn.textContent = 'Verifying…';
+
+    try {
+      await confirmationResult.confirm(code);
+      const phone = formatPhoneNumber(document.getElementById('loginCell').value.trim());
+
+      const snap = await getDoc(doc(db, 'suppliers', phone));
+      if (snap.exists()) {
+        storeSession(phone, snap.data().displayName || '', snap.data().supplierType || 'individual');
+        await loadDashboard(phone);
+      } else {
+        btn.classList.remove('btn--loading');
+        btn.textContent = 'Verify';
+        document.getElementById('otpSection').classList.add('hidden');
+        errEl.textContent = 'No account found for this number. Please register first.';
+        errEl.classList.remove('hidden');
+        document.getElementById('regLinks').classList.remove('hidden');
+      }
+    } catch (err) {
+      console.error('OTP verify error:', err);
+      btn.classList.remove('btn--loading');
+      btn.textContent = 'Verify';
+      let msg = 'Incorrect code. Please try again.';
+      if (err.code === 'auth/code-expired') msg = 'OTP expired. Please request a new one.';
+      errEl.textContent = msg;
+      errEl.classList.remove('hidden');
+    }
+  };
+
+  // ════════════════════════════════════════
+  // LOAD DASHBOARD
+  // ════════════════════════════════════════
+  async function loadDashboard(phone) {
+    const snap = await getDoc(doc(db, 'suppliers', phone));
+    if (!snap.exists()) {
+      document.getElementById('loginError').textContent = 'No supplier account found. Please register first.';
+      document.getElementById('loginError').classList.remove('hidden');
+      document.getElementById('regLinks').classList.remove('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      return;
+    }
+    window.supplierPhone = phone;
+    window.supplierData  = snap.data();
+
+    isSpa = window.supplierData.supplierType === 'spa';
+    document.getElementById('nameBar').textContent = window.supplierData.displayName || window.supplierPhone;
+
+    await loadOfferings();
+
+    if (isSpa) { SECTION_COUNT = 9; renderSpa(); }
+    else        { SECTION_COUNT = 8; renderTherapist(); }
+
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('dashboardScreen').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
 
   document.getElementById('signOutBtn').addEventListener('click', async () => {
     for (let i = localStorage.length - 1; i >= 0; i--) {
