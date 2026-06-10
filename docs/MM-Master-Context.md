@@ -766,3 +766,72 @@ Repo: https://github.com/micmaru/massage-directory/issues
 ### Next session starts with
 Fix location cascade first — covers #3, #28, #32, #33, #34 across register.html and register-spa.html. Read this file and Dev Plan before any code. Discuss and agree approach before any brief.
 *STANDALONE — this file contains everything needed to start any session without any other document.*
+
+---
+
+## Session Log — 10 June 2026 (Session 2)
+
+### What we did
+- Switched to Claude Fable 5 (claude.ai + Claude Code default;
+  included until 22 June - revert default after)
+- Diagnosed location cascade across register.html,
+  register-spa.html, dashboard.html - findings logged below
+- Recovered pre-crash dashboard.html from git commit c778baa
+- #26 root cause: rebuilt dashboard had NO login/session code,
+  hard-redirected to index.html on every visit
+- Transplanted OTP/session login from pre-crash file (ba7b966)
+- Fixed auth-timing race: session check waits for
+  onAuthStateChanged; session never deleted on read errors
+  (38f8310)
+- #26 VERIFIED FIXED in browser: return visit straight to
+  dashboard, no OTP; OTP only after sign-out
+
+### Diagnosis findings (cascade - fix not yet done)
+- #32: silent query-failure path + no save validation +
+  'none' sentinel leakage
+- #33: regression, NOT new decision - spec was always both
+  area+suburb visible, selecting one clears the other
+- #34: saves doc IDs for province/area, display name for
+  suburb - mixed formats
+- #28: dashboard has NO cascade at all - must be built
+- Cascade duplicated byte-identical in both register files
+- Dead buildFormData() in both register files - remove later
+
+### Decisions made
+1. #26 fix: restore from git, transplant, adapt to doc-ID
+   architecture
+2. Lesson locked: NEVER rebuild a working file from scratch -
+   restore from git, then clean
+3. #33 reclassified as regression
+4. NEW ISSUE: Sign Out misaligned - suppliers will tap it
+   after every edit, killing session. Proposed Done button
+   (keeps session) + small Sign Out link. NOT YET APPROVED.
+5. Dashboard hamburger is a bug - remove (not yet done)
+6. Product behaviour must be documented before briefs -
+   supplier journey doc next session
+
+### Parked items (carry forward)
+- Location cascade fix briefs (#3/#28/#32/#33/#34) - pending:
+  name+ID vs name only; shared file vs fix twice
+- Dashboard cascade build (#28)
+- Sign Out / Done redesign - awaiting Johan
+- Dashboard hamburger removal
+- reCAPTCHA dev throttling - Firebase test-mode skip
+- dashboard-precrash.html (untracked, reference) - delete
+  after cascade fixes
+- Dead buildFormData() removal
+- index.html dark theme - Phase D
+- draw.io install + supplier journey doc - NEXT SESSION START
+
+### Git
+- ba7b966 - Fix #26: restore OTP/session login (c778baa)
+- 38f8310 - Fix #26 part 2: session check waits for auth
+- Both pushed
+
+### GitHub Issues
+- #26: fixed and verified - close when Johan confirms
+- New to log: dashboard hamburger removal; Sign Out/Done
+
+### Next session starts with
+draw.io install -> supplier journey doc (plain text, Johan's
+words) -> Sign Out/Done decision -> cascade fix briefs
