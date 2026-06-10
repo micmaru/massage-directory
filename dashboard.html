@@ -258,7 +258,7 @@
 <script src="config.js"></script>
 <script type="module">
   import { app, db } from './firebase-config.js';
-  import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+  import { getAuth, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
   import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
   import { collection, doc, setDoc, getDoc, query, where, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
@@ -307,9 +307,13 @@
   }
 
   // ════════════════════════════════════════
-  // PAGE LOAD — session check
+  // PAGE LOAD — session check (waits for Firebase Auth to restore)
   // ════════════════════════════════════════
-  (async () => {
+  let authChecked = false;
+  onAuthStateChanged(auth, async (user) => {
+    if (authChecked) return;
+    authChecked = true;
+
     let foundPhone = null;
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -319,7 +323,18 @@
       }
     }
 
-    if (foundPhone) {
+    if (!foundPhone) {
+      document.getElementById('loginScreen').classList.remove('hidden');
+      return;
+    }
+
+    if (!user) {
+      // Auth not restored — rules would reject the read. Keep the session, require OTP.
+      document.getElementById('loginScreen').classList.remove('hidden');
+      return;
+    }
+
+    try {
       const snap = await getDoc(doc(db, 'suppliers', foundPhone));
       if (snap.exists()) {
         await loadDashboard(foundPhone);
@@ -327,10 +342,11 @@
         localStorage.removeItem(sessionKey(foundPhone));
         document.getElementById('loginScreen').classList.remove('hidden');
       }
-    } else {
+    } catch (err) {
+      console.error('Session check read failed:', err);
       document.getElementById('loginScreen').classList.remove('hidden');
     }
-  })();
+  });
 
   // ════════════════════════════════════════
   // PHONE AUTH
@@ -436,7 +452,14 @@
   // LOAD DASHBOARD
   // ════════════════════════════════════════
   async function loadDashboard(phone) {
-    const snap = await getDoc(doc(db, 'suppliers', phone));
+    let snap;
+    try {
+      snap = await getDoc(doc(db, 'suppliers', phone));
+    } catch (err) {
+      console.error('loadDashboard read failed:', err);
+      document.getElementById('loginScreen').classList.remove('hidden');
+      return;
+    }
     if (!snap.exists()) {
       document.getElementById('loginError').textContent = 'No supplier account found. Please register first.';
       document.getElementById('loginError').classList.remove('hidden');
