@@ -727,4 +727,42 @@ Repo: https://github.com/micmaru/massage-directory/issues
 ---
 
 *MassageMap Master Context v49 | 9 June 2026 | Johan Cilliers | Confidential*
+
+---
+
+## Session Log — 10 June 2026
+
+### What we did
+- Read MM-Master-Context.md and generated full development plan visual tracker (5 phases, S1–S40)
+- Generated MassageMap Dev Plan v1 10Jun2026.docx — saved to docs/ and pushed to GitHub
+- Compared original Session Build Plan v1 (19 May) against actual progress — confirmed aligned at end of S6
+- Ran live tests on S2 (therapist registration), S3 (spa registration), S6 (therapist dashboard)
+
+### Test results
+- S2 Therapist registration: NOT DONE — 11 bugs logged (#32–#37 plus existing #3, #5, #6, #28)
+- S3 Spa registration: NOT DONE — 5 bugs (shares root causes with S2)
+- S6 Therapist dashboard: NOT DONE — sections 2/4/6/7 save correctly, but OTP loop (#26), location broken (#28), photos broken (#27/#40), associations not loading (#12), travel question missing (#39)
+- S6 Spa dashboard: NOT TESTED — deferred until therapist dashboard fixed
+
+### GitHub issues created today
+- #32 locationArea saves as null
+- #33 area + suburb must both show, selecting one clears other
+- #34 province saves lowercase/hyphenated
+- #35 welcome email uses displayName not firstName+lastName
+- #36 premisesType + mobileAvailable on therapist doc
+- #37 referralCode generating — parked feature
+- #38 qualifications field not editable in dashboard
+- #39 travel question + distance options missing
+- #40 photos uploaded during registration not showing in dashboard
+
+### Decisions made
+1. Dev Plan kept as separate docx — not merged into Master Context
+2. S2, S3, S6 confirmed NOT DONE after live testing
+3. Spa dashboard test deferred
+4. Fix order agreed: location cascade (#3/#28/#32/#33/#34) → OTP loop (#26) → associations (#12) → admin email (#6/#8) → photos (#27/#40)
+5. Both area AND suburb always show on registration — selecting one clears the other
+6. Sign out button label must read "Sign Out of Dashboard"
+
+### Next session starts with
+Fix location cascade first — covers #3, #28, #32, #33, #34 across register.html and register-spa.html. Read this file and Dev Plan before any code. Discuss and agree approach before any brief.
 *STANDALONE — this file contains everything needed to start any session without any other document.*
