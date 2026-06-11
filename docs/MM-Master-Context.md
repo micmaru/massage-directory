@@ -835,3 +835,49 @@ Fix location cascade first — covers #3, #28, #32, #33, #34 across register.htm
 ### Next session starts with
 draw.io install -> supplier journey doc (plain text, Johan's
 words) -> Sign Out/Done decision -> cascade fix briefs
+
+---
+
+## Session Log — 11 June 2026
+
+### What we did
+- OTP Reference v0.1 created (O1-O9) — supersedes Notification
+  Reference v1 Appendix A; login.html never existed, login
+  lives in dashboard.html
+- Dashboard exit redesign: mockup approved + implemented +
+  tested 100% — primary "Back to Main Menu" (navigate only,
+  session kept) + secondary "Sign Out" (shared-device case)
+- admin.html + admin-supplier.html restored from d1802ad —
+  deleted unnoticed in 0338952; HD backup byte-identical
+- Repo hygiene: backup/, _backup_pre_offerings_migration/,
+  ~$* lock files — untracked and gitignored
+- Live Firestore verified: all locations_* collections use
+  `name` for own display name (areas: areaName)
+
+### Decisions made
+1. Cascade: locationArea saves areaName
+2. Cascade: one shared location-cascade.js for register.html,
+   register-spa.html, dashboard.html
+3. Hamburger removal bundled into next dashboard brief
+4. Old sign-out handler deleted mm_session_ tokens against
+   Decision 21 — corrected
+5. Field Register correction needed: provinces/towns own
+   field is `name`, not provinceName/townName
+
+### Parked items (carry forward)
+- Location cascade briefs (#3/#28/#32/#33/#34) — ready to write
+- Footer "Join here" link — remove/repoint/relabel pending
+- Field Register + Master Context locations field correction
+- O7/O8 OTP routing — verify in live testing
+- draw.io OTP cycle diagram from OTP Reference v0.1
+- dashboard-precrash.html — delete after cascade fixes
+- Dead buildFormData() removal
+- Dashboard dark theme — Phase D
+
+### GitHub Issues
+- #26 verified fixed after exit-button testing — close on GitHub
+- New to log: hamburger removal; footer "Join here" link
+
+### Next session starts with
+Location cascade brief discussion — shared location-cascade.js,
+verified live field names, fixes #3/#28/#32/#33/#34
