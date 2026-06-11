@@ -282,6 +282,14 @@
   import { getAuth, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
   import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
   import { collection, doc, setDoc, getDoc, query, where, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+  import { initLocationCascade, onProvinceChange,
+    onAreaChange, onLocationAreaChange, onSuburbChange,
+    getLocationValues, preSelectLocation }
+    from './location-cascade.js';
+  window.onProvinceChange = onProvinceChange;
+  window.onAreaChange = onAreaChange;
+  window.onLocationAreaChange = onLocationAreaChange;
+  window.onSuburbChange = onSuburbChange;
 
   const auth    = getAuth(app);
   const storage = getStorage(app);
@@ -498,6 +506,15 @@
 
     if (isSpa) { SECTION_COUNT = 9; renderSpa(); }
     else        { SECTION_COUNT = 8; renderTherapist(); }
+
+    const data = window.supplierData;
+    if (data.province) {
+      await preSelectLocation({
+        province: data.province, area: data.area,
+        locationArea: data.locationArea, suburb: data.suburb });
+    } else {
+      initLocationCascade();
+    }
 
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('dashboardScreen').classList.remove('hidden');
@@ -810,15 +827,27 @@
     </div>`;
 
     const s3 = `<div class="field-stack">
-      <div class="field"><label class="field__label">Province</label>
-        <input class="input input--locked" value="${esc(d.province)}" readonly /></div>
-      <div class="field"><label class="field__label">Suburb</label>
-        <input class="input input--locked" value="${esc(d.suburb)}" readonly /></div>
+      <div class="field" id="provinceField"><label class="field__label" for="province">Province *</label>
+        <select class="select" id="province" name="province" onchange="onProvinceChange()">
+          <option value="">Select province…</option>
+        </select></div>
+      <div class="field" id="areaField"><label class="field__label" for="area">City / Town *</label>
+        <select class="select" id="area" name="area" disabled onchange="onAreaChange()">
+          <option value="">Select city/town…</option>
+        </select></div>
+      <div class="field hidden" id="locationAreaField"><label class="field__label" for="locationArea">Area *</label>
+        <select class="select" id="locationArea" name="locationArea" disabled onchange="onLocationAreaChange()">
+          <option value="">Select area…</option>
+        </select></div>
+      <div class="field" id="suburbField"><label class="field__label" for="suburb">Suburb *</label>
+        <select class="select" id="suburb" name="suburb" disabled onchange="onSuburbChange()">
+          <option value="">Select suburb…</option>
+        </select></div>
       <div class="field"><label class="field__label">Full street address <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
-        <input class="input" id="t_addressLine1" type="text" value="${esc(d.addressLine1)}" /></div>
+        <input class="input" id="addressLine1" type="text" value="${esc(d.addressLine1)}" /></div>
       <div class="toggle-wrap">
         <div class="toggle-wrap__label">Show address on listing</div>
-        <label class="toggle"><input type="checkbox" id="t_addressVisible" ${d.addressVisible ? 'checked' : ''} /><span class="toggle__track"></span></label>
+        <label class="toggle"><input type="checkbox" id="addressVisible" ${d.addressVisible ? 'checked' : ''} /><span class="toggle__track"></span></label>
       </div>
     </div>`;
 
@@ -950,8 +979,9 @@
       };
     } else if (n === 3) {
       data = {
-        addressLine1:   gv('t_addressLine1') || null,
-        addressVisible: document.getElementById('t_addressVisible').checked
+        ...getLocationValues(),
+        addressLine1:   gv('addressLine1') || null,
+        addressVisible: document.getElementById('addressVisible').checked
       };
     } else if (n === 4) {
       const mobile = document.getElementById('t_mobileAvailable').checked;
@@ -1047,15 +1077,27 @@
     capturedGpsLng = d.gpsLng || null;
 
     const s4 = `<div class="field-stack">
-      <div class="field"><label class="field__label">Province</label>
-        <input class="input input--locked" value="${esc(d.province)}" readonly /></div>
-      <div class="field"><label class="field__label">Suburb</label>
-        <input class="input input--locked" value="${esc(d.suburb)}" readonly /></div>
+      <div class="field" id="provinceField"><label class="field__label" for="province">Province *</label>
+        <select class="select" id="province" name="province" onchange="onProvinceChange()">
+          <option value="">Select province…</option>
+        </select></div>
+      <div class="field" id="areaField"><label class="field__label" for="area">City / Town *</label>
+        <select class="select" id="area" name="area" disabled onchange="onAreaChange()">
+          <option value="">Select city/town…</option>
+        </select></div>
+      <div class="field hidden" id="locationAreaField"><label class="field__label" for="locationArea">Area *</label>
+        <select class="select" id="locationArea" name="locationArea" disabled onchange="onLocationAreaChange()">
+          <option value="">Select area…</option>
+        </select></div>
+      <div class="field" id="suburbField"><label class="field__label" for="suburb">Suburb *</label>
+        <select class="select" id="suburb" name="suburb" disabled onchange="onSuburbChange()">
+          <option value="">Select suburb…</option>
+        </select></div>
       <div class="field"><label class="field__label">Full street address</label>
-        <input class="input" id="sp_addressLine1" type="text" value="${esc(d.addressLine1)}" /></div>
+        <input class="input" id="addressLine1" type="text" value="${esc(d.addressLine1)}" /></div>
       <div class="toggle-wrap">
         <div class="toggle-wrap__label">Show address on listing</div>
-        <label class="toggle"><input type="checkbox" id="sp_addressVisible" ${d.addressVisible !== false ? 'checked' : ''} /><span class="toggle__track"></span></label>
+        <label class="toggle"><input type="checkbox" id="addressVisible" ${d.addressVisible !== false ? 'checked' : ''} /><span class="toggle__track"></span></label>
       </div>
       <div>
         <button type="button" class="btn--gps" onclick="captureGps()">
@@ -1171,8 +1213,9 @@
       };
     } else if (n === 4) {
       data = {
-        addressLine1:   gv('sp_addressLine1') || null,
-        addressVisible: document.getElementById('sp_addressVisible').checked,
+        ...getLocationValues(),
+        addressLine1:   gv('addressLine1') || null,
+        addressVisible: document.getElementById('addressVisible').checked,
         gpsLat:         capturedGpsLat,
         gpsLng:         capturedGpsLng
       };
