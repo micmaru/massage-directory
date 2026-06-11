@@ -881,3 +881,46 @@ words) -> Sign Out/Done decision -> cascade fix briefs
 ### Next session starts with
 Location cascade brief discussion — shared location-cascade.js,
 verified live field names, fixes #3/#28/#32/#33/#34
+
+---
+
+## Session Log — 11 June 2026 (Session 2)
+
+### Decisions made
+1. location-cascade.js in project root (no js/ folder)
+2. 6 location fields saved: province, provinceName, area,
+   townName, locationArea, suburb
+3. Area/suburb mutual exclusion — select one, other hides;
+   clear-selection restores both
+4. No areas for town: area field hidden entirely
+5. Empty string for unpicked field (not null)
+6. Spas keep locationArea — customers search by area
+7. Cell number = one supplier type permanently, no cross-use
+8. Dashboard login: silent Firestore check BEFORE any OTP
+9. In-between choice screen: DELETE (pre-crash baggage)
+10. dashboard.html: no supplierType routing
+11. Wrong-door/not-found: generic message, auto back to menu
+12. OTP sequence locked and logged in full
+
+### What was built
+- location-cascade.js created (280b415) — 132 lines
+- register.html wired (fef07e8) — 159 deletions
+- register-spa.html wired (4338436) — 159 deletions
+- dashboard.html cascade built (fd282ab)
+
+### Known bugs to fix next session
+- townName not writing to Firestore (getLocationValues bug)
+- Dashboard header shows phone not supplier name
+- 0800000002 spa loads therapist template
+
+### Parked
+- OTP/login rework (full spec logged above)
+- Geocoding gap when area selected
+- OTP Reference v0.2
+- dashboard-precrash.html deletion
+- buildFormData() removal
+- Hamburger removal
+
+### Next session starts with
+Fresh browser test (clear cache) → fix townName bug →
+OTP login rework discussion
