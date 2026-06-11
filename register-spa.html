@@ -755,7 +755,7 @@
             </div>
             <div class="field" id="suburbField">
               <label class="field__label" for="suburb">Suburb *</label>
-              <select class="select" id="suburb" name="suburb" disabled>
+              <select class="select" id="suburb" name="suburb" disabled onchange="onSuburbChange()">
                 <option value="">Select suburb…</option>
               </select>
             </div>
@@ -1087,6 +1087,13 @@
     collection, doc, setDoc, getDoc, serverTimestamp, runTransaction,
     query, where, getDocs, orderBy
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+  import { initLocationCascade, onProvinceChange,
+    onAreaChange, onLocationAreaChange, onSuburbChange,
+    getLocationValues } from './location-cascade.js';
+  window.onProvinceChange = onProvinceChange;
+  window.onAreaChange = onAreaChange;
+  window.onLocationAreaChange = onLocationAreaChange;
+  window.onSuburbChange = onSuburbChange;
 
   const auth    = getAuth(app);
   const storage = getStorage(app);
@@ -1149,153 +1156,6 @@
     8: 'Photos (at least one photo)'
   };
   let supplierNumberGenerated = null;
-
-  // ════════════════════════════════════════════
-  // ════════════════════════════════════════════
-  // LOCATION CASCADE — reads from Firestore
-  // ════════════════════════════════════════════
-  let provincesCache = [];
-  let townsCache = {};
-  let suburbsCache = {};
-
-  async function populateProvinces() {
-    const sel = document.getElementById('province');
-    sel.innerHTML = '<option value="">Select province…</option>';
-    try {
-      const snap = await getDocs(query(collection(db, 'locations_provinces'), orderBy('name', 'asc')));
-      provincesCache = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
-      provincesCache.forEach(p => {
-        const o = document.createElement('option');
-        o.value = p.id; o.textContent = p.name;
-        sel.appendChild(o);
-      });
-    } catch (err) {
-      console.error('Failed to load provinces:', err);
-    }
-  }
-
-  async function onProvinceChange() {
-    const provinceId = document.getElementById('province').value;
-    const townEl    = document.getElementById('area');
-    const suburbEl  = document.getElementById('suburb');
-    townEl.innerHTML   = '<option value="">Select city/town…</option>';
-    suburbEl.innerHTML = '<option value="">Select suburb…</option>';
-    townEl.disabled = true; suburbEl.disabled = true;
-    if (!provinceId) return;
-    if (!townsCache[provinceId]) {
-      try {
-        const snap = await getDocs(query(
-          collection(db, 'locations_towns'),
-          where('provinceId', '==', provinceId),
-          orderBy('name', 'asc')
-        ));
-        townsCache[provinceId] = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
-      } catch (err) {
-        console.error('Failed to load towns:', err);
-        return;
-      }
-    }
-    townsCache[provinceId].forEach(t => {
-      const o = document.createElement('option');
-      o.value = t.id; o.textContent = t.name;
-      townEl.appendChild(o);
-    });
-    townEl.disabled = false;
-  }
-
-  let areasCache = {};
-
-  async function onAreaChange() {
-    const townId          = document.getElementById('area').value;
-    const suburbEl        = document.getElementById('suburb');
-    const locationAreaEl   = document.getElementById('locationArea');
-    const locationAreaField = document.getElementById('locationAreaField');
-    const suburbField     = document.getElementById('suburbField');
-
-    suburbEl.innerHTML        = '<option value="">Select suburb…</option>';
-    locationAreaEl.innerHTML   = '<option value="">Select area…</option>';
-    suburbEl.disabled         = true;
-    locationAreaEl.disabled    = true;
-    locationAreaField.classList.add('hidden');
-    suburbField.querySelector('label').textContent = 'Suburb *';
-
-    if (!townId) return;
-
-    // Load suburbs
-    if (!suburbsCache[townId]) {
-      try {
-        const snap = await getDocs(query(
-          collection(db, 'locations_suburbs'),
-          where('townId', '==', townId),
-          orderBy('name', 'asc')
-        ));
-        suburbsCache[townId] = snap.docs.map(d => d.data().name);
-      } catch (err) {
-        console.error('Failed to load suburbs:', err);
-        return;
-      }
-    }
-
-    // Check for areas
-    if (!areasCache[townId]) {
-      try {
-        const snap = await getDocs(query(
-          collection(db, 'locations_areas'),
-          where('townId', '==', townId)
-        ));
-        areasCache[townId] = snap.docs.map(d => ({ id: d.id, name: d.data().areaName, suburbs: d.data().suburbs || [] }));
-      } catch (err) {
-        console.error('Failed to load areas:', err);
-        areasCache[townId] = [];
-      }
-    }
-
-    if (areasCache[townId].length > 0) {
-      // Areas exist — show area dropdown, hide suburb until area selected
-      const noneOpt = document.createElement('option');
-      noneOpt.value = 'none'; noneOpt.textContent = 'My suburb is not in these areas';
-      locationAreaEl.appendChild(noneOpt);
-      areasCache[townId].forEach(a => {
-        const o = document.createElement('option');
-        o.value = a.id; o.textContent = a.name;
-        locationAreaEl.appendChild(o);
-      });
-      locationAreaEl.disabled = false;
-      locationAreaField.classList.remove('hidden');
-      suburbField.classList.add('hidden');
-    } else {
-      // No areas — show all suburbs directly
-      suburbsCache[townId].forEach(s => {
-        const o = document.createElement('option');
-        o.value = s; o.textContent = s;
-        suburbEl.appendChild(o);
-      });
-      suburbEl.disabled = false;
-    }
-  }
-
-  window.onLocationAreaChange = async function() {
-    const areaId   = document.getElementById('locationArea').value;
-    const suburbField = document.getElementById('suburbField');
-    suburbField.classList.add('hidden');
-    if (areaId === 'none') {
-      suburbField.classList.remove('hidden');
-    }
-    const suburbEl = document.getElementById('suburb');
-    const townId   = document.getElementById('area').value;
-    suburbEl.innerHTML = '<option value="">Select suburb… (optional)</option>';
-    suburbEl.disabled  = true;
-    if (areaId === 'none') {
-      // Show all suburbs
-      if (!suburbsCache[townId]) return;
-      suburbsCache[townId].forEach(s => {
-        const o = document.createElement('option');
-        o.value = s; o.textContent = s;
-        suburbEl.appendChild(o);
-      });
-      suburbEl.disabled = false;
-    }
-  }
 
   // ════════════════════════════════════════════
   // PHONE AUTH — OTP
@@ -1661,24 +1521,21 @@
       };
     } else if (n === 3) {
       const addressLine1 = v('addressLine1') || null;
-      const suburb       = document.getElementById('suburb').value;
+      const loc          = getLocationValues();
       const manualLat    = document.getElementById('gpsLat').value;
       const manualLng    = document.getElementById('gpsLng').value;
       let gpsLat = manualLat ? parseFloat(manualLat) : null;
       let gpsLng = manualLng ? parseFloat(manualLng) : null;
       if (!gpsLat) {
         const geoQuery = addressLine1
-          ? `${addressLine1}, ${suburb}, South Africa`
-          : `${suburb}, South Africa`;
+          ? `${addressLine1}, ${loc.suburb}, South Africa`
+          : `${loc.suburb}, South Africa`;
         const geo = await geocodeAddress(geoQuery);
         gpsLat = geo ? geo.lat : null;
         gpsLng = geo ? geo.lng : null;
       }
       data = {
-        province:       document.getElementById('province').value,
-        area:           document.getElementById('area').value,
-        locationArea:   document.getElementById('locationArea').value || null,
-        suburb,
+        ...loc,
         addressLine1,
         addressVisible: document.getElementById('addressVisible').checked,
         gpsLat,
@@ -2189,7 +2046,7 @@
   }
 
   // ── Init ──
-  populateProvinces();
+  initLocationCascade();
   loadOfferings();
   buildWeeklyHoursGrid();
 
@@ -2197,9 +2054,6 @@
   window.handleNext            = handleNext;
   window.resendOtp             = resendOtp;
   window.verifyOtp             = verifyOtp;
-  window.onProvinceChange      = onProvinceChange;
-  window.onAreaChange          = onAreaChange;
-  window.onLocationAreaChange   = onLocationAreaChange;
   window.onMobileToggle        = onMobileToggle;
   window.onDayToggle           = onDayToggle;
   window.onPhotoChange         = onPhotoChange;
