@@ -459,12 +459,8 @@
         storeSession(phone, snap.data().displayName || '', snap.data().supplierType || 'individual');
         await loadDashboard(phone);
       } else {
-        btn.classList.remove('btn--loading');
-        btn.textContent = 'Verify';
-        document.getElementById('otpSection').classList.add('hidden');
-        errEl.textContent = 'No account found for this number. Please register first.';
-        errEl.classList.remove('hidden');
-        document.getElementById('regLinks').classList.remove('hidden');
+        storeSession(phone, '', 'individual');
+        window.location.href = 'register.html';
       }
     } catch (err) {
       console.error('OTP verify error:', err);
