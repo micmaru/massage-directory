@@ -1004,7 +1004,7 @@
 <script type="module">
   import { app, db } from './firebase-config.js';
   import {
-    getAuth, RecaptchaVerifier, signInWithPhoneNumber
+    getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
   import {
     getStorage, ref as storageRef, uploadBytes, getDownloadURL
@@ -1070,14 +1070,18 @@
   let verifiedPhone      = '';
   let knownSupplierData  = null;
 
-  // Auto-skip OTP if redirected from dashboard with phone in URL
-  const _urlParams = new URLSearchParams(window.location.search);
-  const _urlPhone  = _urlParams.get('phone');
-  if (_urlPhone) {
-    verifiedPhone = _urlPhone;
-    phoneVerified = true;
-    storeSession(_urlPhone, '', 'individual');
-    document.addEventListener('DOMContentLoaded', () => showConsentGate());
+  // Auto-skip OTP if redirected from dashboard. The URL param only signals
+  // the skip — the phone must come from the Firebase Auth session, never
+  // from the URL, or anyone could register under someone else's number.
+  if (new URLSearchParams(window.location.search).has('phone')) {
+    onAuthStateChanged(auth, (user) => {
+      if (!user || !user.phoneNumber || phoneVerified) return;
+      authUid       = user.uid;
+      verifiedPhone = user.phoneNumber;
+      phoneVerified = true;
+      storeSession(verifiedPhone, '', 'individual');
+      showConsentGate();
+    });
   }
 
   const accSectionStates = {1:'empty',2:'empty',3:'empty',4:'empty',5:'empty',6:'empty',7:'empty',8:'empty'};
