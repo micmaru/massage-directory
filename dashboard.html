@@ -460,7 +460,7 @@
         await loadDashboard(phone);
       } else {
         storeSession(phone, '', 'individual');
-        window.location.href = 'register.html';
+        window.location.href = 'register.html?phone=' + encodeURIComponent(phone);
       }
     } catch (err) {
       console.error('OTP verify error:', err);

@@ -1070,6 +1070,16 @@
   let verifiedPhone      = '';
   let knownSupplierData  = null;
 
+  // Auto-skip OTP if redirected from dashboard with phone in URL
+  const _urlParams = new URLSearchParams(window.location.search);
+  const _urlPhone  = _urlParams.get('phone');
+  if (_urlPhone) {
+    verifiedPhone = _urlPhone;
+    phoneVerified = true;
+    storeSession(_urlPhone, '', 'individual');
+    document.addEventListener('DOMContentLoaded', () => showConsentGate());
+  }
+
   const accSectionStates = {1:'empty',2:'empty',3:'empty',4:'empty',5:'empty',6:'empty',7:'empty',8:'empty'};
   const REQUIRED_SECTIONS = {
     1: 'Personal details (name, display name, gender)',
