@@ -685,7 +685,7 @@ window.saveSection = async function(section) {
       update = {
         province: document.getElementById('province').value,
         town: document.getElementById('town').value,
-        area: document.getElementById('area').value,
+        locationArea: document.getElementById('area').value,
         suburb: document.getElementById('suburb').value,
         gpsLat: parseFloat(document.getElementById('gpsLat').value) || null,
         gpsLng: parseFloat(document.getElementById('gpsLng').value) || null,
@@ -813,7 +813,7 @@ window.onTownChange = async function() {
     o.textContent = d.data().name;
     suburbEl.appendChild(o);
   });
-  if (supplierData.area) areaEl.value = supplierData.area;
+  if (supplierData.locationArea) areaEl.value = supplierData.locationArea;
   if (supplierData.suburb) suburbEl.value = supplierData.suburb;
 }
 
@@ -836,7 +836,7 @@ auth.onAuthStateChanged(async user => {
       document.getElementById('town').value = data.town;
       await onTownChange();
     }
-    if (data.area) document.getElementById('area').value = data.area;
+    if (data.locationArea) document.getElementById('area').value = data.locationArea;
     if (data.suburb) document.getElementById('suburb').value = data.suburb;
   }
 });
