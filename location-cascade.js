@@ -107,7 +107,7 @@ export function getLocationValues() {
   return {
     province: p.value,
     provinceName: p.value ? p.options[p.selectedIndex].text : '',
-    area: t.value,
+    townId: t.value,
     townName: t.value ? t.options[t.selectedIndex].text : '',
     locationArea: document.getElementById('locationArea').value || '',
     suburb: document.getElementById('suburb').value || ''
@@ -119,8 +119,8 @@ export async function preSelectLocation(saved) {
   await initLocationCascade();
   document.getElementById('province').value = saved.province;
   await onProvinceChange();
-  if (!saved.area) return;
-  document.getElementById('area').value = saved.area;
+  if (!saved.townId) return;
+  document.getElementById('area').value = saved.townId;
   await onAreaChange();
   if (saved.locationArea) {
     document.getElementById('locationArea').value = saved.locationArea;

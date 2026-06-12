@@ -510,7 +510,7 @@
     const data = window.supplierData;
     if (data.province) {
       await preSelectLocation({
-        province: data.province, area: data.area,
+        province: data.province, townId: data.townId,
         locationArea: data.locationArea, suburb: data.suburb });
     } else {
       initLocationCascade();
