@@ -35,7 +35,7 @@ MassageMap is a three-sided massage therapy directory for the South African mark
 - subscribe.html — subscription selection
 - payment.html — PayFast payment screen
 - admin.html — admin dashboard (hidden URL, desktop only, never link publicly)
-- admin-supplier.html — admin supplier detail view
+- admin-supplier.html — admin supplier detail view. Has its own legacy name-based location cascade (province/town/area/suburb as four selects, `area` = locationArea grouping) — NOT wired to shared location-cascade.js. Never assume the register pattern here.
 - style.css — shared styles, never duplicate
 - functions/ — Firebase Cloud Functions (Node.js)
 - functions/.env — credentials (GITIGNORED, never commit)

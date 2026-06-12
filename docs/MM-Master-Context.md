@@ -1,5 +1,5 @@
-# MassageMap — Master Context v49
-**Version:** 49 | **Date:** 9 June 2026 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v50
+**Version:** 50 | **Date:** 12 June 2026 | **Author:** Johan Cilliers | **Confidential**
 **STANDALONE — no previous version needed. This is the single source of truth.**
 
 ---
@@ -924,3 +924,51 @@ verified live field names, fixes #3/#28/#32/#33/#34
 ### Next session starts with
 Fresh browser test (clear cache) → fix townName bug →
 OTP login rework discussion
+
+---
+
+## Session Log — 12 June 2026
+
+### What we did
+- Diagnosed and confirmed location cascade working 100% in register.html
+- Retired `area` field permanently — renamed to `townId` across all files
+- `locationArea` confirmed correct — stores `areaName` value
+- Admin vetting card location line fixed — now shows provinceName | townName | locationArea | suburb
+- `provinceName` and `townName` added to `finalData` in register.html and register-spa.html
+- Fixed OTP double-fire bug — dashboard now redirects to register.html?phone= after OTP for unknown number
+- Phone derived from Firebase Auth (onAuthStateChanged) not URL parameter — security fix
+- admin-supplier.html `area` → `locationArea` rename (its area select is locationArea, not town)
+- CLAUDE.md updated — admin-supplier.html has own legacy cascade, not shared location-cascade.js
+
+### Commits this session
+- da3fc5c — Rename area to townId in register/dashboard/location-cascade
+- eeef2f9 — Rename area fields in admin files
+- 8ab8209 — Fix admin vetting card location display — use display names not IDs
+- e52f36c — Copy provinceName and townName to suppliers doc on final submit
+- 5d1f986 — Fix double OTP: pass phone in URL redirect, skip OTP in register.html
+- 34ca944 — Security fix: derive phone from Firebase Auth not URL parameter
+
+### Decisions made
+1. `area` field retired permanently — `townId` is the replacement everywhere
+2. `locationArea` stores `areaName` — locked, no change
+3. Admin vetting card uses display names not Firestore IDs
+4. OTP skip on redirect uses Firebase Auth phone — not URL parameter
+5. admin-supplier.html has own legacy cascade — separate session to fix
+6. Master Context version number and date must be updated every session
+
+### Known bugs to fix next session
+- No exit button on register.html for incomplete registration
+- Flash of phone screen on register.html redirect (minor)
+- admin-supplier.html legacy cascade — needs full rewrite
+- locations_areas Firestore write permission error
+- Firestore security rules — allow update: if true on suppliers — pre-launch audit
+- admin-supplier.html town dropdown won't pre-fill for suppliers registered before 12 June 2026 (old records have `area` not `townId`) — risk of admin overwriting location with blank town on save
+
+### Parked
+- register-spa.html — not tested this session
+- dashboard header shows phone not supplier name
+- spa loads therapist template on dashboard
+- dashboard-precrash.html — delete after all fixes confirmed
+
+### Next session starts with
+Fix exit button on register.html for incomplete registration
