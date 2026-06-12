@@ -2421,7 +2421,7 @@
 
       const massageTypes = Array.isArray(d.massageTypes) && d.massageTypes.length ? escHtml(d.massageTypes.join(', ')) : '—';
       const treatments   = Array.isArray(d.treatments)   && d.treatments.length   ? escHtml(d.treatments.join(', '))   : '—';
-      const location     = [d.province, d.townId, d.suburb].filter(Boolean).map(escHtml).join(' | ') || '—';
+      const location     = [d.provinceName, d.townName, d.locationArea, d.suburb].filter(Boolean).map(escHtml).join(' | ') || '—';
 
       const card = document.createElement('div');
       card.className = 'vet-card';
