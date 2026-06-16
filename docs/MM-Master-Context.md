@@ -972,3 +972,206 @@ OTP login rework discussion
 
 ### Next session starts with
 Fix exit button on register.html for incomplete registration
+
+---
+
+## Session Log — 13 June 2026
+
+### What we did
+- Established draw.io workflow — XML from claude.ai, pasted via Extras → Edit Diagram
+- Agreed M-numbering system — M-0 master hub, hierarchical sub-numbers (M-1.1, M-1.2 etc.)
+- Colour code locked — teal=navigation, light blue=indicators, purple=supplier screens, green=customer screens, yellow=title boxes
+- M-0 confirmed as living document — new screens get new M-numbers added
+- Post-payment flow confirmed — Registration → Payment → M-0 (not dashboard)
+- M1 Therapist Registration flow agreed and completed
+
+### Decisions made
+1. draw.io workflow — XML from claude.ai, paste via Extras → Edit Diagram
+2. M-numbering system — M-0 master hub, hierarchical sub-numbers
+3. Colour code locked — teal=navigation, light blue=indicators, purple=supplier screens, green=customer screens, yellow=title boxes
+4. M-0 is a living document — new screens added as M-numbers
+5. Post-payment flow — Registration → Payment → M-0 (not dashboard)
+6. M1 covers therapist journey only — spa gets own diagram (M2)
+7. Hamburger menu on M-0 is intentional and stays — only removing from register.html, register-spa.html, dashboard.html
+8. "Registration complete?" — Yes → Save Registration / No → M-0 (back to main menu)
+9. "Pay now?" — Yes → Payment M-1-1 → M-0 / No → M-0
+10. Valid Session Token → No = wrong/invalid token → back to M-0
+11. Hamburger "Make Payment" path always requires OTP regardless of session token
+12. Check Supplier Record → Payment M-1-1 → M-0
+13. M2 = duplicate of M1 with Therapist→Spa and M-3→M-4 label changes
+
+### Diagrams completed
+- M1 Therapist Registration ✅
+
+### GitHub issues to raise
+- Remove bottom link "Are you a therapist or spa? Join here" from index.html
+- Remove hamburger from register.html and register-spa.html
+- Remove hamburger from dashboard.html
+
+### Next session starts with
+Continue M-diagram series — M2 through M9
+
+---
+
+## Session Log — 14 June 2026
+
+### What we did
+- Completed M0, M2, M3, M4, M6, M7, M8 diagrams
+- M9 confirmed as payment flow — PayFast and Manual EFT both part of M9
+- M5 confirmed as document library only — no static about us content
+- Admin touch points standardised — dashed charcoal nodes across all diagrams
+- Payment M-1-1 renamed to M9 across M1 and M2, colour updated to dark olive/green
+- Two M9 entry points: "Entry from M0" (teal) and "Entry from M1/M2" (purple)
+- M0 updated — M9 added via hamburger menu
+
+### Decisions made
+1. M1 never connects to M3 — separate loops, both return to M-0
+2. M9 = Payment flow (M-0 → M9 → M-0, separate diagram)
+3. Dashboard sections detail = separate diagrams (M3-1, M4-1)
+4. M3 entry from M-0 only — M1 never routes to M3
+5. No valid token → OTP → OTP invalid = number doesn't exist → redirect to M1 Registration
+6. Dashboard actions: View/Edit Profile → Make Payment → M-0 (sequential, not parallel)
+7. Back to Main Menu → M-0 (session preserved)
+8. Sign Out → M-0 (shared device)
+9. M3-1 rule: section edit must be saved before supplier can exit that section
+10. M4 is M3 with Therapist→Spa, M1→M2, M3-1→M4-1 label changes
+11. M6 active-only filter at every level — zero-count items never display
+12. M6 display order — Areas first, then unclustered suburbs, flat list, one pick
+13. M6 auto-skip — single area/suburb result → skip selection, go straight to Results
+14. M6 back navigation — customer can go back up one level at each step
+15. Back to M-0 from within browse flow — parked pending customer testing
+16. "No results" at Results List level now impossible due to active-only filter
+17. M7 and M8 inherit same active-only filter rule
+18. M9 — both PayFast and Manual EFT are part of M9
+19. M9 entry points — "Entry from M0" (teal) and "Entry from M1/M2" (purple)
+20. Payment M-1-1 renamed to M9 across M1 and M2
+21. M5 is purely a document library — no static about us content
+22. Admin touch points shown as dashed charcoal nodes — locked standard across all diagrams
+23. Supplier profile screen is pre-launch critical — not Phase D
+24. M8 is the flagship screen — premium design treatment required
+25. Phase 2 strictly: online booking, referral system, extended classifications, TikTok, WhatsApp — no exceptions
+
+### Diagrams completed
+- M0 ✅ (updated — M9 added via hamburger menu)
+- M1 ✅ (Payment M-1-1 → M9, colour updated)
+- M2 ✅ (fixes + Spa Dashboard M-3 → M-4)
+- M3 ✅
+- M4 ✅
+- M5 ✅
+- M6 ✅
+- M7 ✅
+- M8 ✅
+- M9 ✅
+
+### Outstanding diagrams
+- M3-1 — Therapist Dashboard sections
+- M4-1 — Spa Dashboard sections
+
+### Parked
+- Supplier profile screen design — pre-launch, tied to M8 flagship
+- Dark theme → warm surface rebuild — post all functionality
+- Back navigation from within M6 browse flow — pending customer testing
+
+### Next session starts with
+M3-1 Therapist Dashboard sections diagram
+
+---
+
+## Session Log — 15 June 2026
+
+### What we did
+- M3-1 generated and pasted into draw.io — therapist dashboard sections flow
+- M3-1 split into 2 pages: M3-1(a) sections flow and M3-1(b) exit flow
+- All S1–S8 fields agreed, confirmed, and updated in diagram
+- classification field permanently deleted platform-wide
+- displayName moved from S1 to S5 About
+- mobileAvailable and willingToTravelKm moved from S4 to S6
+- traditions UI label changed to "Traditional massages" — Firestore field name unchanged
+
+### Decisions made
+1. S1 Personal (read-only): firstName · lastName · gender · supplierNumber · cellNumber
+2. S2 Contact: whatsappNumber · showWhatsapp · email · contactPreferences · cellNumber (read-only)
+3. S3 Location: province · provinceName · townId · townName · locationArea · suburb · addressLine1 (admin-only) · addressVisible · gpsLat · gpsLng — both ID and display name fields kept
+4. S4 Premises: premisesType · amenities
+5. S5 About: displayName · genderServed · experienceYears · aboutMe · qualifications · associationMembership · specialsText
+6. S6 Availability: weeklyHours · availableOutsideHours · mobileAvailable · willingToTravelKm
+7. S7 split into 4 sub-sections: S7a massageStyles · S7b traditionalMassages · S7c treatments · S7d serviceOfferings
+8. traditions Firestore field name unchanged — UI label changes to "Traditional massages" platform-wide
+9. classification permanently deleted platform-wide — M1, M2, M3, M4, admin screens, offerings collection, Field Register
+10. S8 Photos: facePhotoUrl · showFacePhoto · photos[0] · photos[1] · photos[2+]
+11. Dashboard exit flow: Back to Main Menu (session preserved) · Submit Registration · Sign Out (small text link, shared device)
+12. Submit Registration condition: all required sections complete — S1 + S3 + S5 + S7 + S8
+13. Hamburger menu exists on M0 ONLY — permanent rule, no exceptions platform-wide
+14. Sign Out = small secondary option — clears session token only, nothing in Firestore
+15. M3-1 split into 2 pages: M3-1(a) sections flow · M3-1(b) exit flow
+16. M4-1 = M3-1 with Therapist→Spa label changes (not yet built)
+
+### Diagrams completed
+- M3-1 ✅ (2 pages — sections flow and exit flow)
+
+### Outstanding diagrams
+- M4-1 — Spa Dashboard sections
+
+### GitHub issues to raise
+1. Remove classification field platform-wide — register.html, register-spa.html, dashboard.html, admin.html, admin-supplier.html, offerings collection (delete 3 seeded records), Field Register
+2. Rename traditions UI label to "Traditional massages" — all screens where traditions displays to supplier or customer (Firestore field name unchanged)
+3. Remove hamburger menu from dashboard.html — confirmed bug, permanent rule: hamburger on M0 only
+4. Add Submit Registration button to dashboard — only active when S1+S3+S5+S7+S8 complete; sits alongside Back to Main Menu; Sign Out below as small text link
+
+### Parked
+- Supplier profile screen design — pre-launch, tied to M8 flagship
+- Dark theme → warm surface rebuild — post all functionality
+- Back navigation from within M6 browse flow — pending customer testing
+- Photos bugs (#27, #40) — own session
+- S7 sub-section split in code (S7a/b/c/d) — Phase D UX pass
+
+### Next session starts with
+M4-1 Spa Dashboard sections diagram
+
+---
+
+## Session Log — 16 June 2026
+
+### What we did
+- M4-1(a) and M4-1(b) created in draw.io — spa dashboard sections and exit flow
+- S9 Ownership dissolved — owner fields moved to S1, manager fields moved to S2
+- Spa now has 8 sections (same as therapist) — S9 no longer exists
+- Required sections for spa Submit Registration locked: S1 + S3 + S7 + S8 (S5 About optional for spa)
+- M-diagram series confirmed 100% complete
+
+### Decisions made
+1. Spa S1 — Business Info (read-only, admin-only changes): displayName · tradingName · registrationNumber · vatNumber · ownerFirstName · ownerLastName · ownerMobile
+2. Spa S2 — Management & Contact (editable by spa): managerFirstName · managerLastName · managerMobile · cellNumber (r/o) · spaPhone · spaPhoneVisible · spaMobile · spaMobileVisible · email · whatsappNumber · showWhatsapp · contactPreferences · requiresInvoice
+3. managerFirstName · managerLastName · managerMobile are editable by spa (managers change)
+4. ownerFirstName · ownerLastName · ownerMobile are read-only / admin-only (locked post-registration)
+5. S9 Ownership section dissolved — ownership fields distributed into S1 and S2
+6. Spa has 8 sections total — not 9
+7. S4 for spa = amenities only (no premisesType — spas do not have a premises type)
+8. S5 About is NOT a required section for spa Submit Registration
+9. Spa Submit Registration required sections: S1 + S3 + S7 + S8
+10. S4 premisesType note retained on diagram as reminder only — not a spa field
+11. M4-1(b) exit flow identical to M3-1(b) — same for both supplier types
+12. M-diagram series 100% complete
+
+### M-Diagram status
+- M0 ✅ M1 ✅ M2 ✅ M3 ✅ M4 ✅ M5 ✅ M6 ✅ M7 ✅ M8 ✅ M9 ✅
+- M3-1 ✅ (a + b)
+- M4-1 ✅ (a + b)
+- Diagram series 100% COMPLETE
+
+### Diagrams completed
+- M4-1 ✅ (2 pages — sections flow and exit flow)
+
+### Parked
+- All parked items from previous sessions carry forward
+- Supplier profile screen design — pre-launch, tied to M8 flagship
+- Dark theme → warm surface rebuild — post all functionality
+- Back navigation from within M6 browse flow — pending customer testing
+- Photos bugs (#27, #40) — own session
+- S7 sub-section split in code (S7a/b/c/d) — Phase D UX pass
+
+### GitHub issues to raise
+- See issues logged in 15 June 2026 session — not yet raised on GitHub
+
+### Next session starts with
+Return to active code development — agree priority order from open GitHub issues and session bugs
