@@ -1,9 +1,7 @@
 # MassageMap — Claude Code Project Brief
 
-## Who I am
-- Johan, Johannesburg, South Africa
-- Mac only — always use Mac commands, zsh terminal, Mac keyboard shortcuts
-- Never suggest Windows alternatives
+## Master Context
+docs/MM-Master-Context.md is Johan's accountability record for this project — priority above all else. Always read it before any dev work. Every new version ADDS to the previous — nothing dropped, summarised, or reformatted. All parked items carry forward until explicitly closed by Johan. (General rule for how master context files work lives in global ~/.claude/CLAUDE.md.)
 
 ## Project overview
 MassageMap is a three-sided massage therapy directory for the South African market:
@@ -53,7 +51,6 @@ MassageMap is a three-sided massage therapy directory for the South African mark
 ## Coding rules — always follow
 - Mobile-first on all public screens
 - Never hardcode API keys — always use environment variables or Firebase config
-- Never commit functions/.env or service account keys
 - Google Maps API: load on demand only, never on page load
 - Location data: always read from Firestore collections, never hardcode
 - No frameworks — vanilla HTML/CSS/JS only
@@ -136,6 +133,3 @@ All skills are in .agents/skills/. Consult relevant skills before any CSS or UI 
 - info.html missing — success screen redirect broken (#4)
 - suburb null on submit when locationArea selected (#3)
 - Admin email still going to personal address — fix in S7 (#6)
-
-## Master Context
-Always read docs/MM-Master-Context.md before any dev work.

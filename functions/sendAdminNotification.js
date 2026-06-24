@@ -26,7 +26,7 @@ const { Resend }  = require('resend');
 const PORT        = process.env.PORT || 3003;
 const resend      = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL  = 'MassageMap <onboarding@resend.dev>';
-const ADMIN_EMAIL = 'hjcilliers@gmail.com';
+const ADMIN_EMAIL = 'admin@massagemap.co.za';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin':  '*',

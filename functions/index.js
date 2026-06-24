@@ -166,7 +166,7 @@ exports.onSupplierRegistered = functions
       ].join("\n");
       await resend.emails.send({
         from: "MassageMap <onboarding@resend.dev>",
-        to: "hjcilliers@gmail.com",
+        to: "admin@massagemap.co.za",
         subject: "New MassageMap Registration Received",
         text: adminEmailText,
       });
