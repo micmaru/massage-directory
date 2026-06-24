@@ -1,6 +1,7 @@
-# MassageMap — Master Context v50
-**Version:** 50 | **Date:** 12 June 2026 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v51
+**Version:** 51 | **Date:** 24 June 2026 | **Author:** Johan Cilliers | **Confidential**
 **STANDALONE — no previous version needed. This is the single source of truth.**
+**Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. This is the first version bump since 12 June.**
 
 ---
 
@@ -1175,3 +1176,55 @@ M4-1 Spa Dashboard sections diagram
 
 ### Next session starts with
 Return to active code development — agree priority order from open GitHub issues and session bugs
+
+---
+
+## Session Log — 24 June 2026 (Post-Crash Recovery)
+
+### What happened
+- System crash occurred between 16 June and 23 June sessions — Claude Code and claude.ai both unresponsive
+- Crash occurred AFTER the #6 admin email fix was made but BEFORE it was committed/pushed to GitHub
+- Recovery session today: confirmed fix survived locally, committed and pushed to GitHub successfully — fix is now safe
+- A GitHub issues work plan dated 23 June 2026 was produced (separately) listing launch-blocking, should-fix, and deferrable issues — this plan predates today's findings below and needs reconciliation against current live state before being treated as authoritative
+
+### Confirmed working (live-tested today)
+- Location cascade CONFIRMED WORKING on register.html (therapist registration) — live tested with new therapist 0800000004 (Jane Le Roux), supplierNumber T-26-1044
+- Location cascade CONFIRMED WORKING on dashboard.html (therapist dashboard)
+- SPA SIDE NOT YET TESTED — register-spa.html and spa dashboard cascade behaviour unknown, do not assume fixed
+- #6 admin email fix CONFIRMED: functions/index.js:169 and functions/sendAdminNotification.js:29 both changed from hjcilliers@gmail.com to admin@massagemap.co.za
+- #6 fix CONFIRMED DEPLOYED via firebase deploy --only functions, confirmed live on a therapist registration before the crash
+- #6 fix NOT YET TESTED on spa registration path
+
+### New issue identified — not yet confirmed on GitHub issue tracker
+Flow-blocker: therapist registration does not allow exit-and-resume after partial completion.
+
+Current (broken) behaviour: once Section 1 (Personal) is saved, the therapist record exists on the platform, but she cannot exit to the main menu and return later to complete remaining sections — she is currently forced to complete sections in one continuous sitting.
+
+Required behaviour:
+- After Section 1 (Personal) saved, therapist is lightweight-active on the platform
+- After every subsequent section save, therapist must be able to exit to main menu without losing saved progress
+- Therapist must be able to return at any time and resume from where she left off
+- Registration is considered "complete" only once all required sections are done (per 15 June decision: S1+S3+S5+S7+S8 for therapist, S1+S3+S7+S8 for spa)
+- Front-end customer-facing visibility additionally requires admin vetting approval of required fields — completing registration alone does not make her visible to customers
+
+This is related to but distinct from the old known bug "no exit button on register.html for incomplete registration" (that bug concerned leaving the page; this concerns leaving AND resuming). Needs a GitHub issue number — check existing issues for a match before raising new.
+
+### Outstanding from 15 June decisions — confirmed still not coded
+- classification field deletion (decided 15 June, never implemented) — still present on supplier documents, confirmed via live document inspection today
+
+### Decisions made today
+1. Working method reaffirmed: finish all therapist-side issues fully before starting any spa-side testing or fixes — issue by issue, no jumping back and forth
+2. Master Context header version/date must be updated on every session close going forward — v50 silently went four sessions without a bump, will not repeat
+
+### Parked items (carry forward, plus all previous parked items)
+- Spa registration cascade re-test
+- Spa dashboard cascade re-test
+- Spa registration email path re-test (#6)
+- Flow-blocker fix (exit-and-resume after partial section save) — needs GitHub issue number first
+- classification field platform-wide deletion — still outstanding from 15 June
+
+### Next session starts with
+1. Reconcile 23 June GitHub issues work plan against today's confirmed findings (cascade fixed therapist-side, #6 fixed+deployed therapist-side)
+2. Pull current `gh issue list` to get accurate open issue state
+3. Check/raise GitHub issue for the exit-and-resume flow-blocker
+4. Continue therapist-side issue-by-issue fixes before touching spa side
