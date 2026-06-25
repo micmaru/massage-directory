@@ -726,6 +726,7 @@
     if (errEl) errEl.style.display = 'none';
     try {
       const existingPhotos = Array.isArray(window.supplierData.photos) ? [...window.supplierData.photos] : [];
+      if (existingPhotos[0] === undefined) existingPhotos[0] = null;
       for (let i = 1; i <= 4; i++) {
         if (window['_delPhoto' + i]) { existingPhotos[i] = null; window['_delPhoto' + i] = false; continue; }
         const fileInput = document.getElementById('photo' + i);
