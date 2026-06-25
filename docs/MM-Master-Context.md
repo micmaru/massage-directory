@@ -1,7 +1,7 @@
-# MassageMap — Master Context v51
-**Version:** 51 | **Date:** 24 June 2026 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v52
+**Version:** 52 | **Date:** 25 June 2026 | **Author:** Johan Cilliers | **Confidential**
 **STANDALONE — no previous version needed. This is the single source of truth.**
-**Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. This is the first version bump since 12 June.**
+**Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. v51 bumped 24 June. This is the second consecutive on-time version bump.**
 
 ---
 
@@ -11,8 +11,8 @@
 |---|---|
 | Launch target | 31 July 2026 |
 | Current phase | Phase B — Dashboard & Admin |
-| Next session starts with | #12 verify associations seeded → #10 dashboard therapist end-to-end test → #26 OTP loop fix |
-| Primary blocker | #26 Dashboard OTP loop — returning supplier asked for OTP on 2nd+ visit |
+| Next session starts with | Cluster A fix — Storage rules path mismatch (#44), expected to also resolve #45/#46/#27/#40 |
+| Primary blocker | #44 Photos Storage rules mismatch — blocks registrationComplete flag, which blocks all notifications |
 | Google Cloud billing | DONE — Blaze plan, credit card attached, confirmed 9 June 2026 |
 | BulkSMS credits | AT ZERO — buy before Stage 2 |
 | Free trial expiry | 6 July 2026 — credit card attached, should auto-continue |
@@ -1228,3 +1228,86 @@ This is related to but distinct from the old known bug "no exit button on regist
 2. Pull current `gh issue list` to get accurate open issue state
 3. Check/raise GitHub issue for the exit-and-resume flow-blocker
 4. Continue therapist-side issue-by-issue fixes before touching spa side
+
+---
+
+## Session Log — 25 June 2026 (Therapist Dashboard Full Sweep)
+
+### What we did
+- Pulled live `gh issue list` — 33 open issues confirmed (prior session's "next steps" list was incomplete; dashboard had more bugs than recorded, as suspected)
+- Cleaned test data: deleted Firestore records (suppliers + pending_registrations) for 0800000001–3 and 5–8. Left 0800000004 (Jane Le Roux, T-26-1044) untouched as known-good cascade reference. Firebase Auth phone entries NOT cleared (confirmed unnecessary — OTP re-fires regardless of Auth state, all test numbers fixed at 123456)
+- Registered brand new therapist from scratch on 0800000001 (sandie sandstone / "lipstick"), supplierNumber T-26-1045, using Incognito window for guaranteed clean localStorage
+- Walked full registration end-to-end through all 8 sections, then into dashboard, logging every bug live with screenshots
+- Diagnosed root cause of Photos save failure by reading `storage.rules` directly
+- Created 11 new GitHub issues (#41–#51) for bugs with no existing match
+- Closed 2 issues as not-reproducible: #38 (qualifications editability — tested live, works), #37 (referralCode — field does not exist on fresh document, no evidence of firing)
+- Confirmed `gh issue list` post-update: 42 open issues, accurate current state
+
+### Confirmed WORKING (do not re-test, do not touch)
+- OTP fires and verifies correctly on both registration and dashboard entry (just unnecessarily often — see #43)
+- POPIA consent gate
+- Location cascade — province → town → suburb — 100% working, area vs suburb both display correctly (confirms 24 June finding, now reconfirmed on a second fresh record)
+- Premises & Facilities section — saves and displays correctly
+- About section — saves correctly; qualifications field IS editable post-save (#38 closed)
+- Availability section — working hours grid saves correctly
+- Services section — massageStyles/traditions/treatments selections save and persist correctly (classification still wrongly present — see bugs below)
+- Sections 2–8 (everything except Section 1) correctly reload saved data when dashboard/registration is reopened
+
+### Confirmed BUGS — full list, all logged to GitHub
+
+**Root cause identified — Cluster A (highest priority, fix first):**
+- **#44** — Photos: Save fails every time with `403 storage/unauthorized`. Root cause confirmed by reading `storage.rules`: rule requires `request.auth.uid == uid` on path `/suppliers/{uid}/photos/{filename}`, but the upload path uses **phone number** as `{uid}` (e.g. `suppliers/+27800000001/photos/...`). Firebase Auth UID is never equal to a phone number string — this check fails by design for every supplier, every time. Not a regression from today's OTP testing as initially suspected — this is a structural mismatch between the locked phone-number-as-document-ID architecture and storage rules written assuming `uid` = Firebase Auth UID.
+- **#45** — `registrationComplete` confirmed `false` in Firestore even after all 8 sections showed "Complete" in the UI on the test record. Suspected linked to #44 (if Photos is required for the completion trigger and Photos save always fails, completion never fires) — needs code review to confirm the exact trigger condition, not yet confirmed as definitely the same root cause.
+- **#46** — Zero notifications fired at any point in the registration flow, including Sign Out. Likely a downstream consequence of #45 rather than an independent notification bug.
+- **#27** (pre-existing) — Storage unauthorized on photo upload. Same error as #44, likely same root cause, candidate to close as duplicate once #44 is fixed.
+- **#40** (pre-existing) — Photos uploaded during registration not showing in Photos section. Likely same root cause as #44, candidate to close as duplicate once fixed.
+
+**Cluster B — Section 1 / identity display:**
+- **#41** — Header on both register.html and dashboard.html shows raw mobile number instead of therapist name.
+- **#42** — Section 1 (Personal) is the ONLY section that never reloads saved data on return to registration or dashboard. Sections 2–8 all reload correctly. Suspect Section 1 reads from the wrong source (should read `pending_registrations` while incomplete, not `suppliers`, or vice versa).
+
+**Cluster C — Session/OTP behaviour:**
+- **#43** — OTP fires every single time re-entering registration after going Back to Main Menu, even though a session token should still be valid within the 30-day window. Dashboard re-entry behaviour not conclusively isolated as different — needs its own retest.
+- **#51** — After Sign Out + OTP re-entry, unclear to the user (and to testing) whether the landing screen is registration or dashboard.
+- **#7** (pre-existing) — showWelcomeBack redirect logic incomplete. Possibly the same root cause as #51 — needs reproduction steps to confirm link before merging.
+
+**Cluster D — Quick UI fixes, no investigation needed:**
+- **#29** (pre-existing) — Sections stay open after Save, should auto-close. Reconfirmed live — every section across the whole sweep stayed open after save.
+- **#31** (pre-existing) — Sign Out button label must read "Back to Main Menu" — reconfirmed still showing wrong label.
+- **#30** (pre-existing) — `displayName` field must move from Section 1 (Personal) to Section 5 (About). Reconfirmed: therapist needs to be able to change her public alias without it being locked into initial signup. Currently sits on Section 1 in both registration and dashboard.
+- **#49** — `classification` field still displayed and selectable on Services section, despite 15 June 2026 decision to permanently delete it platform-wide. Confirmed still present via live registration test.
+- **#35** (pre-existing) — Welcome email addressed to `displayName` instead of `firstName + lastName`.
+
+**Cluster E — Missing/incorrect fields:**
+- **#39** (pre-existing) — Travel question and distance options (`willingToTravelKm`) missing entirely from registration and dashboard. Confirmed still absent.
+- **#36** (pre-existing) — `premisesType` and `mobileAvailable` saving on individual therapist document — needs field audit, not retested in detail this session.
+- **#47** — Photos section gives no instruction that Photo 1 must be a face photo for admin vetting purposes. Therapist has no way of knowing this requirement.
+- **#48** — No yes/no toggle in the Photos section UI for `showFacePhoto` (field exists in schema per 9 June decision, never wired to frontend).
+- **#5** (pre-existing) — Notification area field shows Firestore document ID instead of area name, not retested this session.
+
+**Cluster F — Verification only:**
+- **#12** (pre-existing) — Verify associations seeded in offerings collection, not retested this session.
+- **#10** (pre-existing) — Dashboard end-to-end testing — therapist. This session's sweep is effectively this test; recommend closing once Clusters A–E are fixed and a final clean re-run confirms.
+
+**Not yet actioned:**
+- **#4** (pre-existing) — info.html missing, success screen redirect broken. Not touched this session, needs its own investigation.
+
+### Issues CLOSED this session
+- **#38** — qualifications field not editable in About section. Closed: tested live, edited after initial save, change persisted correctly. Not reproducible.
+- **#37** — referralCode generating on registration, parked Phase 2 feature. Closed: checked Firestore directly on fresh supplier document, no `referralCode` field present anywhere. Not reproducible on current code.
+
+### Decisions made today
+1. Working method reconfirmed: cluster bugs by likely shared root cause to fix efficiently, rather than treating all 24 therapist-side open issues as fully independent
+2. Fix order agreed: Cluster A (Storage rules / registrationComplete chain) → Cluster B (Section 1 identity) → Cluster C (session/OTP) → Cluster D (quick UI fixes) → Cluster E (missing fields) → re-run Cluster F as final verification
+3. Session closed deliberately early (before any fixes attempted) due to heavy image/screenshot volume in this conversation — risk of model drift. Continuing in a fresh chat for the actual fix work.
+4. 0800000004 (Jane Le Roux, T-26-1044) preserved as the permanent known-good cascade reference — never delete this record without explicit replacement plan
+
+### Parked items (carry forward, plus all previous parked items)
+- Spa registration cascade re-test
+- Spa dashboard cascade re-test
+- Spa registration email path re-test (#6)
+- All Cluster A–F items above, pending fixes in next session
+
+### Next session starts with
+Fix Cluster A first: investigate and correct the Storage rules path mismatch (#44) — `request.auth.uid` vs phone-number-as-path-segment. Confirm whether fixing this also resolves #45 (registrationComplete), #46 (notifications), #27 and #40 (duplicates). Do not start spa-side work until all therapist-side clusters are closed. Read this file before any code.
+*STANDALONE — this file contains everything needed to start any session without any other document.*
