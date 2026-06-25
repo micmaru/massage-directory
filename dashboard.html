@@ -731,7 +731,7 @@
         const fileInput = document.getElementById('photo' + i);
         if (fileInput && fileInput.files[0]) {
           const file   = fileInput.files[0];
-          const result = await uploadPhoto(file, `suppliers/${window.supplierPhone}/photos/${i}-${file.name}`);
+          const result = await uploadPhoto(file, `suppliers/${window.supplierData.uid}/photos/${i}-${file.name}`);
           existingPhotos[i] = { ...result, visibility: 'public' };
         }
       }
