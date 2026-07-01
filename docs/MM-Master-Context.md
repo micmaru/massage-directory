@@ -1310,4 +1310,91 @@ This is related to but distinct from the old known bug "no exit button on regist
 
 ### Next session starts with
 Fix Cluster A first: investigate and correct the Storage rules path mismatch (#44) — `request.auth.uid` vs phone-number-as-path-segment. Confirm whether fixing this also resolves #45 (registrationComplete), #46 (notifications), #27 and #40 (duplicates). Do not start spa-side work until all therapist-side clusters are closed. Read this file before any code.
+
+--- SESSION LOG: Audit Session (28 June – 1 July 2026) ---
+
+DECISIONS MADE:
+1. Audit plan created: 24-category checklist (MM_Audit_Plan_v4.xlsx), 
+   pressure-tested against 51 GitHub issues + 12 Johan direct reports. 
+   Zero gaps found after adding categories 18-24.
+2. Cold codebase audit run via Claude Code background agent — 121 findings 
+   across all 24 categories (MM_Pass1_Findings_Worksheet_v2.xlsx).
+3. 121 findings clustered into 9 root-cause groups A-J 
+   (MM_RootCause_Clusters_v1.xlsx). Original Cluster B merged into 
+   Cluster A after Johan independently identified they form one feedback 
+   loop — unclear identifier handling causes inconsistent identity checks, 
+   which in turn causes ad-hoc identifier choices. B is absent from the 
+   cluster list because it was absorbed into A.
+4. Formal audit verdict written (MM_Audit_Verdict.md): KEEP BUILDING. 
+   No structural rework needed. Locked architecture confirmed sound 
+   (phone-as-doc-ID, suppliers/pending_registrations split, single 
+   dashboard file). Two foundational fixes required before further 
+   feature work: Cluster A (identity wrapper) and Clusters C/D/E 
+   (security rules).
+5. Firebase Console live verification completed (Step 5): 
+   - Service account JSON files confirmed never pushed to GitHub — clean.
+   - auditLog: anonymous read AND write confirmed live — critical.
+   - suppliers: anonymous update confirmed live — critical.
+   - settings/config: any authenticated user write confirmed live — high.
+   - Phone auth: enabled, 1000/day SMS quota, needs Identity Platform 
+     upgrade pre-scale (existing issue #20).
+   - Project access: Johan only, Owner role — clean.
+6. Firestore security rules fixed (Cluster C) — all open collections 
+   locked down. Three actors only: admin (UID BGI0KYCKnYVM85GdlH1CG2KHP0p2, 
+   Option 1 hardcoded for now), own supplier, nobody else. Rules deployed, 
+   verified in Playground (all three critical tests flipped from allowed 
+   to denied), committed (c3af816) and pushed to GitHub.
+7. Admin UID locked: BGI0KYCKnYVM85GdlH1CG2KHP0p2 (phone +27842500422). 
+   Upgrade to Option 2 (admins collection) before scaling or adding 
+   second admin.
+8. Supplier public/private field split identified as a required design 
+   decision before Phase D customer-facing display cards are built — 
+   Firestore cannot restrict individual fields within a document, so 
+   public fields need to be separated from private fields at the 
+   collection/sub-document level.
+
+BUGS CONFIRMED AND FIXED THIS SESSION:
+- Cluster C: All open Firestore security rules — fixed, deployed, 
+  verified, committed c3af816, pushed.
+
+PARKED — NEXT SESSION (Cluster A design):
+- Identity wrapper (firebaseService.js or equivalent) — single internal 
+  module that every part of the platform calls through to resolve identity. 
+  Governs: which identifier (phone/UID/supplierNumber) is authoritative 
+  for which action, session token handling, OTP decision logic, 
+  pending_registrations vs suppliers read routing. Needs full design 
+  before any brief is written. This is the highest-priority remaining 
+  item from the audit verdict.
+- Cluster D: Admin page authentication (accepted temporary tradeoff 
+  during build, must close before launch).
+- Cluster E: Telegram bot token exposed in config.js — move to 
+  server-side only (fast fix, separate brief).
+- Clusters F-J: Cleanup, schema fixes, deferred notification functions, 
+  UX wording — lower urgency, no blocking risk.
+- Four audit files saved in MM-Audit folder on Mac and to be uploaded 
+  to claude.ai Project Knowledge:
+  MM_Audit_Plan_v4.xlsx
+  MM_Pass1_Findings_Worksheet_v2.xlsx  
+  MM_RootCause_Clusters_v1.xlsx (note: v2 has Johan's B-absorbed-into-A comment)
+  MM_Audit_Verdict.md
+- subscriptionStatus field never transitions to 'active' (Cluster H) — 
+  needs fixing when payment flow is built.
+- supplierNumber null on mid-flow resume (Cluster A/F) — needs fixing 
+  as part of the identity wrapper work.
+- photos[0] never written — face photo lands at photos[1] not [0], 
+  schema mismatch (Cluster F).
+- goBack() function referenced but never defined — would throw 
+  ReferenceError if button clicked (Cluster G).
+
+GITHUB ISSUES STATUS CHANGES THIS SESSION:
+- No issues closed via GitHub this session. Cluster C fix covers issues 
+  #21 (Firebase rules security audit) partially — rules are now correct 
+  but admin authentication (Cluster D) is still open, so #21 stays open.
+
+NEXT SESSION STARTS WITH:
+Open a fresh chat. Upload the four audit files to Project Knowledge first 
+if not already done. Opening line: "Cluster C security rules fixed and 
+pushed. Next is Cluster A — designing the identity wrapper. Here are the 
+audit files." Do not start coding until the wrapper design is agreed.
+--- END SESSION LOG ---
 *STANDALONE — this file contains everything needed to start any session without any other document.*
