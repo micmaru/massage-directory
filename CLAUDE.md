@@ -80,6 +80,22 @@ MassageMap is a three-sided massage therapy directory for the South African mark
 - Dashboard: one file (dashboard.html). No separate dashboard-spa.html.
 - admin.html: hidden URL — never link from any public page
 
+## Identity handling — CRITICAL, read before touching auth/storage/notifications
+- suppliers document ID = phone number (LOCKED, unchanged)
+- uid (Firebase Auth UID) is stored separately on every supplier document
+- Storage paths, PayFast, BulkSMS, Telegram, and any Auth-dependent lookup
+  must use uid — NOT phone number
+- Dashboard lookups and document reads use phone number (the doc ID)
+- If unsure which identifier a given operation needs, ask before writing code
+- Known history: photo-save bug (fixed cb2e0a9) was Storage path using
+  phone number instead of uid — this exact confusion is the recurring risk
+
+## Verification requirement — photos array and Storage paths
+Any change touching the photos array or Storage paths must be explicitly
+tested and confirmed working before being reported as fixed. This area has
+a history of fixes being applied but not verified (see git log / Master
+Context for details) — confirmation is not optional here.
+
 ## Firestore collections
 - suppliers — all supplier data (therapists and spas)
 - pending_registrations — partial registrations, progressive saves
@@ -127,9 +143,5 @@ All skills are in .agents/skills/. Consult relevant skills before any CSS or UI 
 - industrial-brutalist-ui — ANTI-REFERENCE: do not apply to MassageMap
 - minimalist-ui — ANTI-REFERENCE: do not apply to MassageMap
 
-## Known outstanding items — see GitHub Issues for full list
-- Dashboard end-to-end testing not yet done (all test records deleted 3 June 2026)
-- register-spa.html: premisesType + mobileAvailable showing for spa — fix pending (#1)
-- info.html missing — success screen redirect broken (#4)
-- suburb null on submit when locationArea selected (#3)
-- Admin email still going to personal address — fix in S7 (#6)
+## Bug tracking
+All known bugs and their status live in GitHub Issues — not here. Check Issues before starting any dev work.

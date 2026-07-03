@@ -24,6 +24,14 @@
           {
             "type": "command",
             "command": ".claude/hooks/warn-large-files.sh"
+          },
+          {
+              "type": "command",
+              "command": ".claude/hooks/block-locations-json.sh"
+          },
+          {
+              "type": "command",
+              "command": ".claude/hooks/check-face-photo.sh"
           }
         ]
       }
