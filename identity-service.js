@@ -55,6 +55,16 @@ export function storeSession(phone, displayName, supplierType) {
   localStorage.setItem(keep, JSON.stringify(session));
 }
 
+// Removes every session token from this device (used on sign-out).
+export function clearSession() {
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('mm_session_')) {
+      localStorage.removeItem(key);
+    }
+  }
+}
+
 // ════════════════════════════════════════════
 // IDENTITY RESOLUTION
 // ════════════════════════════════════════════

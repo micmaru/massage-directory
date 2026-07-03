@@ -401,7 +401,7 @@
         try {
           const parsed = JSON.parse(localStorage.getItem(key));
           if (parsed && parsed.expiry && Date.now() < parsed.expiry) {
-            return parsed;
+            return { phone: key.slice('mm_session_'.length), ...parsed };
           }
         } catch (_) {}
       }
@@ -413,7 +413,7 @@
     e.preventDefault();
     const session = getValidSession();
     if (session && session.supplierType === 'individual') {
-      window.location.href = 'dashboard.html';
+      window.location.href = `dashboard.html?type=individual&phone=${encodeURIComponent(session.phone)}`;
     } else {
       window.location.href = 'register.html?type=individual';
     }
@@ -423,7 +423,7 @@
     e.preventDefault();
     const session = getValidSession();
     if (session && session.supplierType === 'spa') {
-      window.location.href = 'dashboard.html';
+      window.location.href = `dashboard.html?type=spa&phone=${encodeURIComponent(session.phone)}`;
     } else {
       window.location.href = 'register-spa.html?type=spa';
     }

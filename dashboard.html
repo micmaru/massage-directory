@@ -279,7 +279,7 @@
 <script src="config.js"></script>
 <script type="module">
   import { app, db } from './firebase-config.js';
-  import { resolveIdentity, storeSession, getValidSession } from './identity-service.js';
+  import { resolveIdentity, storeSession, getValidSession, clearSession } from './identity-service.js';
   import { getAuth, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
   import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
   import { collection, doc, setDoc, getDoc, query, where, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
@@ -503,6 +503,7 @@
 
   document.getElementById('signOutBtn').addEventListener('click', async () => {
     try { await signOut(auth); } catch (_) {}
+    clearSession();
     window.location.href = 'index.html';
   });
 
