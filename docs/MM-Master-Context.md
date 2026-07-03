@@ -1,5 +1,5 @@
-# MassageMap — Master Context v52
-**Version:** 52 | **Date:** 25 June 2026 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v53
+**Version:** 53 | **Date:** 2026-07-03 | **Author:** Johan Cilliers | **Confidential**
 **STANDALONE — no previous version needed. This is the single source of truth.**
 **Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. v51 bumped 24 June. This is the second consecutive on-time version bump.**
 
@@ -766,7 +766,6 @@ Repo: https://github.com/micmaru/massage-directory/issues
 
 ### Next session starts with
 Fix location cascade first — covers #3, #28, #32, #33, #34 across register.html and register-spa.html. Read this file and Dev Plan before any code. Discuss and agree approach before any brief.
-*STANDALONE — this file contains everything needed to start any session without any other document.*
 
 ---
 
