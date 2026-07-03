@@ -279,6 +279,7 @@
 <script src="config.js"></script>
 <script type="module">
   import { app, db } from './firebase-config.js';
+  import { resolveIdentity, storeSession, getValidSession } from './identity-service.js';
   import { getAuth, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
   import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
   import { collection, doc, setDoc, getDoc, query, where, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
@@ -307,73 +308,52 @@
   let confirmationResult = null;
 
   // ════════════════════════════════════════
-  // SESSION TOKEN HELPERS (30-day localStorage)
-  // ════════════════════════════════════════
-  function sessionKey(phone) {
-    return 'mm_session_' + phone;
-  }
-
-  function getValidSession(phone) {
-    try {
-      const raw = localStorage.getItem(sessionKey(phone));
-      if (!raw) return null;
-      const session = JSON.parse(raw);
-      if (!session.expiry || Date.now() > session.expiry) {
-        localStorage.removeItem(sessionKey(phone));
-        return null;
-      }
-      return session;
-    } catch (_) { return null; }
-  }
-
-  function storeSession(phone, displayName, supplierType) {
-    const session = {
-      displayName,
-      supplierType,
-      expiry: Date.now() + 30 * 24 * 60 * 60 * 1000
-    };
-    localStorage.setItem(sessionKey(phone), JSON.stringify(session));
-  }
-
-  // ════════════════════════════════════════
   // PAGE LOAD — session check (waits for Firebase Auth to restore)
+  // sessionKey / getValidSession / storeSession now live in identity-service.js
   // ════════════════════════════════════════
   let authChecked = false;
   onAuthStateChanged(auth, async (user) => {
     if (authChecked) return;
     authChecked = true;
 
-    let foundPhone = null;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('mm_session_')) {
-        const phone = key.slice('mm_session_'.length);
-        if (getValidSession(phone)) { foundPhone = phone; break; }
-      }
-    }
-
-    if (!foundPhone) {
+    const showLogin = () =>
       document.getElementById('loginScreen').classList.remove('hidden');
-      return;
-    }
 
-    if (!user) {
-      // Auth not restored — rules would reject the read. Keep the session, require OTP.
-      document.getElementById('loginScreen').classList.remove('hidden');
-      return;
-    }
+    // Identity comes from the URL only — never scan localStorage to find it.
+    // URLSearchParams decodes %2B back to + correctly.
+    const phone = new URLSearchParams(window.location.search).get('phone');
+    if (!phone) { showLogin(); return; }
 
-    try {
-      const snap = await getDoc(doc(db, 'suppliers', foundPhone));
-      if (snap.exists()) {
-        await loadDashboard(foundPhone);
-      } else {
-        localStorage.removeItem(sessionKey(foundPhone));
-        document.getElementById('loginScreen').classList.remove('hidden');
-      }
-    } catch (err) {
-      console.error('Session check read failed:', err);
-      document.getElementById('loginScreen').classList.remove('hidden');
+    // Confirm a non-expired session token exists for THIS phone specifically.
+    if (!getValidSession(phone)) { showLogin(); return; }
+
+    const result = await resolveIdentity(phone);
+    switch (result.status) {
+      case 'verified':
+        await loadDashboard(phone);
+        break;
+      case 'not-found':
+        localStorage.removeItem('mm_session_' + phone);
+        document.getElementById('loginError').textContent = 'No supplier account found. Please register first.';
+        document.getElementById('loginError').classList.remove('hidden');
+        document.getElementById('regLinks').classList.remove('hidden');
+        showLogin();
+        break;
+      case 'blocked':
+        // Generic message only — never reveal a UID mismatch was detected.
+        document.getElementById('loginError').textContent = 'Session invalid, please log in again.';
+        document.getElementById('loginError').classList.remove('hidden');
+        showLogin();
+        break;
+      case 'error':
+        console.error('Identity resolution failed:', result.error);
+        showLogin();
+        break;
+      case 'no-auth':
+      default:
+        // Firebase Auth not restored yet — normal, not an error. No log.
+        showLogin();
+        break;
     }
   });
 

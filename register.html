@@ -1003,6 +1003,7 @@
 <script src="config.js"></script>
 <script type="module">
   import { app, db } from './firebase-config.js';
+  import { storeSession, getValidSession } from './identity-service.js';
   import {
     getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
@@ -1136,7 +1137,7 @@
         const session = getValidSession(phone);
         if (session) {
           // Valid 30-day session — skip OTP entirely
-          showWelcomeBack(session.displayName, session.supplierType);
+          showWelcomeBack(phone, session.displayName, session.supplierType);
           return;
         }
         // Session absent or expired — fall through to OTP
@@ -1213,7 +1214,7 @@
         const displayName  = knownSupplierData.displayName || knownSupplierData.firstName || '';
         const supplierType = knownSupplierData.supplierType || 'individual';
         storeSession(verifiedPhone, displayName, supplierType);
-        showWelcomeBack(displayName, supplierType);
+        showWelcomeBack(verifiedPhone, displayName, supplierType);
       } else {
         // New supplier — store session, create pending registration doc, show consent gate
         const initialType = new URLSearchParams(window.location.search).get('type') || 'individual';
@@ -1238,45 +1239,21 @@
   }
 
   // ════════════════════════════════════════════
-  // SESSION TOKEN HELPERS (30-day localStorage)
+  // SESSION TOKEN HELPERS
+  // sessionKey / getValidSession / storeSession now live in identity-service.js
   // ════════════════════════════════════════════
-  function sessionKey(phone) {
-    return 'mm_session_' + phone;
-  }
-
-  function getValidSession(phone) {
-    try {
-      const raw = localStorage.getItem(sessionKey(phone));
-      if (!raw) return null;
-      const session = JSON.parse(raw);
-      if (!session.expiry || Date.now() > session.expiry) {
-        localStorage.removeItem(sessionKey(phone));
-        return null;
-      }
-      return session;
-    } catch (_) { return null; }
-  }
-
-  function storeSession(phone, displayName, supplierType) {
-    const session = {
-      displayName,
-      supplierType,
-      expiry: Date.now() + 30 * 24 * 60 * 60 * 1000
-    };
-    localStorage.setItem(sessionKey(phone), JSON.stringify(session));
-  }
 
   // ════════════════════════════════════════════
   // WELCOME BACK (returning supplier)
   // ════════════════════════════════════════════
-  function showWelcomeBack(displayName, supplierType) {
+  function showWelcomeBack(phone, displayName, supplierType) {
     document.getElementById('phoneScreen').classList.add('hidden');
     document.getElementById('otpScreen').classList.add('hidden');
     document.getElementById('welcomeName').textContent = displayName || 'there';
     document.getElementById('welcomeBack').classList.remove('hidden');
     const type = supplierType || 'individual';
     setTimeout(() => {
-      window.location.href = `dashboard.html?type=${encodeURIComponent(type)}`;
+      window.location.href = `dashboard.html?type=${encodeURIComponent(type)}&phone=${encodeURIComponent(phone)}`;
     }, 2000);
   }
 
