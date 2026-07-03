@@ -1396,9 +1396,6 @@ Open a fresh chat. Upload the four audit files to Project Knowledge first
 if not already done. Opening line: "Cluster C security rules fixed and 
 pushed. Next is Cluster A — designing the identity wrapper. Here are the 
 audit files." Do not start coding until the wrapper design is agreed.
---- END SESSION LOG ---
-*STANDALONE — this file contains everything needed to start any session without any other document.*
-
 ## Session: 2026-07-03
 
 ### Decisions made
@@ -1423,7 +1420,7 @@ audit files." Do not start coding until the wrapper design is agreed.
 - Identity resolution / wrong-supplier-loads bug (M10b) — commit
   422576b
 - Sign Out token persistence + OTP-skip on valid session — commit
-  (second push this session)
+  be9074a
 
 ### Bugs found, confirmed, NOT yet fixed
 1. CRITICAL — generateSupplierNumber() transaction fails with
@@ -1453,3 +1450,6 @@ audit files." Do not start coding until the wrapper design is agreed.
 ### Next session starts with
 Pull firestore.rules, diagnose and fix the generateSupplierNumber()
 permission-denied bug blocking all new registrations.
+
+--- END SESSION LOG ---
+*STANDALONE — this file contains everything needed to start any session without any other document.*
