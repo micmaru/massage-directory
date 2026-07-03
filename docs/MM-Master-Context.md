@@ -1398,3 +1398,58 @@ pushed. Next is Cluster A — designing the identity wrapper. Here are the
 audit files." Do not start coding until the wrapper design is agreed.
 --- END SESSION LOG ---
 *STANDALONE — this file contains everything needed to start any session without any other document.*
+
+## Session: 2026-07-03
+
+### Decisions made
+1. Rejected Obsidian Claude Code MCP integration — no reviewed
+   plugin, gated command execution risk unacceptable given location
+   data sensitivity.
+2. Designed and locked identity wrapper (M10/M10b) — phone read from
+   URL param, live UID cross-check via identity-service.js,
+   single-session enforcement.
+3. Built and shipped identity-service.js: resolveIdentity(),
+   storeSession(), getValidSession(), clearSession().
+4. Fixed dashboard.html, register.html, register-spa.html to use the
+   shared wrapper instead of local session-scanning copies.
+5. Fixed Sign Out to clear the session token (previously survived
+   logout).
+6. Fixed index.html drawer links to carry ?phone= param so valid
+   sessions correctly skip OTP.
+7. Confirmed area/townId field-naming confusion is real (per audit)
+   — deferred to its own dedicated session, not fixed today.
+
+### Bugs found and fixed (committed + pushed)
+- Identity resolution / wrong-supplier-loads bug (M10b) — commit
+  422576b
+- Sign Out token persistence + OTP-skip on valid session — commit
+  (second push this session)
+
+### Bugs found, confirmed, NOT yet fixed
+1. CRITICAL — generateSupplierNumber() transaction fails with
+   Firestore permission-denied. No suppliers document is created for
+   any new registration past Section 1. Blocks all new therapist
+   registrations. Suspected cause: firestore.rules create-rule
+   mismatch on the suppliers collection (phone-as-doc-ID vs
+   UID-based rule check).
+2. register.html has two entry states (?type= vs ?phone=) — needs
+   confirming as intentional, not a duplicate-screen bug.
+3. 0800000001's old Section 1 data confirmed missing from suppliers
+   — abandoned test record predating today's fixes, not a live bug,
+   no action needed.
+4. dataConsentGiven/dataConsentTimestamp — only one field pair exists
+   for what Product Definition specifies as two checkboxes (POPIA +
+   T&C). Needs checking whether both write to the same field or a
+   second field is missing from the Field Register.
+
+### Parked (carried forward, unchanged)
+- Cluster D (admin auth), Cluster E (Telegram token), Clusters F-J
+  (cleanup)
+- area/townId rename — own dedicated session
+- auditLog rule vs CLAUDE.md documentation mismatch (Cluster J)
+- register.html missing "Back to Main Menu" at bottom (UI
+  inconsistency vs dashboard.html)
+
+### Next session starts with
+Pull firestore.rules, diagnose and fix the generateSupplierNumber()
+permission-denied bug blocking all new registrations.
