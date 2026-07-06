@@ -145,3 +145,25 @@ All skills are in .agents/skills/. Consult relevant skills before any CSS or UI 
 
 ## Bug tracking
 All known bugs and their status live in GitHub Issues — not here. Check Issues before starting any dev work.
+
+## Obsidian Session Logging
+- Vault path: `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/notes/MassageMap/` (iCloud, NOT the repo)
+- One file per CALENDAR DAY in 00-Session-Log/, named YYYY-MM-DD-session.md
+- If a file for today's date already exists, APPEND a new dated entry to it — never create a second file for the same day
+- Do NOT create a new file per Claude Code restart, per work block, or per hour — only per calendar day
+- When asked to "write the Obsidian session log," follow this structure:
+  ## Decisions made
+  ## Files changed / commits
+  ## GitHub issues touched
+  ## Parked / carried forward
+  ## Next session starts with
+- When asked to "update the Phase Tracker," OVERWRITE (not append) 06-Phase-Tracker/MM-Phase-Tracker-v1.md using this structure:
+  # MM Phase Tracker
+  *Last updated: [date]*
+  ## Current phase
+  ## Locked / done
+  ## Active / in progress
+  ## Not started
+  ## Open questions / unresolved
+  ## Next session starts with
+- Never write to Obsidian unless explicitly asked in-session ("write the session log" / "update the Phase Tracker") — no automatic or background writes.
