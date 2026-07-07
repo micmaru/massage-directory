@@ -1452,3 +1452,127 @@ permission-denied bug blocking all new registrations.
 
 --- END SESSION LOG ---
 *STANDALONE — this file contains everything needed to start any session without any other document.*
+
+---
+
+## Session Log — 7 July 2026 (continued after 6 July claude.ai crash)
+
+### LOCKED DECISIONS
+
+1. 3-identifier architecture re-confirmed, NOT reversed: phone number =
+   Firestore doc ID (suppliers/pending_registrations), Auth UID = field on
+   suppliers doc, supplierNumber = stable phone-independent anchor.
+   Reversing to supplierNumber-as-doc-ID would require reworking OTP,
+   PayFast, Resend, BulkSMS, Telegram, admin routines platform-wide
+   (month+ setback). Phone-loss recovery = manual admin operation
+   (copy-doc in Firebase console) until a dedicated Cloud Function is built.
+
+2. OTP verification is ONE shared mechanism used by all four supplier
+   entry points: M1 (therapist registration), M3b (therapist dashboard),
+   M2 (spa registration), M4 (spa dashboard). Must be built once, reused
+   identically — not duplicated per supplier type.
+
+3. OTP failed-attempt lockout policy: 3 wrong PIN attempts → retry in
+   place (same screen, same sent code) → on 3rd failure, 15-minute
+   cooldown. Message: "Too many incorrect attempts. Try again in 15
+   minutes, or request a new code." Fresh OTP resend allowed during
+   cooldown, resets attempt counter. If 3 more fail after resend,
+   escalate to 1-hour lockout. Tracked server-side only
+   (otpFailedAttempts, otpLockedUntil fields on the record) — never
+   client-side/localStorage.
+
+4. New phone numbers (first-ever OTP, no record yet): rely on Firebase
+   Phone Auth's built-in rate limiting. No custom otp_attempts collection.
+
+5. 30-day device-memory check clarified: it is
+   DaysSinceLastVerification > 30, checked once at phone-entry, before
+   OTP starts — not a check on the phone number itself, and not repeated
+   later in the flow.
+
+6. Save / Sign Out / Submit confirmed as three distinct, correctly-scoped
+   actions:
+   - Save (per section): both register.html and dashboard.html, no
+     completion signal.
+   - Submit Registration: register.html only, gated on required sections
+     (S1, S3, S5, S7, S8) complete, flips registrationComplete: true,
+     fires vetting notification.
+   - Sign Out: dashboard.html only, clears device session token only,
+     zero Firestore effect, for shared-device use.
+   - Back to Main Menu / < Back: same on both screens — leave, no
+     signal, saved data stays saved.
+
+### DIAGRAMS CORRECTED AND LOCKED
+
+M1 (Therapist Registration):
+- "Registration complete? No" loops back to Registration All Sections,
+  not Main Menu (matches greyed-out disabled Submit button behaviour).
+- Explicit "< Back = leave, no signal" separated from Save section.
+- Old "New or Existing?" self-selection removed — OTP outcome itself
+  now determines destination.
+- Wrong-PIN arrow loops back to "OTP fire PIN (Via SMS)" for retry
+  (was incorrectly routing to Main Menu).
+
+M3b (Therapist Dashboard, replaces M3):
+- "OTP Valid" split into two real checks: wrong PIN → retry loop;
+  correct PIN + no record → M1 Registration; correct PIN + record
+  exists → Dashboard.
+- Wrong-PIN arrow loops back to "OTP fire PIN (Via SMS)" (was
+  incorrectly routing to Main Menu).
+- "Back to Main Menu" (session stays) vs "Sign Out" (clears token)
+  explicitly distinguished on the diagram.
+- Label corrected to "DaysSinceLastVerification > 30" (was ambiguous
+  "phone Number is > 30 days").
+- New "from M1 (otp check)" connector box documents the shared-
+  mechanism handoff between M1 and M3b.
+
+### BUG — ROOT CAUSE CONFIRMED, FIX AGREED, NOT YET BUILT
+
+generateSupplierNumber() runs client-side inside a Firestore transaction
+touching settings/config (increment counterIndividual), pending_registrations,
+and suppliers. settings/config requires isAdmin() — supplier isn't admin,
+so that write fails, and since Firestore transactions are all-or-nothing,
+the entire transaction rolls back, including suppliers doc creation.
+Confirmed live in Firestore console: +27800000003 exists in
+pending_registrations, has no matching suppliers doc.
+
+Agreed fix, not yet built: move generateSupplierNumber() into a Cloud
+Function (Admin SDK, bypasses rules safely). suppliers create rule can
+then tighten to allow create: if false — only the function creates it.
+Side effect: also fixes final Submit reliability, since isOwnSupplier()
+checks the uid field this same function sets.
+
+### OPEN — NOT YET RESOLVED
+
+1. Suppliers vs. pending_registrations write pattern: documented decisions
+   (#27-32, compiled 9 June) say progressive sections save to
+   pending_registrations, full suppliers doc only written at final submit.
+   Johan's account: before the 25 May crash, sections wrote straight to
+   suppliers from the start — original intended design, not a new request.
+   NOT yet verified against pre-crash git history. Needs the same
+   diagram-first treatment just used for M1/M3b before any brief is written.
+
+2. Re-vetting trigger on post-launch profile edits (e.g. photo change):
+   current architecture has no re-vetting gate after initial
+   registrationComplete vetting. Needs dedicated design session — which
+   fields trigger it, what "pending re-review" status looks like, whether
+   old approved data stays live during re-review, how admin sees it in
+   queue. Reference: supplier field reference file.
+
+3. POPIA data separation (raised 7 July, ref: supplier field reference
+   file): (a) private supplier data must be structurally separated from
+   customer-facing frontend data — Firestore is flat, needs a separate
+   collection/subcollection or field-level split, not commingled in one
+   publicly-readable suppliers document. (b) Data shown on frontend (e.g.
+   phone number) must not render in the open by default — needs
+   click-to-reveal or separate-tab interaction. Frontend not yet
+   designed — decide exact mechanism at that session, but requirement
+   must not be dropped.
+
+### NEXT SESSION PRIORITIES
+
+1. Fresh chat: fix generateSupplierNumber() Cloud Function bug
+2. Rebuild therapist registration/OTP screens to match locked M1/M3b
+3. Verify suppliers-vs-pending_registrations against pre-crash git
+   history, diagram-first before any brief
+4. Design session: re-vetting trigger on post-launch edits
+5. Design session: POPIA data separation + phone click-to-reveal
