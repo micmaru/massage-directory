@@ -1,5 +1,5 @@
-# MassageMap — Master Context v54
-**Version:** 54 | **Date:** 2026-07-07 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v55
+**Version:** 55 | **Date:** 2026-07-08 | **Author:** Johan Cilliers | **Confidential**
 **STANDALONE — no previous version needed. This is the single source of truth.**
 **Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. v51 bumped 24 June. This is the second consecutive on-time version bump.**
 
@@ -1576,3 +1576,95 @@ checks the uid field this same function sets.
    history, diagram-first before any brief
 4. Design session: re-vetting trigger on post-launch edits
 5. Design session: POPIA data separation + phone click-to-reveal
+
+---
+
+## Session Log — 8 July 2026
+
+### DIAGRAMS CREATED AND LOCKED
+
+M1-Firebase (new) — created and locked. Zooms into the
+generateSupplierNumber() Cloud Function flow from OTP Verified through
+Submit:
+- Idempotent guard: suppliers/{phone} exists check before counter
+  increment.
+- UID creation point at Section 1.
+- Sections 2-8 are direct merge writes to suppliers/{phone}.
+- Resume loop reads from suppliers/{phone}, not
+  pending_registrations.
+- pending_registrations confirmed left permanently inert after
+  Section 1 succeeds — no cleanup/delete step, kept as dev-phase
+  debug trail. Revisit pre-launch whether to add a cleanup routine.
+
+### M1 AND M3b UPDATED AND LOCKED
+
+- Wrong-PIN handling rebuilt as a 3-tier structure: attempts 1-2
+  retry the same code; attempt 3 = 15-min cooldown box with a
+  reset-counter diamond (counter=1 → retry via fresh OTP,
+  counter>1 → escalate); lockout box after the second failure cycle
+  = 1 hour.
+- resolveIdentity() correctly placed between the Hamburger menu and
+  the phone-input diamond on both diagrams (was previously misplaced
+  between OTP fire PIN and OTP Verification on both — corrected).
+- storeSession() shown on both OTP-success branches on both diagrams.
+- clearSession() added to M3b Sign Out only (wipes mm_session_<phone>
+  from localStorage, zero Firestore write) — M1 has no Sign Out
+  action so no clearSession() needed there.
+- M1 branch-swap bug found and fixed: "phone on platform" and "phone
+  not on platform" outcomes were pointing to swapped destinations
+  (was routing existing suppliers to POPIA Consent and new suppliers
+  to Dashboard M-3b) — now correctly matches M3b.
+
+### DECISION #151 AMENDED (supersedes prior "silent rejection" rule)
+
+Rejection is no longer silent. On a negative vetting outcome, an SMS
+fires to the supplier: "Approval needs further clarification; please
+contact admin." No specific reason is disclosed in the SMS itself.
+Reasoning: silence risked supplier frustration, repeated contact
+attempts, and negative word-of-mouth among therapists. Admin can have
+the real conversation directly (e.g. bad photo, missing qualification),
+giving her a path to correct and reapply. Investigate outcome
+unchanged: no SMS to supplier, admin-only, loops back into vetting for
+a second pass.
+
+### PAYMENT FLOW RESTRUCTURED OFF M1 AND M3b
+
+- Removed the "Pay now?" diamond and the Payment M9 branch from
+  directly after Submit registration on M1.
+- Removed the "Want to make a Pay now?" diamond and the Make Payment
+  box from the M3b dashboard.
+- Payment now lives only on the Main Menu (M0), gated by
+  status = 'active' AND subscriptionStatus not already active within
+  the 30-day window.
+- M1 now shows a 3-way admin vetting outcome (Approve / Investigate /
+  Reject-equivalent) after Submit, replacing the single pass/fail.
+- Approve outcome fires the T3-equivalent SMS ("pay now") which
+  unlocks the Payment option on the Main Menu.
+- Hamburger Menu "Make Payment" path confirmed correctly bypasses the
+  resolveIdentity() skip-logic — OTP is always required regardless of
+  a valid session token (matches existing locked decision).
+- KNOWN DEPENDENCY: this design cannot go live until Cluster H
+  (subscriptionStatus never transitions to 'active') is fixed — the
+  design is correct, the underlying payfastNotify mechanism is not.
+
+### PARKED (carried forward)
+
+- OTP shared component (single otp.html or otp-component.js reused
+  across M1/M2/M3b/M4 instead of duplicated per screen) — Phase 2 /
+  pre-launch cleanup candidate, not urgent.
+
+### OPEN — NOT RESOLVED
+
+1. M1 phone-input diamond "No" loop back to Main Menu — the condition
+   triggering this path is unclear, could not be recalled from memory.
+   Needs checking against live register.html/dashboard.html code next
+   session, not decided from memory.
+2. generateSupplierNumber() Cloud Function — still not written.
+   Remains the actual launch blocker. All diagram work this session
+   was preparation for this brief, which is now next session's
+   starting task.
+
+### NEXT SESSION STARTS WITH
+
+generateSupplierNumber() Cloud Function brief, built against the
+now-locked M1-Firebase diagram.
