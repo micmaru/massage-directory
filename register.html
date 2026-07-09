@@ -1011,7 +1011,10 @@
     getStorage, ref as storageRef, uploadBytes, getDownloadURL
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
   import {
-    collection, doc, setDoc, getDoc, serverTimestamp, runTransaction,
+    getFunctions, httpsCallable
+  } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js';
+  import {
+    collection, doc, setDoc, getDoc, serverTimestamp,
     query, where, getDocs, orderBy
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
   import { initLocationCascade, onProvinceChange,
@@ -1023,6 +1026,7 @@
   window.onSuburbChange = onSuburbChange;
 
   const auth    = getAuth(app);
+  const functionsInstance = getFunctions(app, 'us-central1');
   const storage = getStorage(app);
 
   // ── Cached offerings (loaded once on page load)
@@ -1137,7 +1141,7 @@
         const session = getValidSession(phone);
         if (session) {
           // Valid 30-day session — skip OTP entirely
-          showWelcomeBack(phone, session.displayName, session.supplierType);
+          showWelcomeBack(phone, session.displayName, session.supplierType, knownSupplierData?.registrationComplete);
           return;
         }
         // Session absent or expired — fall through to OTP
@@ -1214,7 +1218,7 @@
         const displayName  = knownSupplierData.displayName || knownSupplierData.firstName || '';
         const supplierType = knownSupplierData.supplierType || 'individual';
         storeSession(verifiedPhone, displayName, supplierType);
-        showWelcomeBack(verifiedPhone, displayName, supplierType);
+        showWelcomeBack(verifiedPhone, displayName, supplierType, knownSupplierData.registrationComplete);
       } else {
         // New supplier — store session, create pending registration doc, show consent gate
         const initialType = new URLSearchParams(window.location.search).get('type') || 'individual';
@@ -1222,9 +1226,10 @@
         try {
           const pendRef = doc(db, 'pending_registrations', verifiedPhone);
           await setDoc(pendRef, {
-            cellNumber: verifiedPhone,
-            createdAt:  serverTimestamp(),
-            status:     'incomplete'
+            cellNumber:   verifiedPhone,
+            createdAt:    serverTimestamp(),
+            status:       'incomplete',
+            supplierType: 'individual'
           });
         } catch (e) { console.error('pending_registrations create error:', e); }
         showConsentGate();
@@ -1246,9 +1251,15 @@
   // ════════════════════════════════════════════
   // WELCOME BACK (returning supplier)
   // ════════════════════════════════════════════
-  function showWelcomeBack(phone, displayName, supplierType) {
+  function showWelcomeBack(phone, displayName, supplierType, registrationComplete) {
     document.getElementById('phoneScreen').classList.add('hidden');
     document.getElementById('otpScreen').classList.add('hidden');
+    if (!registrationComplete) {
+      verifiedPhone = phone;
+      phoneVerified = true;
+      showConsentGate();
+      return;
+    }
     document.getElementById('welcomeName').textContent = displayName || 'there';
     document.getElementById('welcomeBack').classList.remove('hidden');
     const type = supplierType || 'individual';
@@ -1364,32 +1375,10 @@
 
   async function generateSupplierNumber() {
     try {
-      const configRef = doc(db, 'settings', 'config');
-      const pendRef   = doc(db, 'pending_registrations', verifiedPhone);
-      let supplierNumber;
-      await runTransaction(db, async tx => {
-        const snap    = await tx.get(configRef);
-        const current = snap.exists() ? (snap.data().counterIndividual || 1000) : 1000;
-        const next    = Math.max(current + 1, 1001);
-        const yy      = String(new Date().getFullYear()).slice(-2);
-        supplierNumber = `T-${yy}-${String(next).padStart(4, '0')}`;
-        tx.set(configRef, { counterIndividual: next }, { merge: true });
-        tx.set(pendRef,   { supplierNumber },           { merge: true });
-        const supplierRef = doc(db, 'suppliers', verifiedPhone);
-        tx.set(supplierRef, {
-          uid:                  authUid,
-          cellNumber:           verifiedPhone,
-          supplierNumber,
-          supplierType:         new URLSearchParams(window.location.search).get('type') || 'individual',
-          status:               'pending',
-          subscriptionStatus:   'not_paid',
-          subscriptionExpiry:   null,
-          registrationComplete: false,
-          createdAt:            serverTimestamp()
-        }, { merge: true });
-      });
-      supplierNumberGenerated = supplierNumber;
-      document.getElementById('supplierPillNum').textContent = `Your therapist number: ${supplierNumber}`;
+      const callFn = httpsCallable(functionsInstance, 'generateSupplierNumber');
+      const result = await callFn();
+      supplierNumberGenerated = result.data.supplierNumber;
+      document.getElementById('supplierPillNum').textContent = `Your therapist number: ${supplierNumberGenerated}`;
       document.getElementById('supplierPill').classList.remove('hidden');
     } catch (err) {
       console.error('generateSupplierNumber error:', err);
