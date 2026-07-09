@@ -360,13 +360,21 @@
     </div>
 
     <p class="home-footer">
-      Are you a therapist or spa?<a href="dashboard.html" class="home-footer__link">Join here</a>
+      Are you a therapist or spa?<a href="register.html?type=individual" class="home-footer__link">Join here</a>
     </p>
 
   </main>
 
 
-  <script>
+  <script type="module">
+    import { app } from './firebase-config.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+    import { resolveIdentity } from './identity-service.js';
+
+    const auth = getAuth(app);
+    let authReady = false;
+    onAuthStateChanged(auth, () => { authReady = true; });
+
     const burgerBtn      = document.getElementById('burgerBtn');
     const drawer         = document.getElementById('drawer');
     const drawerBackdrop = document.getElementById('drawerBackdrop');
@@ -394,40 +402,63 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
 
   // Session check for drawer links
-  function getValidSession() {
+  async function waitForAuth() {
+    while (!authReady) {
+      await new Promise(r => setTimeout(r, 50));
+    }
+  }
+
+  async function routeToSupplierArea(phone, type) {
+    await waitForAuth();
+    const result = await resolveIdentity(phone);
+    const file = type === 'spa' ? 'register-spa.html' : 'register.html';
+    switch (result.status) {
+      case 'verified':
+        window.location.href = `dashboard.html?type=${type}&phone=${encodeURIComponent(phone)}`;
+        break;
+      case 'incomplete':
+      case 'not-found':
+      case 'no-auth':
+        window.location.href = `${file}?type=${type}`;
+        break;
+      case 'blocked':
+      case 'error':
+      default:
+        // Hard stop — never redirect on a uid mismatch or read error.
+        // Generic message only; never reveal a mismatch was detected.
+        alert('Session invalid, please log in again.');
+        break;
+    }
+  }
+
+  document.getElementById('therapistLoginLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    const session = getValidSessionPhone('individual');
+    if (session) { routeToSupplierArea(session, 'individual'); }
+    else { window.location.href = 'register.html?type=individual'; }
+  });
+
+  document.getElementById('spaLoginLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    const session = getValidSessionPhone('spa');
+    if (session) { routeToSupplierArea(session, 'spa'); }
+    else { window.location.href = 'register-spa.html?type=spa'; }
+  });
+
+  function getValidSessionPhone(supplierType) {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && key.startsWith('mm_session_')) {
         try {
           const parsed = JSON.parse(localStorage.getItem(key));
-          if (parsed && parsed.expiry && Date.now() < parsed.expiry) {
-            return { phone: key.slice('mm_session_'.length), ...parsed };
+          if (parsed && parsed.expiry && Date.now() < parsed.expiry && parsed.supplierType === supplierType) {
+            return key.slice('mm_session_'.length);
           }
         } catch (_) {}
       }
     }
     return null;
   }
-
-  document.getElementById('therapistLoginLink').addEventListener('click', function(e) {
-    e.preventDefault();
-    const session = getValidSession();
-    if (session && session.supplierType === 'individual') {
-      window.location.href = `dashboard.html?type=individual&phone=${encodeURIComponent(session.phone)}`;
-    } else {
-      window.location.href = 'register.html?type=individual';
-    }
-  });
-
-  document.getElementById('spaLoginLink').addEventListener('click', function(e) {
-    e.preventDefault();
-    const session = getValidSession();
-    if (session && session.supplierType === 'spa') {
-      window.location.href = `dashboard.html?type=spa&phone=${encodeURIComponent(session.phone)}`;
-    } else {
-      window.location.href = 'register-spa.html?type=spa';
-    }
-  });
   </script>
 
 </body>
