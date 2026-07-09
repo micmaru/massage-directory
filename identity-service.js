@@ -74,6 +74,7 @@ export function clearSession() {
 //   { status: 'no-auth' }                              no live Auth session
 //   { status: 'not-found', uid }                       no supplier doc yet (pending stage)
 //   { status: 'verified', uid }                        doc exists, uid matches session
+//   { status: 'incomplete', uid }                      doc exists, uid matches, registration not yet complete
 //   { status: 'blocked', storedUid, sessionUid }       uid mismatch — logged to auditLog
 //   { status: 'error', error }                          read failed
 export async function resolveIdentity(phone) {
@@ -106,6 +107,10 @@ export async function resolveIdentity(phone) {
       console.error('auditLog write failed (identity mismatch):', logErr);
     }
     return { status: 'blocked', storedUid, sessionUid: user.uid };
+  }
+
+  if (!snap.data().registrationComplete) {
+    return { status: 'incomplete', uid: user.uid };
   }
 
   return { status: 'verified', uid: user.uid };
