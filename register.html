@@ -1266,13 +1266,28 @@
   // ════════════════════════════════════════════
   // WELCOME BACK (returning supplier)
   // ════════════════════════════════════════════
-  function showWelcomeBack(phone, displayName, supplierType, registrationComplete) {
+  async function showWelcomeBack(phone, displayName, supplierType, registrationComplete) {
     document.getElementById('phoneScreen').classList.add('hidden');
     document.getElementById('otpScreen').classList.add('hidden');
     if (!registrationComplete) {
       verifiedPhone = phone;
       phoneVerified = true;
-      showConsentGate();
+      let pendData = null;
+      try {
+        const pendSnap = await getDoc(doc(db, 'pending_registrations', phone));
+        pendData = pendSnap.exists() ? pendSnap.data() : null;
+      } catch (err) {
+        console.error('showWelcomeBack prefill fetch error:', err);
+      }
+      if (pendData && pendData.dataConsentGiven) {
+        document.getElementById('otpPhase').classList.add('hidden');
+        document.getElementById('consentPhase').classList.add('hidden');
+        document.getElementById('regPhase').classList.remove('hidden');
+        document.getElementById('cellDisplay').value = phone;
+        prefillSection1(pendData);
+      } else {
+        showConsentGate();
+      }
       return;
     }
     document.getElementById('welcomeName').textContent = displayName || 'there';

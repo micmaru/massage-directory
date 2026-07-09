@@ -340,3 +340,51 @@ exports.checkIncompleteRegistrations = functions
       }
     }
   });
+
+exports.generateSupplierNumber = functions
+  .region("us-central1")
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Must be signed in.");
+    }
+    const phone = context.auth.token.phone_number;
+    if (!phone) {
+      throw new functions.https.HttpsError("failed-precondition", "No verified phone on token.");
+    }
+    const db = admin.firestore();
+    const supplierRef = db.collection("suppliers").doc(phone);
+    const existing = await supplierRef.get();
+    if (existing.exists && existing.data().supplierNumber) {
+      return { supplierNumber: existing.data().supplierNumber };
+    }
+    const pendRef = db.collection("pending_registrations").doc(phone);
+    const pendSnap = await pendRef.get();
+    const supplierType = pendSnap.exists ? (pendSnap.data().supplierType || "individual") : "individual";
+    const counterField = supplierType === "spa" ? "counterSpa" : "counterIndividual";
+    const prefix = supplierType === "spa" ? "S" : "T";
+    const configRef = db.collection("settings").doc("config");
+
+    let supplierNumber;
+    await db.runTransaction(async tx => {
+      const snap = await tx.get(configRef);
+      const current = snap.exists ? (snap.data()[counterField] || 1000) : 1000;
+      const next = Math.max(current + 1, 1001);
+      const yy = String(new Date().getFullYear()).slice(-2);
+      supplierNumber = `${prefix}-${yy}-${String(next).padStart(4, "0")}`;
+      tx.set(configRef, { [counterField]: next }, { merge: true });
+      tx.set(pendRef, { supplierNumber }, { merge: true });
+      tx.set(supplierRef, {
+        uid: context.auth.uid,
+        cellNumber: phone,
+        supplierNumber,
+        supplierType,
+        status: "pending",
+        subscriptionStatus: "not_paid",
+        subscriptionExpiry: null,
+        registrationComplete: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    });
+
+    return { supplierNumber };
+  });
