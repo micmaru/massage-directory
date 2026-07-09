@@ -332,6 +332,9 @@
       case 'verified':
         await loadDashboard(phone);
         break;
+      case 'incomplete':
+        window.location.href = 'register.html?phone=' + encodeURIComponent(phone) + '&checked=1';
+        break;
       case 'not-found':
         localStorage.removeItem('mm_session_' + phone);
         document.getElementById('loginError').textContent = 'No supplier account found. Please register first.';
@@ -435,12 +438,12 @@
       const phone = formatPhoneNumber(document.getElementById('loginCell').value.trim());
 
       const snap = await getDoc(doc(db, 'suppliers', phone));
-      if (snap.exists()) {
+      if (snap.exists() && snap.data().registrationComplete) {
         storeSession(phone, snap.data().displayName || '', snap.data().supplierType || 'individual');
         await loadDashboard(phone);
       } else {
         storeSession(phone, '', 'individual');
-        window.location.href = 'register.html?phone=' + encodeURIComponent(phone);
+        window.location.href = 'register.html?phone=' + encodeURIComponent(phone) + '&checked=1';
       }
     } catch (err) {
       console.error('OTP verify error:', err);
@@ -470,6 +473,10 @@
       document.getElementById('loginError').classList.remove('hidden');
       document.getElementById('regLinks').classList.remove('hidden');
       document.getElementById('loginScreen').classList.remove('hidden');
+      return;
+    }
+    if (!snap.data().registrationComplete) {
+      window.location.href = 'register.html?phone=' + encodeURIComponent(phone) + '&checked=1';
       return;
     }
     window.supplierPhone = phone;
