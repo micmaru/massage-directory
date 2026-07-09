@@ -1079,13 +1079,28 @@
   // the skip — the phone must come from the Firebase Auth session, never
   // from the URL, or anyone could register under someone else's number.
   if (new URLSearchParams(window.location.search).has('phone')) {
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (!user || !user.phoneNumber || phoneVerified) return;
       authUid       = user.uid;
       verifiedPhone = user.phoneNumber;
       phoneVerified = true;
       storeSession(verifiedPhone, '', 'individual');
-      showConsentGate();
+      let pendData = null;
+      try {
+        const pendSnap = await getDoc(doc(db, 'pending_registrations', verifiedPhone));
+        pendData = pendSnap.exists() ? pendSnap.data() : null;
+      } catch (err) {
+        console.error('resume prefill fetch error:', err);
+      }
+      if (pendData && pendData.dataConsentGiven) {
+        document.getElementById('otpPhase').classList.add('hidden');
+        document.getElementById('consentPhase').classList.add('hidden');
+        document.getElementById('regPhase').classList.remove('hidden');
+        document.getElementById('cellDisplay').value = verifiedPhone;
+        prefillSection1(pendData);
+      } else {
+        showConsentGate();
+      }
     });
   }
 
@@ -1324,6 +1339,36 @@
     document.getElementById('regPhase').classList.remove('hidden');
     const cellDisplay = document.getElementById('cellDisplay');
     if (cellDisplay) cellDisplay.value = verifiedPhone;
+    try {
+      const pendSnap = await getDoc(doc(db, 'pending_registrations', verifiedPhone));
+      if (pendSnap.exists()) prefillSection1(pendSnap.data());
+    } catch (err) {
+      console.error('beginRegistration prefill fetch error:', err);
+    }
+  }
+
+  function prefillSection1(data) {
+    if (!data) return;
+    if (data.firstName)   document.getElementById('firstName').value   = data.firstName;
+    if (data.lastName)    document.getElementById('lastName').value    = data.lastName;
+    if (data.displayName) document.getElementById('displayName').value = data.displayName;
+    if (data.gender) {
+      const r = document.querySelector(`input[name="personalGender"][value="${data.gender}"]`);
+      if (r) r.checked = true;
+    }
+    if (data.firstName && data.lastName && data.displayName && data.gender) {
+      accSectionStates[1] = 'done';
+      document.getElementById('accNum1').textContent = '✓';
+      document.getElementById('accNum1').classList.add('acc-num--done');
+      document.getElementById('accStatus1').textContent = 'Complete';
+      document.getElementById('accStatus1').classList.add('acc-status--done');
+      updateAccordionProgress();
+    }
+    if (data.supplierNumber) {
+      supplierNumberGenerated = data.supplierNumber;
+      document.getElementById('supplierPillNum').textContent = `Your therapist number: ${data.supplierNumber}`;
+      document.getElementById('supplierPill').classList.remove('hidden');
+    }
   }
 
   // ════════════════════════════════════════════
