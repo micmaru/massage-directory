@@ -1668,3 +1668,66 @@ a second pass.
 
 generateSupplierNumber() Cloud Function brief, built against the
 now-locked M1-Firebase diagram.
+
+## Session Log — 9 July 2026
+
+### RESOLVED
+
+1. generateSupplierNumber() permission-denied bug. Root cause: the
+   client-side transaction touched admin-only settings/config, which
+   the browser has no write access to. Fix: replaced with a new callable
+   Cloud Function (Admin SDK, us-central1) that owns the counter
+   increment and the suppliers/{phone} + pending_registrations writes.
+   Deployed and verified live — T-26-1047 through T-26-1051 confirmed
+   created correctly. This was the standing launch blocker; now closed.
+
+2. identity-service.js — new 'incomplete' status added to
+   resolveIdentity(), distinguishing "registered but not finished"
+   (supplier doc exists, uid matches, registrationComplete false) from
+   "fully registered" (verified). Status table now:
+   no-auth / not-found / verified / incomplete / blocked / error.
+
+3. dashboard.html confirmed fully excluded from the registration path,
+   proven via a file-rename test (dashboard.html temporarily renamed so
+   any stray registration-path reference would break loudly). Three
+   dashboard entry points — the identity switch, the OTP-verify handler,
+   and loadDashboard() — now guard on registrationComplete and redirect
+   incomplete users to register.html.
+
+4. index.html hamburger links and the "Join here" footer link now route
+   through resolveIdentity() with a proper auth-ready wait
+   (waitForAuth), matching the full status table: verified → dashboard;
+   incomplete / not-found / no-auth → register; blocked / error → hard
+   stop with a generic message, no redirect. Footer "Join here" no
+   longer points straight at dashboard.html.
+
+5. register.html — showWelcomeBack() and the ?phone= resume entry path
+   both now check dataConsentGiven before showing the consent gate, and
+   both call prefillSection1() to restore saved Section 1 data on
+   resume. Verified live: register, save, exit, resume — Section 1 loads
+   correctly with no data loss, on two different re-entry paths.
+
+7. dashboard.html rename — resolved this session. The file was renamed
+   to dashboard.html.bak.html during today's file-rename exclusion test
+   (item 3) and that rename had been committed/pushed. Renamed back to
+   dashboard.html manually this session; confirmed present,
+   dashboard.html.bak.html removed. No longer an open action item.
+
+### OPEN — NOT RESOLVED
+
+6. Sections 2-8 need the same prefill pattern as Section 1, each adapted
+   to its own field types. Confirmed this session. Location
+   (province/town/suburb cascade dropdowns) is the next case and is more
+   complex than Section 1's plain text fields — the cascade logic must
+   re-populate its options before the saved values can be set.
+
+### DIAGRAM CORRECTION NEEDED
+
+8. M1 (Therapist Registration) is missing the token-valid-skip-OTP
+   branch that M3b already has correctly drawn. Redraw M1 to match
+   M3b's pattern when diagrams are next reviewed.
+
+### NEXT SESSION STARTS WITH
+
+Extend the prefill pattern from Section 1 to Sections 2-8, starting with
+the Location cascade.
