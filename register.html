@@ -1019,7 +1019,7 @@
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
   import { initLocationCascade, onProvinceChange,
     onAreaChange, onLocationAreaChange, onSuburbChange,
-    getLocationValues } from './location-cascade.js';
+    getLocationValues, preSelectLocation } from './location-cascade.js';
   window.onProvinceChange = onProvinceChange;
   window.onAreaChange = onAreaChange;
   window.onLocationAreaChange = onLocationAreaChange;
@@ -1074,6 +1074,7 @@
   let authUid            = null;
   let verifiedPhone      = '';
   let knownSupplierData  = null;
+  let offeringsReady;
 
   // Auto-skip OTP if redirected from dashboard. The URL param only signals
   // the skip — the phone must come from the Firebase Auth session, never
@@ -1098,6 +1099,12 @@
         document.getElementById('regPhase').classList.remove('hidden');
         document.getElementById('cellDisplay').value = verifiedPhone;
         prefillSection1(pendData);
+        prefillSection2(pendData);
+        await prefillSection3(pendData);
+        await prefillSection4(pendData);
+        prefillSection5(pendData);
+        prefillSection6(pendData);
+        await prefillSection7(pendData);
       } else {
         showConsentGate();
       }
@@ -1285,6 +1292,12 @@
         document.getElementById('regPhase').classList.remove('hidden');
         document.getElementById('cellDisplay').value = phone;
         prefillSection1(pendData);
+        prefillSection2(pendData);
+        await prefillSection3(pendData);
+        await prefillSection4(pendData);
+        prefillSection5(pendData);
+        prefillSection6(pendData);
+        await prefillSection7(pendData);
       } else {
         showConsentGate();
       }
@@ -1356,7 +1369,16 @@
     if (cellDisplay) cellDisplay.value = verifiedPhone;
     try {
       const pendSnap = await getDoc(doc(db, 'pending_registrations', verifiedPhone));
-      if (pendSnap.exists()) prefillSection1(pendSnap.data());
+      if (pendSnap.exists()) {
+        const pendData = pendSnap.data();
+        prefillSection1(pendData);
+        prefillSection2(pendData);
+        await prefillSection3(pendData);
+        await prefillSection4(pendData);
+        prefillSection5(pendData);
+        prefillSection6(pendData);
+        await prefillSection7(pendData);
+      }
     } catch (err) {
       console.error('beginRegistration prefill fetch error:', err);
     }
@@ -1383,6 +1405,160 @@
       supplierNumberGenerated = data.supplierNumber;
       document.getElementById('supplierPillNum').textContent = `Your therapist number: ${data.supplierNumber}`;
       document.getElementById('supplierPill').classList.remove('hidden');
+    }
+  }
+
+  function prefillSection2(data) {
+    if (!data) return;
+    if (data.whatsappNumber) document.getElementById('whatsappNumber').value = data.whatsappNumber;
+    if (data.showWhatsapp) document.getElementById('showWhatsapp').checked = true;
+    if (data.email) document.getElementById('email').value = data.email;
+    if (Array.isArray(data.contactPreferences)) {
+      if (data.contactPreferences.includes('email')) {
+        document.getElementById('contactPrefEmail').checked = true;
+      }
+      if (data.contactPreferences.includes('whatsapp')) {
+        document.getElementById('contactPrefWhatsapp').checked = true;
+      }
+    }
+    if (data.email && Array.isArray(data.contactPreferences)) {
+      accSectionStates[2] = 'done';
+      document.getElementById('accNum2').textContent = '✓';
+      document.getElementById('accNum2').classList.add('acc-num--done');
+      document.getElementById('accStatus2').textContent = 'Complete';
+      document.getElementById('accStatus2').classList.add('acc-status--done');
+      updateAccordionProgress();
+    }
+  }
+
+  async function prefillSection3(data) {
+    if (!data || !data.province) return;
+    await preSelectLocation(data);
+    if (data.province && data.townId && (data.locationArea || data.suburb)) {
+      accSectionStates[3] = 'done';
+      document.getElementById('accNum3').textContent = '✓';
+      document.getElementById('accNum3').classList.add('acc-num--done');
+      document.getElementById('accStatus3').textContent = 'Complete';
+      document.getElementById('accStatus3').classList.add('acc-status--done');
+      updateAccordionProgress();
+    }
+  }
+
+  async function prefillSection4(data) {
+    if (!data) return;
+    await offeringsReady;
+    if (data.premisesType) {
+      const r = document.querySelector(`input[name="premisesType"][value="${data.premisesType}"]`);
+      if (r) r.checked = true;
+    }
+    if (data.mobileAvailable) {
+      document.getElementById('mobileMassage').checked = true;
+      onMobileToggle();
+      if (data.willingToTravelKm) {
+        document.getElementById('willingToTravelKm').value = data.willingToTravelKm;
+      }
+    }
+    if (Array.isArray(data.amenities)) {
+      data.amenities.forEach(val => {
+        const cb = document.querySelector(`#amenitiesGroup input[type="checkbox"][value="${val}"]`);
+        if (cb) cb.checked = true;
+      });
+    }
+    if (data.premisesType) {
+      accSectionStates[4] = 'done';
+      document.getElementById('accNum4').textContent = '✓';
+      document.getElementById('accNum4').classList.add('acc-num--done');
+      document.getElementById('accStatus4').textContent = 'Complete';
+      document.getElementById('accStatus4').classList.add('acc-status--done');
+      updateAccordionProgress();
+    }
+  }
+
+  function prefillSection5(data) {
+    if (!data) return;
+    if (data.genderServed) {
+      const r = document.querySelector(`input[name="genderServed"][value="${data.genderServed}"]`);
+      if (r) r.checked = true;
+    }
+    if (data.experienceYears) document.getElementById('experienceYears').value = data.experienceYears;
+    if (data.aboutMe) {
+      const el = document.getElementById('aboutMe');
+      el.value = data.aboutMe;
+      updateCharCount(el);
+    }
+    if (data.qualifications) document.getElementById('qualifications').value = data.qualifications;
+    if (Array.isArray(data.associationMembership)) {
+      data.associationMembership.forEach(val => {
+        const cb = document.querySelector(`input[name="associationMembership"][value="${val}"]`);
+        if (cb) cb.checked = true;
+      });
+    }
+    if (data.specialsText) {
+      const el = document.getElementById('specialsText');
+      el.value = data.specialsText;
+      updateSpecialsCount(el);
+    }
+    if (data.genderServed) {
+      accSectionStates[5] = 'done';
+      document.getElementById('accNum5').textContent = '✓';
+      document.getElementById('accNum5').classList.add('acc-num--done');
+      document.getElementById('accStatus5').textContent = 'Complete';
+      document.getElementById('accStatus5').classList.add('acc-status--done');
+      updateAccordionProgress();
+    }
+  }
+
+  function prefillSection6(data) {
+    if (!data || !data.weeklyHours) return;
+    DAYS.forEach(day => {
+      const dayData = data.weeklyHours[day];
+      if (!dayData) return;
+      const toggle = document.getElementById('day-' + day);
+      if (toggle) {
+        toggle.checked = !!dayData.available;
+        onDayToggle(day);
+      }
+      if (dayData.available) {
+        if (dayData.from != null) document.getElementById('dayFrom-' + day).value = dayData.from;
+        if (dayData.to   != null) document.getElementById('dayTo-'   + day).value = dayData.to;
+      }
+    });
+    if (data.availableOutsideHours) {
+      document.getElementById('availableOutsideHours').checked = true;
+    }
+    if (Object.keys(data.weeklyHours).length) {
+      accSectionStates[6] = 'done';
+      document.getElementById('accNum6').textContent = '✓';
+      document.getElementById('accNum6').classList.add('acc-num--done');
+      document.getElementById('accStatus6').textContent = 'Complete';
+      document.getElementById('accStatus6').classList.add('acc-status--done');
+      updateAccordionProgress();
+    }
+  }
+
+  async function prefillSection7(data) {
+    if (!data) return;
+    await offeringsReady;
+    const setChecked = (name, values) => {
+      if (!Array.isArray(values)) return;
+      values.forEach(val => {
+        const cb = document.querySelector(`input[name="${name}"][value="${val}"]`);
+        if (cb) cb.checked = true;
+      });
+    };
+    setChecked('massageStyles', data.massageStyles);
+    setChecked('traditions', data.traditions);
+    setChecked('treatments', data.treatments);
+    setChecked('classification', data.classification);
+    setChecked('serviceOfferings', data.serviceOfferings);
+
+    if (Array.isArray(data.massageStyles) && data.massageStyles.length > 0) {
+      accSectionStates[7] = 'done';
+      document.getElementById('accNum7').textContent = '✓';
+      document.getElementById('accNum7').classList.add('acc-num--done');
+      document.getElementById('accStatus7').textContent = 'Complete';
+      document.getElementById('accStatus7').classList.add('acc-status--done');
+      updateAccordionProgress();
     }
   }
 
@@ -1936,7 +2112,7 @@
 
   // ── Init ──
   initLocationCascade();
-  loadOfferings();
+  offeringsReady = loadOfferings();
   buildWeeklyHoursGrid();
 
   // ── Expose globals (onclick handlers) ──
