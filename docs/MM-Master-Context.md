@@ -1,7 +1,8 @@
-# MassageMap — Master Context v56
-**Version:** 56 | **Date:** 2026-07-09 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v57
+**Version:** 57 | **Date:** 2026-07-11 | **Author:** Johan Cilliers | **Confidential**
 **STANDALONE — no previous version needed. This is the single source of truth.**
 **Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. v51 bumped 24 June. This is the second consecutive on-time version bump.**
+**v57 bumped 11 July.**
 
 ---
 
@@ -10,9 +11,9 @@
 | Item | Status |
 |---|---|
 | Launch target | 31 July 2026 |
-| Current phase | Phase B — Dashboard & Admin |
-| Next session starts with | Cluster A fix — Storage rules path mismatch (#44), expected to also resolve #45/#46/#27/#40 |
-| Primary blocker | #44 Photos Storage rules mismatch — blocks registrationComplete flag, which blocks all notifications |
+| Current phase | Phase B — Registration fixes (Sections 2-8, authUid/routing fix) — Photos rebuild next |
+| Next session starts with | Section 8 (Photos) rebuild — single required verification photo, remove gallery slots |
+| Primary blocker | #44 Photos Storage rules mismatch — still blocks registrationComplete flag and all notifications on the Photos leg specifically (admin email also separately broken, see 11 July log) |
 | Google Cloud billing | DONE — Blaze plan, credit card attached, confirmed 9 June 2026 |
 | BulkSMS credits | AT ZERO — buy before Stage 2 |
 | Free trial expiry | 6 July 2026 — credit card attached, should auto-continue |
