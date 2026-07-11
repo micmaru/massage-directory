@@ -568,14 +568,6 @@
                 <input class="input" id="lastName" type="text" placeholder="Last name" autocomplete="family-name" />
               </div>
             </div>
-            <div class="field" id="displayNameField">
-              <label class="field__label" for="displayName">Display Name / Alias *</label>
-              <input class="input" id="displayName" type="text" placeholder="Your public name" />
-              <div class="field__note">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                This is your public name — can be your real name or a made-up name for privacy
-              </div>
-            </div>
             <div>
               <div class="form-section-label">Gender</div>
               <div class="radio-group radio-group--row">
@@ -759,6 +751,14 @@
         </div>
         <div class="acc-body hidden" id="accBody5">
           <div class="field-stack">
+            <div class="field">
+              <label class="field__label" for="displayName">Display Name / Alias *</label>
+              <input class="input" id="displayName" type="text" placeholder="Your public name" />
+              <div class="field__note">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                This is your public name — can be your real name or a made-up name for privacy
+              </div>
+            </div>
             <div>
               <div class="form-section-label">Genders Served</div>
               <div class="radio-group radio-group--row">
@@ -872,12 +872,6 @@
             <div id="treatmentsField">
               <div class="form-section-label">Treatments *</div>
               <div id="treatmentsGroup" class="check-group check-group--3col">
-                <div class="loading-options">Loading…</div>
-              </div>
-            </div>
-            <div id="classificationField">
-              <div class="form-section-label">Classification *</div>
-              <div id="classificationGroup" class="check-group">
                 <div class="loading-options">Loading…</div>
               </div>
             </div>
@@ -1029,6 +1023,17 @@
   const functionsInstance = getFunctions(app, 'us-central1');
   const storage = getStorage(app);
 
+  let authResolved = false;
+  let currentAuthUser = null;
+  const authReadyPromise = new Promise((resolve) => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      currentAuthUser = user;
+      authResolved = true;
+      unsub();
+      resolve(user);
+    });
+  });
+
   // ── Cached offerings (loaded once on page load)
   let offeringsCache = [];
 
@@ -1041,7 +1046,6 @@
       renderOfferingsGroup('massageStyles',    'massageStylesGroup',    'massageStyles');
       renderOfferingsGroup('traditions',       'traditionsGroup',       'traditions');
       renderOfferingsGroup('treatments',       'treatmentsGroup',       'treatments');
-      renderOfferingsGroup('classification',   'classificationGroup',   'classification');
       renderOfferingsGroup('serviceOfferings', 'serviceOfferingsGroup', 'serviceOfferings');
       renderOfferingsGroup('amenities',        'amenitiesGroup',        'amenities');
     } catch (err) {
@@ -1093,6 +1097,10 @@
       } catch (err) {
         console.error('resume prefill fetch error:', err);
       }
+      if (pendData && pendData.status === 'completed') {
+        window.location.href = `dashboard.html?type=individual&phone=${encodeURIComponent(verifiedPhone)}`;
+        return;
+      }
       if (pendData && pendData.dataConsentGiven) {
         document.getElementById('otpPhase').classList.add('hidden');
         document.getElementById('consentPhase').classList.add('hidden');
@@ -1113,10 +1121,10 @@
 
   const accSectionStates = {1:'empty',2:'empty',3:'empty',4:'empty',5:'empty',6:'empty',7:'empty',8:'empty'};
   const REQUIRED_SECTIONS = {
-    1: 'Personal details (name, display name, gender)',
+    1: 'Personal details (name, gender)',
     3: 'Location (province and city / town)',
-    5: 'About (genders served)',
-    7: 'Services (massage styles, treatments, classification)',
+    5: 'About (display name, genders served)',
+    7: 'Services (massage styles, treatments)',
     8: 'Photos (at least one face photo)'
   };
   let supplierNumberGenerated = null;
@@ -1162,9 +1170,14 @@
         // Returning supplier — check localStorage session first
         const session = getValidSession(phone);
         if (session) {
-          // Valid 30-day session — skip OTP entirely
-          showWelcomeBack(phone, session.displayName, session.supplierType, knownSupplierData?.registrationComplete);
-          return;
+          btn.textContent = 'Checking session…';
+          const user = authResolved ? currentAuthUser : await authReadyPromise;
+          if (user && user.phoneNumber === phone) {
+            authUid = user.uid;
+            showWelcomeBack(phone, session.displayName, session.supplierType, knownSupplierData?.registrationComplete);
+            return;
+          }
+          console.warn('Session token valid but Firebase Auth session missing/mismatched — re-verifying via OTP.');
         }
         // Session absent or expired — fall through to OTP
       }
@@ -1388,12 +1401,11 @@
     if (!data) return;
     if (data.firstName)   document.getElementById('firstName').value   = data.firstName;
     if (data.lastName)    document.getElementById('lastName').value    = data.lastName;
-    if (data.displayName) document.getElementById('displayName').value = data.displayName;
     if (data.gender) {
       const r = document.querySelector(`input[name="personalGender"][value="${data.gender}"]`);
       if (r) r.checked = true;
     }
-    if (data.firstName && data.lastName && data.displayName && data.gender) {
+    if (data.firstName && data.lastName && data.gender) {
       accSectionStates[1] = 'done';
       document.getElementById('accNum1').textContent = '✓';
       document.getElementById('accNum1').classList.add('acc-num--done');
@@ -1476,6 +1488,7 @@
 
   function prefillSection5(data) {
     if (!data) return;
+    if (data.displayName) document.getElementById('displayName').value = data.displayName;
     if (data.genderServed) {
       const r = document.querySelector(`input[name="genderServed"][value="${data.genderServed}"]`);
       if (r) r.checked = true;
@@ -1498,7 +1511,7 @@
       el.value = data.specialsText;
       updateSpecialsCount(el);
     }
-    if (data.genderServed) {
+    if (data.genderServed && data.displayName) {
       accSectionStates[5] = 'done';
       document.getElementById('accNum5').textContent = '✓';
       document.getElementById('accNum5').classList.add('acc-num--done');
@@ -1549,7 +1562,6 @@
     setChecked('massageStyles', data.massageStyles);
     setChecked('traditions', data.traditions);
     setChecked('treatments', data.treatments);
-    setChecked('classification', data.classification);
     setChecked('serviceOfferings', data.serviceOfferings);
 
     if (Array.isArray(data.massageStyles) && data.massageStyles.length > 0) {
@@ -1630,7 +1642,6 @@
       data = {
         firstName:   v('firstName'),
         lastName:    v('lastName'),
-        displayName: v('displayName'),
         gender:      document.querySelector('input[name="personalGender"]:checked')?.value || null
       };
     } else if (n === 2) {
@@ -1670,6 +1681,7 @@
       };
     } else if (n === 5) {
       data = {
+        displayName:           v('displayName'),
         genderServed:          document.querySelector('input[name="genderServed"]:checked')?.value || null,
         experienceYears:       v('experienceYears') || null,
         aboutMe:               v('aboutMe') || null,
@@ -1700,7 +1712,6 @@
         massageStyles:    getChecked('massageStyles'),
         traditions:       getChecked('traditions'),
         treatments:       getChecked('treatments'),
-        classification:   getChecked('classification'),
         serviceOfferings: getChecked('serviceOfferings')
       };
     } else if (n === 8) {
@@ -1964,7 +1975,6 @@
       massageStyles:    getChecked('massageStyles'),
       traditions:       getChecked('traditions'),
       treatments:       getChecked('treatments'),
-      classification:   getChecked('classification'),
       serviceOfferings: getChecked('serviceOfferings'),
       genderServed:       document.querySelector('input[name="genderServed"]:checked')?.value || null,
       qualifications,
@@ -2066,7 +2076,6 @@
         massageStyles:         saved.massageStyles         || [],
         traditions:            saved.traditions            || [],
         treatments:            saved.treatments            || [],
-        classification:        saved.classification        || [],
         serviceOfferings:      saved.serviceOfferings      || [],
         photos:                saved.photos                || []
       };

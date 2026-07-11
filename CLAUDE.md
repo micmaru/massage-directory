@@ -76,7 +76,7 @@ MassageMap is a three-sided massage therapy directory for the South African mark
 - associationMembership: multi-select array for both therapist and spa. Reads from offerings category: associations.
 - amenities: dynamic from offerings category: amenities. Replaces old boolean fields.
 - auditLog collection: append-only. No update, no delete — ever. Legal record.
-- photos array: photos[0] = ID (admin only). photos[1] = card photo. photos[2]+ = additional.
+- photos array: photos[0] = required face/vetting photo (facePhotoUrl; NOT an ID or passport copy). photos[1] = card photo. photos[2]+ = additional. (Locked 9 June 2026 — retired idPhotoUrl, replaced by facePhotoUrl.) Future work (agreed, not yet done): split facePhotoUrl out of the photos array into its own field in Section 1.
 - Dashboard: one file (dashboard.html). No separate dashboard-spa.html.
 - admin.html: hidden URL — never link from any public page
 

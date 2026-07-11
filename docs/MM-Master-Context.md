@@ -1731,3 +1731,153 @@ now-locked M1-Firebase diagram.
 
 Extend the prefill pattern from Section 1 to Sections 2-8, starting with
 the Location cascade.
+
+═══════════════════════════════════════
+SESSION LOG — 11 July 2026
+═══════════════════════════════════════
+
+RESOLVED / BUILT THIS SESSION:
+
+1. Resume-prefill built for Sections 2-7 (prefillSection2 through
+   prefillSection7), completing the pattern started with Section 1
+   on 9 July. Section 3 (Location) required async handling via the
+   pre-existing but unused preSelectLocation() cascade function in
+   location-cascade.js. Sections 4 and 7 required a shared
+   offeringsReady promise to fix a load-order race against
+   loadOfferings() on the fast ?phone= auto-resume path.
+
+2. displayName field moved from Section 1 (Personal) to Section 5
+   (About), editable — closes a decision that was agreed multiple
+   times previously but never implemented. REQUIRED_SECTIONS
+   labels for both sections updated to match.
+
+3. classification field fully removed from Section 7 (Services) —
+   HTML block, render call, prefill, both persist locations, and
+   submitForm's finalData. Zero references remain, verified.
+
+4. MAJOR ROOT-CAUSE FIX — authUid never set on OTP-skip resume
+   path. handleNext()'s session-valid branch (getValidSession()
+   finds a valid mm_session token) called showWelcomeBack()
+   directly without ever calling verifyOtp() or the ?phone=
+   handler — the only two places authUid was ever assigned. Result:
+   authUid stayed null for the entire session on this path,
+   causing (a) intermittent Section 8 photo upload failures via
+   the Storage rules uid check, and (b) submitForm() writing
+   uid: null into the final suppliers document — permanently
+   locking that therapist out of her own account via
+   resolveIdentity()'s uid-match check ("Session invalid, please
+   log in again").
+   FIX: added a one-shot authReadyPromise (awaits the first
+   onAuthStateChanged callback). handleNext()'s session-valid
+   branch now confirms a live Firebase Auth session (matching
+   phone number) before trusting the token and skipping OTP. If
+   Firebase's session is genuinely gone, falls through to a fresh
+   OTP send instead of silently proceeding with a broken uid.
+   SECOND GAP CLOSED IN SAME FIX: the ?phone= URL-param resume
+   path only checked pendData.dataConsentGiven, never completion
+   status — meaning a fully-submitted therapist could reopen the
+   registration form via an old/bookmarked link and resubmit,
+   overwriting her live suppliers document. Fixed by checking
+   pendData.status === 'completed' first, redirecting to
+   dashboard.html if true.
+   TESTED LIVE END-TO-END (not just code-reviewed): Path A
+   (valid mm_session token, Firebase Auth user deleted in
+   console) confirmed falls through to fresh OTP — tested on
+   +27800000004. Path B (re-entry after submit) confirmed
+   redirects to dashboard.html — tested on +27800000005, full
+   registration completed through Submit first.
+
+5. Stale/corrupted test record +27800000003 (uid: null from the
+   bug above, also predates today's field changes) deleted from
+   pending_registrations, suppliers, and Firebase Auth. Do not
+   reference this number's old data going forward.
+
+DECISIONS LOCKED THIS SESSION:
+
+6. Face/verification photo architecture redesigned:
+   - facePhotoUrl (sole remaining field in Section 8) = required
+     vetting photo, admin-use-only, NEVER shown publicly. The
+     showFacePhoto toggle (previously spec'd, decision 83/#48) is
+     explicitly DROPPED — no visibility option exists, superseding
+     the earlier decision.
+   - Once set, only admin can reset it — no self-service change.
+     Enforced via UI (locked thumbnail view replaces upload
+     control once facePhotoUrl exists). Full Storage-rules-level
+     enforcement deferred to the broader rules audit (#44/S33),
+     not built today.
+   - Section 8 reduced to ONE required upload only. Slots 2-4 and
+     "add another photo" REMOVED entirely. Label changes to
+     "Verification Photo — admin use only."
+   - CLAUDE.md's stale "photos[0] = ID, admin only" line corrected
+     to reflect the actual 9 June locked decision (facePhotoUrl
+     replaces retired idPhotoUrl) — docs-only fix, applied.
+   - Confirmed dead code, not yet cleaned up: onIdPhotoChange/
+     deleteIdPhoto reference idPhoto* HTML elements that don't
+     exist anywhere in register.html.
+
+7. Gallery photos (freely-editable marketing photos, up to 4-5)
+   SPLIT OUT of registration/dashboard entirely into a new
+   standalone flow: M11-Gallery.
+   - Reached via hamburger menu, same pattern as existing "Make
+     Payment" — OTP required every single time, no session-token
+     skip ever, first upload and every later change.
+   - Rationale: removes the entire auth-timing-race bug class by
+     design (fresh OTP = guaranteed live Firebase session every
+     time). Also removes need for per-upload admin vetting.
+   - NO admin vetting on gallery photos (would not scale past
+     ~300 suppliers). Instead: on-screen warning before upload —
+     "no sexually explicit photos; violation = account deletion,
+     no refund." Liability shifts to T&Cs.
+   - Rides the existing 8-hour frontendRefreshHours cadence.
+   - The previously-parked "re-vetting trigger for post-launch
+     profile edits" design session is NO LONGER NEEDED for photos
+     specifically — superseded by the T&Cs approach.
+   - M11-Gallery NOT YET BUILT. Build sequence locked: (1) fix
+     face photo in Section 8 [in progress], (2) remove old gallery
+     slots [same fix], (3) build M11-Gallery as new flow. Rough
+     flow sketched in chat: hamburger -> phone input -> OTP ->
+     gallery screen (thumbnails + delete, up to 4 slots) -> save
+     -> back to main menu. M11 diagram not yet drawn — M1's
+     diagram is out of date re: face photo (still shows
+     photos[0]=ID) and needs updating once Section 8 rebuild ships.
+
+8. POPIA data separation (public-displayable fields vs
+   never-displayed fields, potentially two separate Firestore
+   documents) — reconfirmed as likely necessary eventually, but
+   EXPLICITLY DEFERRED to Phase 2, pending professional legal/
+   developer input. Same item already on the pre-launch parked
+   list — reconfirmed, not newly discovered. Do not design or
+   build on current architecture without that input.
+
+9. Registration completion lock reconfirmed as intentional design
+   — once submitted, a therapist should never re-enter the
+   registration form, only the dashboard. Fully enforced as of
+   item 4's fix (both entry paths now covered).
+
+OPEN / NOT YET FIXED:
+
+10. Section 8 (Photos) code REBUILD not yet briefed or built. Plan
+    fully locked per item 6 above. Next task.
+
+11. Admin email notification (admin@massagemap.co.za via Resend)
+    NOT firing on registration submit. Confirmed via live test on
+    +27800000005: Telegram admin alert fired correctly, therapist
+    confirmation email fired correctly (personalized, correct
+    membership number, correct dashboard link). Admin email did
+    not arrive. Narrower than #46 ("no notifications fire") —
+    specifically the admin-recipient email leg only. Not yet
+    diagnosed.
+
+12. "Willing to travel" km selector (Section 4) reported not
+    appearing when the mobile-massage toggle is on. Code reviewed
+    in the last-uploaded register.html shows correct wiring
+    (onMobileToggle() shows/hides travelKmField; prefillSection4
+    restores it on resume) — no defect found in that copy, but
+    that copy predates item 4's authUid fix, so may not reflect
+    current state. Needs live reproduction with a screenshot,
+    confirmed toggle state, and a fresh register.html upload
+    before diagnosing further.
+
+NOTE: register.html as held in claude.ai is stale as of item 4's
+fix — re-upload before relying on any line numbers in a future
+session.
