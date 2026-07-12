@@ -1801,9 +1801,13 @@
   // ════════════════════════════════════════════
   function onPhotoChange(input) {
     if (input.files.length) {
-      document.getElementById('photoName1').textContent = input.files[0].name;
+      const file = input.files[0];
+      document.getElementById('photoName1').textContent = file.name;
       document.getElementById('photoName1').classList.remove('hidden');
       document.getElementById('photoDelete1').classList.remove('hidden');
+      const thumb = document.getElementById('photoThumb1');
+      thumb.src = URL.createObjectURL(file);
+      thumb.classList.remove('hidden');
     }
   }
 
@@ -1832,6 +1836,8 @@
     document.getElementById('photoName1').textContent = '';
     document.getElementById('photoName1').classList.add('hidden');
     document.getElementById('photoDelete1').classList.add('hidden');
+    document.getElementById('photoThumb1').classList.add('hidden');
+    document.getElementById('photoThumb1').src = '';
     accSectionStates[8] = 'empty';
     document.getElementById('accStatus8').textContent = 'Not started';
     updateAccordionProgress();
