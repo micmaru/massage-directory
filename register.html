@@ -750,14 +750,6 @@
                 This is your public name — can be your real name or a made-up name for privacy
               </div>
             </div>
-            <div>
-              <div class="form-section-label">Genders Served</div>
-              <div class="radio-group radio-group--row">
-                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="female" /><span class="radio-item__label">Ladies</span></label>
-                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="male" /><span class="radio-item__label">Gents</span></label>
-                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="both" /><span class="radio-item__label">Both</span></label>
-              </div>
-            </div>
             <div class="field">
               <label class="field__label" for="experienceYears">Years of Experience</label>
               <select class="select" id="experienceYears" name="experienceYears">
@@ -848,6 +840,14 @@
         </div>
         <div class="acc-body hidden" id="accBody7">
           <div class="field-stack">
+            <div>
+              <div class="form-section-label">Genders Served</div>
+              <div class="radio-group radio-group--row">
+                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="female" /><span class="radio-item__label">Ladies</span></label>
+                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="male" /><span class="radio-item__label">Gents</span></label>
+                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="both" /><span class="radio-item__label">Both</span></label>
+              </div>
+            </div>
             <div id="massageStylesField">
               <div class="form-section-label">Massage Styles *</div>
               <div id="massageStylesGroup" class="check-group check-group--3col">
@@ -1069,8 +1069,8 @@
   const REQUIRED_SECTIONS = {
     1: 'Personal details (name, gender)',
     3: 'Location (province and city / town)',
-    5: 'About (display name, genders served)',
-    7: 'Services (massage styles, treatments)',
+    5: 'About (display name)',
+    7: 'Services (genders served, massage styles, treatments)',
     8: 'Photos (verification photo)'
   };
   let supplierNumberGenerated = null;
@@ -1438,10 +1438,6 @@
   function prefillSection5(data) {
     if (!data) return;
     if (data.displayName) document.getElementById('displayName').value = data.displayName;
-    if (data.genderServed) {
-      const r = document.querySelector(`input[name="genderServed"][value="${data.genderServed}"]`);
-      if (r) r.checked = true;
-    }
     if (data.experienceYears) document.getElementById('experienceYears').value = data.experienceYears;
     if (data.aboutMe) {
       const el = document.getElementById('aboutMe');
@@ -1460,7 +1456,7 @@
       el.value = data.specialsText;
       updateSpecialsCount(el);
     }
-    if (data.genderServed && data.displayName) {
+    if (data.displayName) {
       accSectionStates[5] = 'done';
       document.getElementById('accNum5').textContent = '✓';
       document.getElementById('accNum5').classList.add('acc-num--done');
@@ -1513,7 +1509,12 @@
     setChecked('treatments', data.treatments);
     setChecked('serviceOfferings', data.serviceOfferings);
 
-    if (Array.isArray(data.massageStyles) && data.massageStyles.length > 0) {
+    if (data.genderServed) {
+      const r = document.querySelector(`input[name="genderServed"][value="${data.genderServed}"]`);
+      if (r) r.checked = true;
+    }
+
+    if (Array.isArray(data.massageStyles) && data.massageStyles.length > 0 && data.genderServed) {
       accSectionStates[7] = 'done';
       document.getElementById('accNum7').textContent = '✓';
       document.getElementById('accNum7').classList.add('acc-num--done');
@@ -1646,7 +1647,6 @@
     } else if (n === 5) {
       data = {
         displayName:           v('displayName'),
-        genderServed:          document.querySelector('input[name="genderServed"]:checked')?.value || null,
         experienceYears:       v('experienceYears') || null,
         aboutMe:               v('aboutMe') || null,
         qualifications:        v('qualifications') || null,
@@ -1673,6 +1673,7 @@
       const getChecked = name =>
         Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
       data = {
+        genderServed:     document.querySelector('input[name="genderServed"]:checked')?.value || null,
         massageStyles:    getChecked('massageStyles'),
         traditions:       getChecked('traditions'),
         treatments:       getChecked('treatments'),
