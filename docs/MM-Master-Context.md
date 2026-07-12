@@ -2097,9 +2097,10 @@ with a 10-point list, worked through one at a time:
    (HTML/CSS + JS save/toggle/completion logic, landed as one
    commit — the HTML/CSS was deliberately applied uncommitted
    first, then paired with the JS brief and committed together
-   once both were verified working), 5a79736 (auto-close on
-   complete — first version, had the repeated-slam-shut bug),
-   816e3ef (transition guard fix).
+   once both were verified working), 22273ed (green tick state on
+   saved sub-items — sub-acc__num--done class), 5a79736
+   (auto-close on complete — first version, had the
+   repeated-slam-shut bug), 816e3ef (transition guard fix).
 8. Section 8 (Photos) — see full rebuild above, no further
    action.
 9. Submit-locks-photo-editing — CONFIRMED ALREADY WORKING, no
@@ -2118,4 +2119,4 @@ confirmed-no-action-needed.
 GIT: three pushes this session, all confirmed clean.
   Push 1: 5e80211..3282496 (c7f3113, 05fc909, b711b4e, 3282496)
   Push 2: 3282496..fe9342e (fd0b2db, 432ad9e, fe9342e)
-  Push 3: fe9342e..816e3ef (9dfa2ea, 5a79736, 816e3ef)
+  Push 3: fe9342e..816e3ef (9dfa2ea, 22273ed, 5a79736, 816e3ef)
