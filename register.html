@@ -389,6 +389,17 @@
     .acc-chevron--open { transform: rotate(180deg); }
     .acc-body { padding: var(--space-5); border-top: 1px solid var(--border); }
     .acc-body.hidden { display: none !important; }
+
+    .sub-acc { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: var(--space-2); overflow: hidden; }
+    .sub-acc:last-child { margin-bottom: 0; }
+    .sub-acc__header { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .sub-acc__num { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--border); background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: var(--text-xs); font-weight: 700; color: var(--text-muted); transition: background var(--ease), border-color var(--ease), color var(--ease); }
+    .sub-acc__num--done { background: var(--green); border-color: var(--green); color: #fff; }
+    .sub-acc__name { flex: 1; font-size: var(--text-sm); font-weight: 600; color: var(--text); }
+    .sub-acc__chevron { color: var(--text-muted); transition: transform 0.22s ease; flex-shrink: 0; }
+    .sub-acc__chevron--open { transform: rotate(180deg); }
+    .sub-acc__body { padding: var(--space-4); border-top: 1px solid var(--border); }
+    .sub-acc__body.hidden { display: none !important; }
     .req-badge { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--green); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); border-radius: 4px; padding: 1px 6px; margin-left: var(--space-1); vertical-align: middle; }
     /* ── Accordion progress ── */
     .acc-progress { margin-bottom: var(--space-4); }
@@ -840,40 +851,72 @@
         </div>
         <div class="acc-body hidden" id="accBody7">
           <div class="field-stack">
-            <div>
-              <div class="form-section-label">Genders Served</div>
-              <div class="radio-group radio-group--row">
-                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="female" /><span class="radio-item__label">Ladies</span></label>
-                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="male" /><span class="radio-item__label">Gents</span></label>
-                <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="both" /><span class="radio-item__label">Both</span></label>
+
+            <div class="sub-acc" id="sub7Sec1">
+              <div class="sub-acc__header" onclick="toggleSub7Section(1)">
+                <div class="sub-acc__num" id="sub7Num1">1</div>
+                <div class="sub-acc__name">7.1 Genders Served</div>
+                <svg class="sub-acc__chevron" id="sub7Chevron1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sub-acc__body hidden" id="sub7Body1">
+                <div class="radio-group radio-group--row">
+                  <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="female" /><span class="radio-item__label">Ladies</span></label>
+                  <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="male" /><span class="radio-item__label">Gents</span></label>
+                  <label class="radio-item radio-item--flex"><input type="radio" name="genderServed" value="both" /><span class="radio-item__label">Both</span></label>
+                </div>
+                <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-4);" onclick="saveSub7Section(1)">Save — Genders Served</button>
               </div>
             </div>
-            <div id="massageStylesField">
-              <div class="form-section-label">Massage Styles *</div>
-              <div id="massageStylesGroup" class="check-group check-group--3col">
-                <div class="loading-options">Loading…</div>
+
+            <div class="sub-acc" id="sub7Sec2">
+              <div class="sub-acc__header" onclick="toggleSub7Section(2)">
+                <div class="sub-acc__num" id="sub7Num2">2</div>
+                <div class="sub-acc__name">7.2 Massage Styles *</div>
+                <svg class="sub-acc__chevron" id="sub7Chevron2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sub-acc__body hidden" id="sub7Body2">
+                <div id="massageStylesGroup" class="check-group check-group--3col"><div class="loading-options">Loading…</div></div>
+                <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-4);" onclick="saveSub7Section(2)">Save — Massage Styles</button>
               </div>
             </div>
-            <div id="traditionsField">
-              <div class="form-section-label">Traditions <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(optional)</span></div>
-              <div id="traditionsGroup" class="check-group check-group--3col">
-                <div class="loading-options">Loading…</div>
+
+            <div class="sub-acc" id="sub7Sec3">
+              <div class="sub-acc__header" onclick="toggleSub7Section(3)">
+                <div class="sub-acc__num" id="sub7Num3">3</div>
+                <div class="sub-acc__name">7.3 Traditions <span style="font-weight:400; color:var(--text-muted);">(optional)</span></div>
+                <svg class="sub-acc__chevron" id="sub7Chevron3" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sub-acc__body hidden" id="sub7Body3">
+                <div id="traditionsGroup" class="check-group check-group--3col"><div class="loading-options">Loading…</div></div>
+                <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-4);" onclick="saveSub7Section(3)">Save — Traditions</button>
               </div>
             </div>
-            <div id="treatmentsField">
-              <div class="form-section-label">Treatments *</div>
-              <div id="treatmentsGroup" class="check-group check-group--3col">
-                <div class="loading-options">Loading…</div>
+
+            <div class="sub-acc" id="sub7Sec4">
+              <div class="sub-acc__header" onclick="toggleSub7Section(4)">
+                <div class="sub-acc__num" id="sub7Num4">4</div>
+                <div class="sub-acc__name">7.4 Treatments *</div>
+                <svg class="sub-acc__chevron" id="sub7Chevron4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sub-acc__body hidden" id="sub7Body4">
+                <div id="treatmentsGroup" class="check-group check-group--3col"><div class="loading-options">Loading…</div></div>
+                <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-4);" onclick="saveSub7Section(4)">Save — Treatments</button>
               </div>
             </div>
-            <div id="serviceOfferingsField">
-              <div class="form-section-label">Service Offerings <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(optional)</span></div>
-              <div id="serviceOfferingsGroup" class="check-group check-group--3col">
-                <div class="loading-options">Loading…</div>
+
+            <div class="sub-acc" id="sub7Sec5">
+              <div class="sub-acc__header" onclick="toggleSub7Section(5)">
+                <div class="sub-acc__num" id="sub7Num5">5</div>
+                <div class="sub-acc__name">7.5 Service Offerings <span style="font-weight:400; color:var(--text-muted);">(optional)</span></div>
+                <svg class="sub-acc__chevron" id="sub7Chevron5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sub-acc__body hidden" id="sub7Body5">
+                <div id="serviceOfferingsGroup" class="check-group check-group--3col"><div class="loading-options">Loading…</div></div>
+                <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-4);" onclick="saveSub7Section(5)">Save — Service Offerings</button>
               </div>
             </div>
+
           </div>
-          <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-5);" onclick="saveAccSection(7)">Save — Services</button>
         </div>
       </div>
 
@@ -1066,6 +1109,25 @@
   }
 
   const accSectionStates = {1:'empty',2:'empty',3:'empty',4:'empty',5:'empty',6:'empty',7:'empty',8:'empty'};
+
+  const sub7SectionStates = {1:'empty',2:'empty',3:'empty',4:'empty',5:'empty'};
+  const SUB7_CONFIG = {
+    1: { type:'radio',    name:'genderServed',     field:'genderServed' },
+    2: { type:'checkbox', name:'massageStyles',    field:'massageStyles' },
+    3: { type:'checkbox', name:'traditions',       field:'traditions' },
+    4: { type:'checkbox', name:'treatments',       field:'treatments' },
+    5: { type:'checkbox', name:'serviceOfferings', field:'serviceOfferings' }
+  };
+  function getSub7Value(subN) {
+    const cfg = SUB7_CONFIG[subN];
+    if (cfg.type === 'radio') return document.querySelector(`input[name="${cfg.name}"]:checked`)?.value || null;
+    return Array.from(document.querySelectorAll(`input[name="${cfg.name}"]:checked`)).map(cb => cb.value);
+  }
+  function sub7HasValue(subN) {
+    const v = getSub7Value(subN);
+    return Array.isArray(v) ? v.length > 0 : !!v;
+  }
+
   const REQUIRED_SECTIONS = {
     1: 'Personal details (name, gender)',
     3: 'Location (province and city / town)',
@@ -1514,14 +1576,44 @@
       if (r) r.checked = true;
     }
 
-    if (Array.isArray(data.massageStyles) && data.massageStyles.length > 0 && data.genderServed) {
-      accSectionStates[7] = 'done';
-      document.getElementById('accNum7').textContent = '✓';
-      document.getElementById('accNum7').classList.add('acc-num--done');
-      document.getElementById('accStatus7').textContent = 'Complete';
-      document.getElementById('accStatus7').classList.add('acc-status--done');
-      updateAccordionProgress();
-    }
+    Object.keys(SUB7_CONFIG).forEach(subN => {
+      if (sub7HasValue(subN)) {
+        sub7SectionStates[subN] = 'done';
+        document.getElementById('sub7Num' + subN).textContent = '✓';
+      }
+    });
+    updateSection7Progress();
+  }
+
+  function toggleSub7Section(subN) {
+    const body = document.getElementById('sub7Body' + subN);
+    const isOpen = !body.classList.contains('hidden');
+    body.classList.toggle('hidden', isOpen);
+    document.getElementById('sub7Chevron' + subN).classList.toggle('sub-acc__chevron--open', !isOpen);
+  }
+
+  async function saveSub7Section(subN) {
+    const cfg = SUB7_CONFIG[subN];
+    const value = getSub7Value(subN);
+    sub7SectionStates[subN] = 'done';
+    document.getElementById('sub7Num' + subN).textContent = '✓';
+    document.getElementById('sub7Body' + subN).classList.add('hidden');
+    document.getElementById('sub7Chevron' + subN).classList.remove('sub-acc__chevron--open');
+    const pendRef = doc(db, 'pending_registrations', verifiedPhone);
+    await setDoc(pendRef, { [cfg.field]: value }, { merge: true });
+    updateSection7Progress();
+  }
+
+  function updateSection7Progress() {
+    const requiredSubs = [1,2,4];
+    const doneCount = Object.values(sub7SectionStates).filter(s => s === 'done').length;
+    const allRequiredDone = requiredSubs.every(n => sub7SectionStates[n] === 'done');
+    document.getElementById('accStatus7').textContent = allRequiredDone ? 'Complete' : `${doneCount} of 5 complete`;
+    document.getElementById('accStatus7').classList.toggle('acc-status--done', allRequiredDone);
+    accSectionStates[7] = allRequiredDone ? 'done' : 'empty';
+    document.getElementById('accNum7').textContent = allRequiredDone ? '✓' : '7';
+    document.getElementById('accNum7').classList.toggle('acc-num--done', allRequiredDone);
+    updateAccordionProgress();
   }
 
   async function prefillSection8(data) {
@@ -1668,16 +1760,6 @@
       data = {
         weeklyHours,
         availableOutsideHours: document.getElementById('availableOutsideHours').checked
-      };
-    } else if (n === 7) {
-      const getChecked = name =>
-        Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
-      data = {
-        genderServed:     document.querySelector('input[name="genderServed"]:checked')?.value || null,
-        massageStyles:    getChecked('massageStyles'),
-        traditions:       getChecked('traditions'),
-        treatments:       getChecked('treatments'),
-        serviceOfferings: getChecked('serviceOfferings')
       };
     } else if (n === 8) {
       const uid = auth.currentUser?.uid || authUid;
@@ -2020,6 +2102,8 @@
   window.closeModal            = closeModal;
   window.submitForm            = submitForm;
   window.toggleAccSection      = toggleAccSection;
+  window.toggleSub7Section     = toggleSub7Section;
+  window.saveSub7Section       = saveSub7Section;
   window.toggleAccordion       = toggleAccSection;
   window.saveAccSection        = saveAccSection;
   window.saveAccordionSection  = saveAccSection;
