@@ -1608,6 +1608,7 @@
 
   function updateSection7Progress() {
     const requiredSubs = [1,2,4];
+    const wasDone = accSectionStates[7] === 'done';
     const doneCount = Object.values(sub7SectionStates).filter(s => s === 'done').length;
     const allRequiredDone = requiredSubs.every(n => sub7SectionStates[n] === 'done');
     document.getElementById('accStatus7').textContent = allRequiredDone ? 'Complete' : `${doneCount} of 5 complete`;
@@ -1615,7 +1616,7 @@
     accSectionStates[7] = allRequiredDone ? 'done' : 'empty';
     document.getElementById('accNum7').textContent = allRequiredDone ? '✓' : '7';
     document.getElementById('accNum7').classList.toggle('acc-num--done', allRequiredDone);
-    if (allRequiredDone) {
+    if (allRequiredDone && !wasDone) {
       document.getElementById('accBody7').classList.add('hidden');
       document.getElementById('accChevron7').classList.remove('acc-chevron--open');
     }
