@@ -1615,6 +1615,10 @@
     accSectionStates[7] = allRequiredDone ? 'done' : 'empty';
     document.getElementById('accNum7').textContent = allRequiredDone ? '✓' : '7';
     document.getElementById('accNum7').classList.toggle('acc-num--done', allRequiredDone);
+    if (allRequiredDone) {
+      document.getElementById('accBody7').classList.add('hidden');
+      document.getElementById('accChevron7').classList.remove('acc-chevron--open');
+    }
     updateAccordionProgress();
   }
 
