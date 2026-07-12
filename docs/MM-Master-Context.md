@@ -1,8 +1,9 @@
-# MassageMap — Master Context v57
-**Version:** 57 | **Date:** 2026-07-11 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v58
+**Version:** 58 | **Date:** 2026-07-12 | **Author:** Johan Cilliers | **Confidential**
 **STANDALONE — no previous version needed. This is the single source of truth.**
 **Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. v51 bumped 24 June. This is the second consecutive on-time version bump.**
 **v57 bumped 11 July.**
+**v58 bumped 12 July.**
 
 ---
 
@@ -11,9 +12,9 @@
 | Item | Status |
 |---|---|
 | Launch target | 31 July 2026 |
-| Current phase | Phase B — Registration fixes (Sections 2-8, authUid/routing fix) — Photos rebuild next |
-| Next session starts with | Section 8 (Photos) rebuild — single required verification photo, remove gallery slots |
-| Primary blocker | #44 Photos Storage rules mismatch — still blocks registrationComplete flag and all notifications on the Photos leg specifically (admin email also separately broken, see 11 July log) |
+| Current phase | Phase B — Registration cosmetic/UX pass complete. Section 8 rebuild DONE and tested live. Section 7 restructured into sub-accordion (7.1-7.5) with independent save/completion tracking. Address-toggle, distance-selector, and genders-served field-location fixes DONE. |
+| Next session starts with | Johan to identify next scope — register.html core flow confirmed complete by Johan ("120% the way I wanted this"). Candidates: spa registration, dashboard, admin, or Storage rules (#44). |
+| Primary blocker | #44 Photos Storage rules mismatch — still blocks registrationComplete flag and all notifications on the Photos leg specifically (admin email also separately broken, see 11 July log) — confirmed today via live 403 on deleteObject in addition to the existing upload/registrationComplete issue. Also blocks a therapist from deleting her own verification photo during registration. |
 | Google Cloud billing | DONE — Blaze plan, credit card attached, confirmed 9 June 2026 |
 | BulkSMS credits | AT ZERO — buy before Stage 2 |
 | Free trial expiry | 6 July 2026 — credit card attached, should auto-continue |
@@ -666,6 +667,7 @@ Repo: https://github.com/micmaru/massage-directory/issues
 6. Dark theme permanently retired. Never reintroduce.
 7. Prices always from settings/config. Never hardcode R299 or R999.
 8. Cloud Function is sole notification sender — never from browser.
+9. ONE BRIEF AT A TIME, WAIT FOR THE ACTUAL COMMIT. Never issue a second brief, a mockup discussion, or a test instruction until Claude Code's commit confirmation (hash + files-changed summary) for the current brief has been seen and checked against what the brief asked for. Added 12 July 2026 after a session where combined/rapid briefing caused two sub-fixes (thumbnail wiring in Section 8's onPhotoChange/deletePhoto) to get silently skipped — Claude Code had moved on to a later brief before the earlier one's full scope had landed, and testing began before the gap was caught.
 
 ---
 
@@ -1859,6 +1861,7 @@ OPEN / NOT YET FIXED:
 
 10. Section 8 (Photos) code REBUILD not yet briefed or built. Plan
     fully locked per item 6 above. Next task.
+    CLOSED 12 July — see Session Log 12 July 2026.
 
 11. Admin email notification (admin@massagemap.co.za via Resend)
     NOT firing on registration submit. Confirmed via live test on
@@ -1878,7 +1881,241 @@ OPEN / NOT YET FIXED:
     current state. Needs live reproduction with a screenshot,
     confirmed toggle state, and a fresh register.html upload
     before diagnosing further.
+    SUPERSEDED 12 July — the entire dropdown mechanism this item
+    referred to was replaced with 5/10/15/20km buttons; no longer
+    applicable to current code. See Session Log 12 July 2026.
 
 NOTE: register.html as held in claude.ai is stale as of item 4's
 fix — re-upload before relying on any line numbers in a future
 session.
+
+---
+
+## Session Log — 12 July 2026
+
+SESSION EVENTS (non-code):
+- Johan accidentally deleted code in index.html while setting
+  up the dev environment before this session started. Restored
+  cleanly via `git restore index.html` — uncommitted
+  working-directory change only, nothing lost. No commit.
+
+SECTION 8 (PHOTOS) REBUILD — DONE, LIVE-TESTED, CONFIRMED WORKING:
+- Full rebuild per the plan locked 11 July: single required
+  `facePhotoUrl` field replacing the old 4-slot gallery
+  (`photos[]` array, `visibility: 'public'` on every entry
+  including the face photo — this was a live privacy gap,
+  confirmed and fixed).
+- Dead code removed: `buildFormData()` (defined, zero call
+  sites, wrote stale `idPhotoUrl`/`profilePhotos` field names),
+  `onIdPhotoChange`, `deleteIdPhoto` (referenced HTML elements
+  that didn't exist).
+- Storage path: `suppliers/{uid}/photos/verification-{filename}`
+  (uid-based, matches the identity architecture rule).
+- DECISION REVISED (supersedes "admin-only reset, no
+  self-service change" from 11 July's decision 6): during
+  ACTIVE REGISTRATION (pre-submit), the therapist can freely
+  delete and re-upload her verification photo as many times as
+  she likes. The admin-only lock only matters after Submit —
+  already fully enforced structurally by the existing
+  completed-registration guard (any resume attempt on a
+  submitted record redirects straight to dashboard.html,
+  register.html unreachable). Section 8 needs no separate lock
+  of its own — the guard upstream already does the job.
+- `deletePhoto()` rewritten to actually delete the Storage
+  object (`deleteObject`) and clear `facePhotoUrl` from both
+  `pending_registrations` and `suppliers` (via `deleteField()`),
+  not just clear the browser file input. Also reopens the
+  Submit gate (`updateAccordionProgress()`) if a photo is
+  deleted after the section was marked complete — a real gap
+  in the first version of the fix (a therapist could delete her
+  photo and still submit with none attached).
+- Thumbnail preview added (mockup approved in-session before
+  coding, per the UI-decision workflow rule): shows immediately
+  on file select via `URL.createObjectURL` (before Save),
+  persists after Save, restored on resume via new
+  `prefillSection8()` (didn't exist before today — Section 8
+  was never included in the 11 July prefill work for
+  sections 1-7).
+- Live-tested end-to-end via screenshots: select→thumbnail
+  updates immediately, Save→section completes, delete→thumbnail
+  clears and Submit gate re-locks, re-select→thumbnail updates
+  to new photo, Save→completes again, back-to-menu-and-return→
+  correct photo thumbnail restored on resume. All confirmed.
+- WORKFLOW ISSUE DURING THIS WORK: a combined brief (thumbnail
+  + delete-and-replace) was issued, but the session moved on to
+  mockup approval and a follow-up brief before Claude Code's
+  commit for the first brief was fully checked. Result: the
+  `deletePhoto()` Storage/Firestore fix landed (commit 05fc909)
+  but the thumbnail-wiring portion of that same brief
+  (onPhotoChange local preview, deletePhoto thumbnail-clear)
+  silently did not — because the `photoThumb1` element didn't
+  exist yet at that point in the sequence. Not caught until
+  live retesting showed the thumbnail frozen on old photos.
+  Fixed same session (commit 3282496) once traced by directly
+  re-reading the actual file rather than relying on
+  conversation memory. New Workflow Rule added as a result —
+  see Workflow Rules section.
+- Minor technical notes, confirmed harmless, left as-is:
+  `URL.createObjectURL` leaks one blob reference per file
+  selection (never revoked) — bounded to a single image on a
+  form filled once, no real impact. Setting `thumb.src = ''` on
+  delete technically fires a request for register.html itself
+  against the hidden `<img>` element — invisible to the user,
+  common practice.
+- Commits: c7f3113 (rebuild), 05fc909 (delete Storage+Firestore,
+  reopen submit gate), b711b4e (prefillSection8 + thumbnail
+  element), 3282496 (thumbnail wiring fix, missed in the
+  combined brief above).
+
+KNOWN GAP CONFIRMED, NOT FIXED (ties to #44):
+- `deleteObject()` in `deletePhoto()` fails with a live 403
+  (storage/unauthorized) — Storage rules don't currently permit
+  an authenticated user to delete her own verification photo.
+  Function catches the error and continues (Firestore still
+  clears correctly), but the Storage file is orphaned. Confirmed
+  live in console during testing.
+
+DOWNSTREAM CONSUMER AUDIT (Claude Code ran this proactively,
+grep across the repo) — ALL PARKED, dashboard/admin/spa
+explicitly out of scope this session:
+1. Verification photo writes to a PUBLICLY-READABLE Storage
+   path — `storage.rules:16-21` grants `allow read: if true` on
+   `suppliers/{uid}/photos/`, contradicting the UI's "Admin use
+   only — never shown publicly" text. Correct fix is moving it
+   to the existing auth-only `suppliers/{uid}/id/` path
+   (`storage.rules:7-12`, `allow read: if request.auth != null`,
+   already commented "admin use") — but that requires amending
+   the locked CLAUDE.md line `photos[0] = facePhotoUrl`.
+   Deliberately not done this session — own session, ties to #44.
+2. `admin.html` reads `photos`/`idPhotoUrl` at lines 1260-1266,
+   2070-2077, 2411-2419 — never `facePhotoUrl`.
+   `admin-supplier.html` does the same via
+   `renderPhotoGrid(data.photos, data.idPhotoUrl)` at lines 553,
+   616. Every new therapist registered under the new flow will
+   show "No photos uploaded" in admin vetting. Not fixed.
+3. `dashboard.html` (lines 716-728) still runs the old 4-slot
+   photo-loop and writes a legacy `photos` array on save, never
+   touches `facePhotoUrl`. Also (lines 833-836, 969) still
+   shows therapists a "Show address on listing" toggle and
+   writes `addressVisible` back on save — a therapist who
+   registers under the new flow (no `addressVisible` field at
+   all) could open dashboard and set one, since it currently
+   defaults to unchecked when undefined. Needs its own session.
+4. `admin-supplier.html` (lines 270-271, 700) has its own
+   "Address visible on listing" checkbox — may be an
+   intentional admin override, separate from supplier
+   self-service, needs a decision later, not an automatic
+   removal.
+5. `register-spa.html` untouched — still has the full 4-slot
+   photo gallery + `photos` array + its own dead `buildFormData`
+   with `idPhotoUrl` (lines 1568-1577, 1881-1882, 1985), still
+   has Genders Served in its own Section 5, and still uses the
+   old 10/25/50/100km distance dropdown. The therapist and spa
+   registration flows have now diverged significantly.
+6. `seed-s1.js` seeds `idPhotoUrl: ''` and `photos: []` on every
+   record — stale field names, worth reviewing whenever seed
+   data is next touched.
+7. `--border` CSS token resolves to translucent white
+   (rgba(255,255,255,0.07)) — a retired dark-mode remnant. The
+   new photo thumbnail's border is invisible against the
+   current dark background as a result. Phase D (full design
+   pass) item, not urgent.
+8. `dashboard-precrash.html` sitting in the repo root (not in
+   backup/) looks like a stale crash artefact, still references
+   `idPhotoUrl`. Flagged, not deleted — confirm with Johan
+   before removing.
+
+REGISTRATION FIELD/UX CLEANUP — Johan reviewed all 8 sections
+with a 10-point list, worked through one at a time:
+
+0. Sections auto-close on Save — confirmed already correct in
+   code. No fix needed.
+1. Section 1 — no issues, no action.
+2. WhatsApp field (Section 2) — CONFIRMED KEEP: therapist↔
+   customer only, a public `wa.me/{number}` link on the
+   listing, phone-to-phone, zero backend/API integration
+   required. Not the therapist↔platform notification stack
+   (BulkSMS/Telegram). No fix needed. Unconfirmed whether
+   `profile.html` currently renders the `wa.me` link on the
+   public side — check in a future session.
+3. FIXED — removed the "Show full address publicly" toggle
+   (Section 3), which directly contradicted the field's own
+   helper text ("Never shown publicly — admin only") a few
+   lines above it. Address is now unconditionally admin-only in
+   register.html. Confirmed via audit that this was a dead
+   control, not a live leak — `profile.html` never rendered a
+   street address publicly at any point. Commit: fd0b2db.
+   PARKED: dashboard.html and admin-supplier.html both still
+   have their own address-visibility toggles — see downstream
+   audit items 3-4.
+4. FIXED — replaced the travel-distance `<select>` dropdown
+   (10/25/50/100km) with four press/click buttons: 5/10/15/20km
+   (LOCKED VALUES — 20km deliberately chosen as the ceiling,
+   "already quite far"). Field only appears when mobile-massage
+   toggle is on (already correct, no fix needed). No validation
+   forcing a distance choice — toggling mobile massage on with
+   nothing selected is an intentionally allowed state (saves as
+   `null`); Johan confirmed this represents "prepared to
+   travel, exact distance/fee negotiated directly with the
+   customer," out of platform scope by design. Commit: 432ad9e.
+   DECISION CHANGE, PARKED: 5/10/15/20km supersedes
+   10/25/50/100km as the standard set. dashboard.html and
+   register-spa.html both still use the old values — need
+   reconciling before a therapist who picks e.g. 15km at
+   registration hits a mismatched dropdown later.
+5. FIXED — moved "Genders Served" from Section 5 (About) to
+   Section 7 (Services) as its first item (7.1). Section 5
+   completion now requires only `displayName`; Section 7
+   completion now requires `genderServed` + `massageStyles` +
+   `treatments`. Commit: fe9342e.
+6. Section 6 (Availability) — no issues, no action.
+7. FIXED — Section 7 (Services) restructured from one long flat
+   screen into 5 independently-collapsible sub-accordions,
+   matching the visual pattern of the main 1-8 accordion:
+     7.1 Genders Served (required)
+     7.2 Massage Styles (required)
+     7.3 Traditions (optional)
+     7.4 Treatments (required)
+     7.5 Service Offerings (optional)
+   Each sub-item saves independently, straight to
+   `pending_registrations` via `setDoc(..., {merge:true})` on
+   its own Save button — the old shared "Save — Services"
+   button and its single combined save call
+   (`persistSectionToFirestore`'s `n===7` branch) is now dead
+   code, removed. Optional sub-items (7.3, 7.5) save as
+   explicit empty arrays when untouched (e.g. `traditions: []`)
+   rather than an absent field — fine for optional data. Section
+   7 shows "Complete" only once all three required sub-items
+   (7.1, 7.2, 7.4) are saved — optional ones don't block it. The
+   outer Section 7 accordion auto-collapses the moment it
+   transitions into Complete, guarded so it only fires on that
+   transition and not on every subsequent save (an early
+   version slammed the section shut every time an optional item
+   was saved afterward — fixed same session). Resume/prefill
+   restores each sub-item's own done-state individually.
+   Mockup approved before any code was written. Commits: 9dfa2ea
+   (HTML/CSS + JS save/toggle/completion logic, landed as one
+   commit — the HTML/CSS was deliberately applied uncommitted
+   first, then paired with the JS brief and committed together
+   once both were verified working), 5a79736 (auto-close on
+   complete — first version, had the repeated-slam-shut bug),
+   816e3ef (transition guard fix).
+8. Section 8 (Photos) — see full rebuild above, no further
+   action.
+9. Submit-locks-photo-editing — CONFIRMED ALREADY WORKING, no
+   fix needed. On successful submit, the entire accordion
+   (`regPhase`, including Section 8) is hidden immediately and
+   replaced by a success screen, then redirects to info.html
+   after 3 seconds. No window exists where photo edit/delete is
+   reachable post-submit.
+
+RESULT: Johan confirmed register.html's core registration flow
+as functionally and cosmetically complete — direct quote:
+"this registration screen is now 120% the way I wanted this."
+All 10 items from tonight's review list are either fixed or
+confirmed-no-action-needed.
+
+GIT: three pushes this session, all confirmed clean.
+  Push 1: 5e80211..3282496 (c7f3113, 05fc909, b711b4e, 3282496)
+  Push 2: 3282496..fe9342e (fd0b2db, 432ad9e, fe9342e)
+  Push 3: fe9342e..816e3ef (9dfa2ea, 5a79736, 816e3ef)
