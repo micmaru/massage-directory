@@ -899,67 +899,20 @@
         <div class="acc-body hidden" id="accBody8">
           <div class="field-stack">
             <div class="photo-slots" id="photoSlots">
-
               <div class="photo-slot" id="photoSlot1">
                 <div class="photo-slot__row">
                   <label class="photo-slot__btn" for="photo1">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    Upload a clear face photo *
+                    Upload Verification Photo *
                   </label>
-                  <input type="file" id="photo1" accept="image/*" capture="environment" onchange="onPhotoChange(this, 1)" />
+                  <input type="file" id="photo1" accept="image/*" capture="environment" onchange="onPhotoChange(this)" />
                   <span class="photo-slot__filename hidden" id="photoName1"></span>
-                  <button type="button" class="photo-slot__delete hidden" id="photoDelete1" onclick="deletePhoto(1)">&#x2715;</button>
+                  <button type="button" class="photo-slot__delete hidden" id="photoDelete1" onclick="deletePhoto()">&#x2715;</button>
+                </div>
+                <div class="photo-slot__hint" style="font-size:12px; color:var(--text-muted); margin-top:4px;">
+                  Admin use only — never shown publicly on your listing.
                 </div>
               </div>
-
-              <button type="button" class="qual-add-btn hidden" id="addPhotoBtn2" onclick="revealPhotoSlot(2)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add another photo
-              </button>
-              <div class="photo-slot hidden" id="photoSlot2">
-                <div class="photo-slot__row">
-                  <label class="photo-slot__btn" for="photo2">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    Choose photo
-                  </label>
-                  <input type="file" id="photo2" accept="image/*" onchange="onPhotoChange(this, 2)" />
-                  <span class="photo-slot__filename hidden" id="photoName2"></span>
-                  <button type="button" class="photo-slot__delete hidden" id="photoDelete2" onclick="deletePhoto(2)">&#x2715;</button>
-                </div>
-              </div>
-
-              <button type="button" class="qual-add-btn hidden" id="addPhotoBtn3" onclick="revealPhotoSlot(3)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add another photo
-              </button>
-              <div class="photo-slot hidden" id="photoSlot3">
-                <div class="photo-slot__row">
-                  <label class="photo-slot__btn" for="photo3">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    Choose photo
-                  </label>
-                  <input type="file" id="photo3" accept="image/*" onchange="onPhotoChange(this, 3)" />
-                  <span class="photo-slot__filename hidden" id="photoName3"></span>
-                  <button type="button" class="photo-slot__delete hidden" id="photoDelete3" onclick="deletePhoto(3)">&#x2715;</button>
-                </div>
-              </div>
-
-              <button type="button" class="qual-add-btn hidden" id="addPhotoBtn4" onclick="revealPhotoSlot(4)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add another photo
-              </button>
-              <div class="photo-slot hidden" id="photoSlot4">
-                <div class="photo-slot__row">
-                  <label class="photo-slot__btn" for="photo4">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    Choose photo
-                  </label>
-                  <input type="file" id="photo4" accept="image/*" onchange="onPhotoChange(this, 4)" />
-                  <span class="photo-slot__filename hidden" id="photoName4"></span>
-                  <button type="button" class="photo-slot__delete hidden" id="photoDelete4" onclick="deletePhoto(4)">&#x2715;</button>
-                </div>
-              </div>
-
             </div>
           </div>
           <button type="button" class="btn btn--primary btn--full" style="margin-top:var(--space-5);" onclick="saveAccSection(8)">Save — Photos</button>
@@ -1125,7 +1078,7 @@
     3: 'Location (province and city / town)',
     5: 'About (display name, genders served)',
     7: 'Services (massage styles, treatments)',
-    8: 'Photos (at least one face photo)'
+    8: 'Photos (verification photo)'
   };
   let supplierNumberGenerated = null;
 
@@ -1715,17 +1668,13 @@
         serviceOfferings: getChecked('serviceOfferings')
       };
     } else if (n === 8) {
-      const uid    = auth.currentUser?.uid || authUid;
-      const photos = [];
-      for (let i = 1; i <= 4; i++) {
-        const fileInput = document.getElementById('photo' + i);
-        if (fileInput && fileInput.files[0]) {
-          const file   = fileInput.files[0];
-          const result = await uploadPhoto(file, `suppliers/${uid}/photos/${i}-${file.name}`);
-          photos.push({ ...result, visibility: 'public' });
-        }
+      const uid = auth.currentUser?.uid || authUid;
+      const fileInput = document.getElementById('photo1');
+      if (fileInput && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const result = await uploadPhoto(file, `suppliers/${uid}/photos/verification-${file.name}`);
+        data = { facePhotoUrl: result.url };
       }
-      data = { photos };
     }
 
     try {
@@ -1829,42 +1778,19 @@
   // ════════════════════════════════════════════
   // PHOTO HELPERS
   // ════════════════════════════════════════════
-  function onPhotoChange(input, slotIndex) {
+  function onPhotoChange(input) {
     if (input.files.length) {
-      document.getElementById('photoName'   + slotIndex).textContent = input.files[0].name;
-      document.getElementById('photoName'   + slotIndex).classList.remove('hidden');
-      document.getElementById('photoDelete' + slotIndex).classList.remove('hidden');
-      if (slotIndex < 5) {
-        document.getElementById('addPhotoBtn' + (slotIndex + 1)).classList.remove('hidden');
-      }
+      document.getElementById('photoName1').textContent = input.files[0].name;
+      document.getElementById('photoName1').classList.remove('hidden');
+      document.getElementById('photoDelete1').classList.remove('hidden');
     }
   }
 
-  function deletePhoto(slotIndex) {
-    document.getElementById('photo'       + slotIndex).value = '';
-    document.getElementById('photoName'   + slotIndex).textContent = '';
-    document.getElementById('photoName'   + slotIndex).classList.add('hidden');
-    document.getElementById('photoDelete' + slotIndex).classList.add('hidden');
-  }
-
-  function revealPhotoSlot(n) {
-    document.getElementById('addPhotoBtn' + n).classList.add('hidden');
-    document.getElementById('photoSlot'   + n).classList.remove('hidden');
-  }
-
-  function onIdPhotoChange(input) {
-    if (input.files.length) {
-      document.getElementById('idPhotoName').textContent = input.files[0].name;
-      document.getElementById('idPhotoName').classList.remove('hidden');
-      document.getElementById('idPhotoDelete').classList.remove('hidden');
-    }
-  }
-
-  function deleteIdPhoto() {
-    document.getElementById('idPhoto').value = '';
-    document.getElementById('idPhotoName').textContent = '';
-    document.getElementById('idPhotoName').classList.add('hidden');
-    document.getElementById('idPhotoDelete').classList.add('hidden');
+  function deletePhoto() {
+    document.getElementById('photo1').value = '';
+    document.getElementById('photoName1').textContent = '';
+    document.getElementById('photoName1').classList.add('hidden');
+    document.getElementById('photoDelete1').classList.add('hidden');
   }
 
   // ════════════════════════════════════════════
@@ -1913,90 +1839,6 @@
     let suffix = '';
     for (let i = 0; i < 5; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
     return prefix + suffix;
-  }
-
-  // ════════════════════════════════════════════
-  // BUILD FORM DATA
-  // ════════════════════════════════════════════
-  function buildFormData(idResult, profilePhotos) {
-    const getChecked = name =>
-      Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
-
-    const weeklyHours = {};
-    DAYS.forEach(day => {
-      const available = document.getElementById('day-' + day).checked;
-      weeklyHours[day] = {
-        available,
-        from: available ? parseInt(document.getElementById('dayFrom-' + day).value) : null,
-        to:   available ? parseInt(document.getElementById('dayTo-'   + day).value) : null
-      };
-    });
-
-    const qualifications = [];
-    document.querySelectorAll('.qual-row').forEach(row => {
-      const inputs = row.querySelectorAll('input');
-      if (inputs[0] && inputs[0].value.trim()) {
-        qualifications.push({
-          institute:       inputs[0].value.trim(),
-          certificateType: inputs[1] ? inputs[1].value.trim() : ''
-        });
-      }
-    });
-
-    // Contact preferences (SMS always included)
-    const contactPreferences = ['sms', ...getChecked('contactPref').filter(v => v !== 'sms')];
-
-    return {
-      supplierType: 'individual',
-      uid:          authUid,
-
-      // Personal
-      firstName:          v('firstName'),
-      lastName:           v('lastName'),
-      displayName:        v('displayName'),
-      gender:             document.querySelector('input[name="personalGender"]:checked')?.value || null,
-      cellNumber:         verifiedPhone,
-      whatsappNumber:     v('whatsappNumber') || null,
-      email:              v('email') || null,
-      contactPreferences,
-      experienceYears:    v('experienceYears') || null,
-
-      // Location
-      province:           document.getElementById('province').value,
-      townId:             document.getElementById('area').value,
-      suburb:             document.getElementById('suburb').value,
-      address:            v('address') || null,
-      addressVisible:     document.getElementById('addressVisible').checked,
-      premisesType:       document.querySelector('input[name="premisesType"]:checked')?.value || null,
-      shower:             document.getElementById('shower').checked,
-      parking:            document.getElementById('parking').checked,
-
-      // Services
-      massageStyles:    getChecked('massageStyles'),
-      traditions:       getChecked('traditions'),
-      treatments:       getChecked('treatments'),
-      serviceOfferings: getChecked('serviceOfferings'),
-      genderServed:       document.querySelector('input[name="genderServed"]:checked')?.value || null,
-      qualifications,
-      affiliations:       getChecked('affiliations'),
-
-      // Availability
-      mobileAvailable:       document.getElementById('mobileMassage').checked,
-      willingToTravelKm:     document.getElementById('mobileMassage').checked
-                               ? parseInt(document.getElementById('willingToTravelKm').value) : null,
-      weeklyHours,
-      availableOutsideHours: document.getElementById('availableOutsideHours').checked,
-
-      // Photos & bio
-      idPhotoUrl:  idResult,
-      photos:      profilePhotos,
-      aboutMe:     v('aboutMe') || null,
-      specialsText: v('specialsText') || null,
-
-      status:       'pending',
-      referralCode: generateReferralCode(v('firstName')),
-      createdAt:    serverTimestamp()
-    };
   }
 
   // ════════════════════════════════════════════
@@ -2077,7 +1919,7 @@
         traditions:            saved.traditions            || [],
         treatments:            saved.treatments            || [],
         serviceOfferings:      saved.serviceOfferings      || [],
-        photos:                saved.photos                || []
+        facePhotoUrl:          saved.facePhotoUrl          || null
       };
 
       await setDoc(supplierRef, finalData);
@@ -2132,7 +1974,6 @@
   window.onDayToggle           = onDayToggle;
   window.onPhotoChange         = onPhotoChange;
   window.deletePhoto           = deletePhoto;
-  window.revealPhotoSlot       = revealPhotoSlot;
   window.updateCharCount       = updateCharCount;
   window.updateSpecialsCount   = updateSpecialsCount;
   window.openModal             = openModal;
