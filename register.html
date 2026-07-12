@@ -1580,6 +1580,7 @@
       if (sub7HasValue(subN)) {
         sub7SectionStates[subN] = 'done';
         document.getElementById('sub7Num' + subN).textContent = '✓';
+        document.getElementById('sub7Num' + subN).classList.add('sub-acc__num--done');
       }
     });
     updateSection7Progress();
@@ -1597,6 +1598,7 @@
     const value = getSub7Value(subN);
     sub7SectionStates[subN] = 'done';
     document.getElementById('sub7Num' + subN).textContent = '✓';
+    document.getElementById('sub7Num' + subN).classList.add('sub-acc__num--done');
     document.getElementById('sub7Body' + subN).classList.add('hidden');
     document.getElementById('sub7Chevron' + subN).classList.remove('sub-acc__chevron--open');
     const pendRef = doc(db, 'pending_registrations', verifiedPhone);
