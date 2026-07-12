@@ -710,14 +710,14 @@
                 <span class="toggle__track"></span>
               </label>
             </div>
-            <div class="field hidden conditional-field" id="travelKmField">
-              <label class="field__label" for="willingToTravelKm">Willing to travel up to</label>
-              <select class="select" id="willingToTravelKm" name="willingToTravelKm">
-                <option value="10">10 km</option>
-                <option value="25">25 km</option>
-                <option value="50">50 km</option>
-                <option value="100">100 km</option>
-              </select>
+            <div class="hidden conditional-field" id="travelKmField">
+              <div class="field__label">Willing to travel up to</div>
+              <div class="radio-group radio-group--row">
+                <label class="radio-item radio-item--flex"><input type="radio" name="willingToTravelKm" value="5" /><span class="radio-item__label">5 km</span></label>
+                <label class="radio-item radio-item--flex"><input type="radio" name="willingToTravelKm" value="10" /><span class="radio-item__label">10 km</span></label>
+                <label class="radio-item radio-item--flex"><input type="radio" name="willingToTravelKm" value="15" /><span class="radio-item__label">15 km</span></label>
+                <label class="radio-item radio-item--flex"><input type="radio" name="willingToTravelKm" value="20" /><span class="radio-item__label">20 km</span></label>
+              </div>
             </div>
             <div>
               <div class="form-section-label">Amenities</div>
@@ -1415,7 +1415,8 @@
       document.getElementById('mobileMassage').checked = true;
       onMobileToggle();
       if (data.willingToTravelKm) {
-        document.getElementById('willingToTravelKm').value = data.willingToTravelKm;
+        const r = document.querySelector(`input[name="willingToTravelKm"][value="${data.willingToTravelKm}"]`);
+        if (r) r.checked = true;
       }
     }
     if (Array.isArray(data.amenities)) {
@@ -1639,7 +1640,7 @@
         premisesType:      document.querySelector('input[name="premisesType"]:checked')?.value || null,
         mobileAvailable:   document.getElementById('mobileMassage').checked,
         willingToTravelKm: document.getElementById('mobileMassage').checked
-          ? parseInt(document.getElementById('willingToTravelKm').value) : null,
+          ? parseInt(document.querySelector('input[name="willingToTravelKm"]:checked')?.value) || null : null,
         amenities
       };
     } else if (n === 5) {
