@@ -288,6 +288,7 @@
     }
     .photo-slot__btn:hover { border-color: var(--accent); color: var(--text); }
     .photo-slot input[type="file"] { display: none; }
+    .photo-slot__thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 0.5px solid var(--border); flex-shrink: 0; }
     .photo-slot__filename { font-size: var(--text-sm); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
     .photo-slot__delete {
       flex-shrink: 0; height: 28px; padding: 0 10px;
@@ -901,6 +902,7 @@
             <div class="photo-slots" id="photoSlots">
               <div class="photo-slot" id="photoSlot1">
                 <div class="photo-slot__row">
+                  <img class="photo-slot__thumb hidden" id="photoThumb1" alt="Verification photo" />
                   <label class="photo-slot__btn" for="photo1">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                     Upload Verification Photo *
@@ -1066,6 +1068,7 @@
         prefillSection5(pendData);
         prefillSection6(pendData);
         await prefillSection7(pendData);
+        await prefillSection8(pendData);
       } else {
         showConsentGate();
       }
@@ -1264,6 +1267,7 @@
         prefillSection5(pendData);
         prefillSection6(pendData);
         await prefillSection7(pendData);
+        await prefillSection8(pendData);
       } else {
         showConsentGate();
       }
@@ -1344,6 +1348,7 @@
         prefillSection5(pendData);
         prefillSection6(pendData);
         await prefillSection7(pendData);
+        await prefillSection8(pendData);
       }
     } catch (err) {
       console.error('beginRegistration prefill fetch error:', err);
@@ -1523,6 +1528,22 @@
       document.getElementById('accNum7').classList.add('acc-num--done');
       document.getElementById('accStatus7').textContent = 'Complete';
       document.getElementById('accStatus7').classList.add('acc-status--done');
+      updateAccordionProgress();
+    }
+  }
+
+  async function prefillSection8(data) {
+    if (data.facePhotoUrl) {
+      document.getElementById('photoThumb1').src = data.facePhotoUrl;
+      document.getElementById('photoThumb1').classList.remove('hidden');
+      document.getElementById('photoName1').textContent = 'Verification photo uploaded';
+      document.getElementById('photoName1').classList.remove('hidden');
+      document.getElementById('photoDelete1').classList.remove('hidden');
+      accSectionStates[8] = 'done';
+      document.getElementById('accNum8').textContent = '✓';
+      document.getElementById('accNum8').classList.add('acc-num--done');
+      document.getElementById('accStatus8').textContent = 'Complete';
+      document.getElementById('accStatus8').classList.add('acc-status--done');
       updateAccordionProgress();
     }
   }
