@@ -955,13 +955,13 @@
     getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
   import {
-    getStorage, ref as storageRef, uploadBytes, getDownloadURL
+    getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
   import {
     getFunctions, httpsCallable
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js';
   import {
-    collection, doc, setDoc, getDoc, serverTimestamp,
+    collection, doc, setDoc, getDoc, deleteField, serverTimestamp,
     query, where, getDocs, orderBy
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
   import { initLocationCascade, onProvinceChange,
@@ -1786,11 +1786,34 @@
     }
   }
 
-  function deletePhoto() {
+  async function deletePhoto() {
+    const pendRef = doc(db, 'pending_registrations', verifiedPhone);
+    const pendSnap = await getDoc(pendRef);
+    const existingUrl = pendSnap.exists() ? pendSnap.data().facePhotoUrl : null;
+
+    if (existingUrl) {
+      try {
+        const path = decodeURIComponent(new URL(existingUrl).pathname.split('/o/')[1].split('?')[0]);
+        await deleteObject(storageRef(storage, path));
+      } catch (err) {
+        console.error('Storage delete error:', err);
+      }
+      await setDoc(pendRef, { facePhotoUrl: deleteField() }, { merge: true });
+
+      const supRef = doc(db, 'suppliers', verifiedPhone);
+      const supSnap = await getDoc(supRef);
+      if (supSnap.exists() && supSnap.data().facePhotoUrl) {
+        await setDoc(supRef, { facePhotoUrl: deleteField() }, { merge: true });
+      }
+    }
+
     document.getElementById('photo1').value = '';
     document.getElementById('photoName1').textContent = '';
     document.getElementById('photoName1').classList.add('hidden');
     document.getElementById('photoDelete1').classList.add('hidden');
+    accSectionStates[8] = 'empty';
+    document.getElementById('accStatus8').textContent = 'Not started';
+    updateAccordionProgress();
   }
 
   // ════════════════════════════════════════════
