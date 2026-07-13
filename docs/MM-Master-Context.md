@@ -1,9 +1,10 @@
-# MassageMap — Master Context v58
-**Version:** 58 | **Date:** 2026-07-12 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v59
+**Version:** 59 | **Date:** 2026-07-13 | **Author:** Johan Cilliers | **Confidential**
 **STANDALONE — no previous version needed. This is the single source of truth.**
 **Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. v51 bumped 24 June. This is the second consecutive on-time version bump.**
 **v57 bumped 11 July.**
 **v58 bumped 12 July.**
+**v59 bumped 13 July.**
 
 ---
 
@@ -12,9 +13,9 @@
 | Item | Status |
 |---|---|
 | Launch target | 31 July 2026 |
-| Current phase | Phase B — Registration cosmetic/UX pass complete. Section 8 rebuild DONE and tested live. Section 7 restructured into sub-accordion (7.1-7.5) with independent save/completion tracking. Address-toggle, distance-selector, and genders-served field-location fixes DONE. |
+| Current phase | Phase B — Registration cosmetic/UX pass complete. Section 8 rebuild DONE and tested live. Section 7 restructured into sub-accordion (7.1-7.5) with independent save/completion tracking. Address-toggle, distance-selector, and genders-served field-location fixes DONE. Section 8 photo privacy fix complete (13 July) - Storage delete 403 fixed, face photo moved to private path, facePhotoUrl renamed facePhotoPath. Full registration-to-Submit flow tested end-to-end and confirmed working. |
 | Next session starts with | Johan to identify next scope — register.html core flow confirmed complete by Johan ("120% the way I wanted this"). Candidates: spa registration, dashboard, admin, or Storage rules (#44). |
-| Primary blocker | #44 Photos Storage rules mismatch — still blocks registrationComplete flag and all notifications on the Photos leg specifically (admin email also separately broken, see 11 July log) — confirmed today via live 403 on deleteObject in addition to the existing upload/registrationComplete issue. Also blocks a therapist from deleting her own verification photo during registration. |
+| Primary blocker | Admin email notification - Resend sandbox domain only delivers to account owner's own address. DNS records needed for domain verification; cPanel Zone Editor would not offer TXT type. Support ticket opened with domains.co.za 13 July, awaiting response. |
 | Google Cloud billing | DONE — Blaze plan, credit card attached, confirmed 9 June 2026 |
 | BulkSMS credits | AT ZERO — buy before Stage 2 |
 | Free trial expiry | 6 July 2026 — credit card attached, should auto-continue |
@@ -2120,3 +2121,83 @@ GIT: three pushes this session, all confirmed clean.
   Push 1: 5e80211..3282496 (c7f3113, 05fc909, b711b4e, 3282496)
   Push 2: 3282496..fe9342e (fd0b2db, 432ad9e, fe9342e)
   Push 3: fe9342e..816e3ef (9dfa2ea, 22273ed, 5a79736, 816e3ef)
+
+---
+
+## Session Log — 13 July 2026
+
+### Session workflow change (non-code)
+
+Adopted feature-branch workflow going forward, replacing direct-to-main work. Two zsh functions added to ~/.zshrc: mmstart <name> (checks out main, pulls, creates and switches to feature/YYYY-MM-DD-<name>) and mmdone (merges current feature branch into main, pushes, deletes the feature branch). Pattern locked: mmstart at the beginning of each piece of work, confirm branch name matches in both zsh and Claude Code terminals (git branch --show-current in each) before briefing, same check in reverse (both terminals show main) after mmdone. Used correctly across two branches this session (feature/2026-07-13-storage-rules-fix, feature/2026-07-13-post-submit-flow), both merged cleanly.
+
+### RESOLVED — Section 8 Storage delete 403 (ties to #44)
+
+Root cause confirmed via live debug logging (temporary console.log on auth.currentUser?.uid vs authUid, added and removed same session): the two values matched exactly, every time — the earlier theory that authUid was stale/mismatched on the OTP-skip resume path was wrong and disproven live, not assumed.
+
+Actual cause: storage.rules' allow write condition referenced request.resource.size and request.resource.contentType — these only exist on upload/update operations. On a delete, request.resource is null, so the condition errored out evaluating null.size, and Firebase Storage treats a rule evaluation error as an automatic deny. This produced the 403 on every delete attempt regardless of uid matching.
+
+Fix: split the single allow write rule into separate allow write (create/update, keeps the size/type checks) and allow delete (auth + uid match only, no request.resource reference) on both the suppliers/{uid}/id/ and suppliers/{uid}/photos/ match blocks. Deployed live via firebase deploy --only storage. Tested live end-to-end on +27800000006: upload, save, delete, re-upload, delete again — all succeeded, zero console errors, confirmed via screenshots. Committed 3384a48, merged to main.
+
+### RESOLVED — Face verification photo privacy gap (POPIA)
+
+Investigation while fixing the above surfaced a real, live privacy exposure: facePhotoUrl was storing a Firebase Storage download URL generated by getDownloadURL(). These URLs carry a permanent bypass token — anyone possessing the URL can access the file indefinitely, regardless of what the Storage security rule says. Moving the file to a different folder alone would not have closed this gap, since the URL itself is the access mechanism, not the folder's rule.
+
+Fix, agreed and built:
+- Upload path moved from the public suppliers/{uid}/photos/ folder to the already-existing private suppliers/{uid}/id/ folder (allow read: if request.auth != null — not public).
+- Field renamed facePhotoUrl -> facePhotoPath platform-wide in register.html (9 occurrences across upload, prefillSection8, deletePhoto, submitForm) to reflect that it now stores a Storage path, not a usable URL.
+- prefillSection8() (covers both the just-uploaded preview and the resume/reload/post-submit view) now calls getDownloadURL() live, authenticated, at render time — nothing persisted. Works correctly regardless of which device the therapist logs in from, since the Firebase Auth UID is tied to the verified phone number via OTP, not the device.
+- deletePhoto() simplified to use the stored path directly, no longer parses a path out of a URL.
+Tested live end-to-end on +27800000006: upload, save, exit to main menu, resume, thumbnail correctly reloads via authenticated fetch, delete, re-upload — all confirmed, zero console errors. Committed e4c9f06, merged to main.
+
+Known gap, not addressed this session: this only closes the Storage-file-level exposure. The broader Firestore document-level POPIA separation (private PII vs public frontend fields, same suppliers document today) remains undesigned, as previously logged 7 July — this session deliberately did not expand into that scope.
+
+### RESOLVED — createdAt clobbered on Submit
+
+submitForm()'s final setDoc(supplierRef, finalData) had no merge:true and finalData explicitly included createdAt: serverTimestamp(), overwriting the true registration-start timestamp (set by generateSupplierNumber()'s lightweight record) with the Submit-time timestamp on every registration. Fixed by removing the createdAt line from finalData entirely (merge:true alone would not have been sufficient, since merge:true only preserves fields absent from the write — it does not protect an explicitly-included field) and adding merge:true as a general safeguard for any other field not explicitly restated. Tested live: Submit on +27800000006 (submitted this afternoon) shows suppliers.createdAt as 12 July 12:00:04 PM — the original lightweight-record timestamp — confirming the fix held, verified via Firestore console screenshot in the same window before the commit was made. Committed 9f8e745, merged to main.
+
+register-spa.html has the identical createdAt clobber pattern (finalData re-sets createdAt: serverTimestamp() on Submit) — noted, not fixed, deferred to the planned spa session.
+
+### CONFIRMED — notification/registrationComplete chain works correctly for both supplier types
+
+Claude Code initially flagged the therapist path as missing the lightweight-record step that onSupplierRegistered's onUpdate trigger depends on (register-spa.html creates one inline; register.html appeared not to). Corrected on further check: register.html gets the equivalent lightweight record server-side, via the generateSupplierNumber() callable Cloud Function (which already writes registrationComplete: false at supplier-number-generation time, per the 9 July fix). No defect — architecture works as designed for both supplier types, just via different code paths.
+
+### TESTED — full registration-to-Submit flow, live, end-to-end
+
++27800000006, complete registration through all 8 sections including Submit. Confirmed working: validation gate, finalData write to suppliers/{phone} with registrationComplete:true, pending_registrations status flips to completed, referral code generated, success screen displays with correct membership number (T-26-1053), 3-second redirect to info.html, Telegram admin alert fires with correct details, therapist confirmation email fires (Resend) with correct content and membership number, facePhotoPath correctly present on the final submitted document confirming the private-path fix survives all the way through Submit.
+
+One unrelated console error observed ("Could not establish connection. Receiving end does not exist") on navigation to info.html — consistent with a browser extension losing its connection on page navigation, not application code. Not investigated further; re-test in Incognito if certainty is wanted.
+
+### DIAGNOSED, NOT YET FIXED — admin email notification (#11 from 11 July log)
+
+Root cause confirmed by reading functions/index.js: all outgoing email (admin notification, therapist welcome, spa welcome) sends from onboarding@resend.dev, Resend's shared sandbox/test domain. Resend enforces a hard restriction on that domain — delivery only succeeds to the Resend account owner's own verified address. This is why the therapist welcome email (sent to hjcilliers@gmail.com, the account owner) fires correctly while the admin email (sent to admin@massagemap.co.za, a different address) is silently rejected — the code itself is correct, not a bug.
+
+Real fix (in progress, blocked): verify massagemap.co.za as a sending domain in Resend, requiring three DNS records (TXT for DKIM, MX + TXT for SPF/sending) added to the domain's zone. Attempted via cPanel Zone Editor (cp72.domains.co.za, Domains -> Zone Editor -> Manage -> Add Record) — the Add Record tool's Type selector only ever offered MX, with no way found to select TXT despite trying multiple approaches (dropdown arrow, keyboard selection, zoom, alternate entry points, cPanel's own documentation walkthrough). Support ticket opened with domains.co.za (ticket "New Ticket: add TXT records (not MX)", Support/Medium/Open) with the exact three records and an explicit note not to touch the existing root-domain MX record. Awaiting response — next session should check ticket status before attempting DNS again.
+
+Once domain is verified: change every from: in functions/index.js from onboarding@resend.dev to an address on massagemap.co.za, then re-test admin email delivery live.
+
+### Documentation
+
+Field Register updated to v2 (docs/MM-Field-Register-v2.md): facePhotoUrl renamed facePhotoPath with corrected description (path not URL, private not public, live-fetched not persisted); showFacePhoto moved to Retired (dropped 7 July, no visibility toggle exists); classification moved to Retired (removed platform-wide 11 July); photos array description flagged stale pending M11-Gallery design; displayName section corrected from Personal to About (moved 11 July, never updated in v1); new Known Gaps section added covering the three open items above (spa createdAt clobber, admin.html/photos legacy mismatch, admin email/DNS).
+
+### Parked (carried forward, unchanged)
+
+- Spa registration and dashboard — untested, likely similar bugs to therapist side
+- register-spa.html createdAt clobber — same fix needed as therapist side, deferred to spa session
+- admin.html / admin-supplier.html still read legacy photos array, never facePhotoPath — any new-flow therapist shows "no photos" in admin vetting until reconciled
+- M11-Gallery — not yet built
+- POPIA document-level data separation — not yet designed
+- Re-vetting trigger for post-launch profile edits — not yet designed
+- Firestore security rules audit (Cluster J, auditLog write-access mismatch) — not yet reconciled
+- BulkSMS credits at zero, MFA not enabled
+- PayFast sandbox -> live credentials
+- Web hosting deployment to massagemap.co.za
+- Customer-facing frontend — never had a dedicated design session
+- 18+ age gate
+- Legal review: T&Cs, POPIA compliance, Privacy Policy
+
+### Next session starts with
+
+1. Check domains.co.za support ticket status (DNS records for Resend domain verification)
+2. If DNS is live: verify domain in Resend, update functions/index.js from: addresses, re-test admin email delivery
+3. Update GitHub issue list to reflect today's fixes — close/update #44 (Storage rules), log the facePhotoPath rename and createdAt fix if no existing issue covers them
+4. Johan to decide next scope: spa registration, dashboard, admin, or continue closing remaining registration-side gaps

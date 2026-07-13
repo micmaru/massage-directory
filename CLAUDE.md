@@ -76,7 +76,8 @@ MassageMap is a three-sided massage therapy directory for the South African mark
 - associationMembership: multi-select array for both therapist and spa. Reads from offerings category: associations.
 - amenities: dynamic from offerings category: amenities. Replaces old boolean fields.
 - auditLog collection: append-only. No update, no delete — ever. Legal record.
-- photos array: photos[0] = required face/vetting photo (facePhotoUrl; NOT an ID or passport copy). photos[1] = card photo. photos[2]+ = additional. (Locked 9 June 2026 — retired idPhotoUrl, replaced by facePhotoUrl.) Future work (agreed, not yet done): split facePhotoUrl out of the photos array into its own field in Section 1.
+- facePhotoPath: required face/vetting photo (NOT an ID or passport copy). Its own field on the supplier document — not part of the photos array. Stores a Firebase Storage PATH, never a URL. Path: suppliers/{uid}/id/ — the private folder (read requires auth), never suppliers/{uid}/photos/ (public read). Rendered by fetching a fresh authenticated getDownloadURL() at render time; never persist a download URL — those carry a permanent bypass token and leak the file regardless of Storage rules. (Locked 13 July 2026 — renamed from facePhotoUrl, which stored a public download URL under the public photos path.)
+- photos array: card + additional photos. Indices under review — M11-Gallery not yet built; admin pages still read the legacy array. (Locked 9 June 2026 — retired idPhotoUrl.)
 - Dashboard: one file (dashboard.html). No separate dashboard-spa.html.
 - admin.html: hidden URL — never link from any public page
 
