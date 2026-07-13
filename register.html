@@ -1624,8 +1624,13 @@
   }
 
   async function prefillSection8(data) {
-    if (data.facePhotoUrl) {
-      document.getElementById('photoThumb1').src = data.facePhotoUrl;
+    if (data.facePhotoPath) {
+      try {
+        const url = await getDownloadURL(storageRef(storage, data.facePhotoPath));
+        document.getElementById('photoThumb1').src = url;
+      } catch (err) {
+        console.error('Photo fetch error:', err);
+      }
       document.getElementById('photoThumb1').classList.remove('hidden');
       document.getElementById('photoName1').textContent = 'Verification photo uploaded';
       document.getElementById('photoName1').classList.remove('hidden');
@@ -1773,8 +1778,8 @@
       const fileInput = document.getElementById('photo1');
       if (fileInput && fileInput.files[0]) {
         const file = fileInput.files[0];
-        const result = await uploadPhoto(file, `suppliers/${uid}/photos/verification-${file.name}`);
-        data = { facePhotoUrl: result.url };
+        const result = await uploadPhoto(file, `suppliers/${uid}/id/verification-${file.name}`);
+        data = { facePhotoPath: result.storagePath };
       }
     }
 
@@ -1894,21 +1899,20 @@
   async function deletePhoto() {
     const pendRef = doc(db, 'pending_registrations', verifiedPhone);
     const pendSnap = await getDoc(pendRef);
-    const existingUrl = pendSnap.exists() ? pendSnap.data().facePhotoUrl : null;
+    const existingPath = pendSnap.exists() ? pendSnap.data().facePhotoPath : null;
 
-    if (existingUrl) {
+    if (existingPath) {
       try {
-        const path = decodeURIComponent(new URL(existingUrl).pathname.split('/o/')[1].split('?')[0]);
-        await deleteObject(storageRef(storage, path));
+        await deleteObject(storageRef(storage, existingPath));
       } catch (err) {
         console.error('Storage delete error:', err);
       }
-      await setDoc(pendRef, { facePhotoUrl: deleteField() }, { merge: true });
+      await setDoc(pendRef, { facePhotoPath: deleteField() }, { merge: true });
 
       const supRef = doc(db, 'suppliers', verifiedPhone);
       const supSnap = await getDoc(supRef);
-      if (supSnap.exists() && supSnap.data().facePhotoUrl) {
-        await setDoc(supRef, { facePhotoUrl: deleteField() }, { merge: true });
+      if (supSnap.exists() && supSnap.data().facePhotoPath) {
+        await setDoc(supRef, { facePhotoPath: deleteField() }, { merge: true });
       }
     }
 
@@ -2048,7 +2052,7 @@
         traditions:            saved.traditions            || [],
         treatments:            saved.treatments            || [],
         serviceOfferings:      saved.serviceOfferings      || [],
-        facePhotoUrl:          saved.facePhotoUrl          || null
+        facePhotoPath:         saved.facePhotoPath         || null
       };
 
       await setDoc(supplierRef, finalData);
