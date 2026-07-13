@@ -2016,7 +2016,6 @@
         dataConsentGiven:      true,
         dataConsentTimestamp:  saved.dataConsentTimestamp || null,
         referralCode:          generateReferralCode(saved.firstName || ''),
-        createdAt:             serverTimestamp(),
         lastUpdated:           serverTimestamp(),
         registrationComplete:  true,
         firstName:             saved.firstName             || null,
@@ -2055,7 +2054,7 @@
         facePhotoPath:         saved.facePhotoPath         || null
       };
 
-      await setDoc(supplierRef, finalData);
+      await setDoc(supplierRef, finalData, { merge: true });
       await setDoc(pendRef, { status: 'completed' }, { merge: true });
 
       storeSession(verifiedPhone, finalData.displayName, finalData.supplierType);
