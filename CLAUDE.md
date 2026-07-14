@@ -158,13 +158,7 @@ All known bugs and their status live in GitHub Issues — not here. Check Issues
   ## GitHub issues touched
   ## Parked / carried forward
   ## Next session starts with
-- When asked to "update the Phase Tracker," OVERWRITE (not append) 06-Phase-Tracker/MM-Phase-Tracker-v1.md using this structure:
-  # MM Phase Tracker
-  *Last updated: [date]*
-  ## Current phase
-  ## Locked / done
-  ## Active / in progress
-  ## Not started
-  ## Open questions / unresolved
-  ## Next session starts with
+- When asked to "update the Phase Tracker," update the CURRENT tracker — the highest-numbered file in 06-Phase-Tracker/ (MM-Phase-Tracker-v2.md as of 14 July 2026). Earlier versions are kept as historical record — never overwrite or delete them.
+- Update the current tracker IN PLACE — refresh the status/date lines and add new rows to its existing tables. Never replace its existing sections (Session Build Plan, Phase Plan, Outstanding Items, Parked Items, Platform Status) with a shorter structure. It carries the same accountability weight as the Master Context: nothing dropped, summarised, or reformatted without Johan's explicit permission.
+- The tracker must always still answer: current phase / locked-done / active / not started / open questions / next session starts with — but as content within its existing structure, not as a replacement skeleton.
 - Never write to Obsidian unless explicitly asked in-session ("write the session log" / "update the Phase Tracker") — no automatic or background writes.
