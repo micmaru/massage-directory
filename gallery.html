@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Therapist Gallery — MassageMap</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { padding-top: 0; padding-bottom: 0; }
+
+    /* ── Layout ── */
+    .reg-layout { display: flex; min-height: 100dvh; }
+
+    /* ── Sidebar ── */
+    .reg-sidebar {
+      width: 200px; flex-shrink: 0; position: sticky; top: 0;
+      height: 100dvh; background: var(--bg-card); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: var(--space-6) var(--space-4); overflow-y: auto;
+    }
+    .reg-sidebar__logo {
+      font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.3px;
+      color: var(--text); margin-bottom: var(--space-8); flex-shrink: 0;
+    }
+    .reg-sidebar__logo span { color: var(--accent); }
+    .reg-sidebar__heading {
+      font-size: var(--text-sm); font-weight: 600; color: var(--text-muted);
+      line-height: 1.3; flex: 1;
+    }
+
+    /* ── Mobile sidebar ── */
+    @media (max-width: 600px) {
+      .reg-sidebar {
+        width: 52px; padding: var(--space-5) var(--space-2); align-items: center;
+      }
+      .reg-sidebar__logo { font-size: var(--text-sm); font-weight: 700; margin-bottom: var(--space-5); text-align: center; }
+      .reg-sidebar__logo .logo-text { display: none; }
+      .reg-sidebar__heading { display: none; }
+      .reg-content { padding: var(--space-5) var(--space-3); }
+    }
+
+    /* ── Content ── */
+    .reg-content { flex: 1; min-width: 0; padding: var(--space-8) var(--space-6); max-width: 560px; }
+
+    /* ── Back to home ── */
+    .reg-back-home {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--text-muted); font-size: var(--text-sm); font-weight: 500;
+      text-decoration: none; margin-bottom: var(--space-5);
+      transition: color var(--ease); -webkit-tap-highlight-color: transparent;
+    }
+    .reg-back-home:hover { color: var(--text); }
+
+    /* ── Form card ── */
+    .form-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: var(--space-5); margin-bottom: var(--space-4);
+    }
+    .form-card__title { font-size: var(--text-lg); font-weight: 700; color: var(--text); margin-bottom: var(--space-1); }
+    .form-card__subtitle { font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-5); }
+
+    /* ── Field layout ── */
+    .field-stack { display: flex; flex-direction: column; gap: var(--space-4); }
+
+    /* ── OTP ── */
+    .cell-input-row { display: flex; gap: var(--space-2); }
+    .cell-input-row .input { flex: 1; min-width: 0; }
+    .btn--otp {
+      flex-shrink: 0; height: 44px; padding: 0 var(--space-4);
+      background: var(--accent); border: none; border-radius: var(--radius);
+      color: #fff; font-family: var(--font-sans); font-size: var(--text-sm);
+      font-weight: 600; cursor: pointer; transition: opacity var(--ease); white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn--otp:disabled { opacity: 0.4; cursor: not-allowed; }
+    .otp-section {
+      padding: var(--space-4); background: rgba(108, 99, 255, 0.06);
+      border: 1px solid rgba(108, 99, 255, 0.2); border-radius: var(--radius);
+      display: flex; flex-direction: column; gap: var(--space-3);
+    }
+    .otp-status { font-size: var(--text-sm); color: var(--text-muted); }
+    .otp-input { letter-spacing: 8px; font-size: var(--text-lg); text-align: center; font-family: monospace; }
+
+    /* ── Nav / errors ── */
+    .form-nav { display: flex; gap: var(--space-3); margin-top: var(--space-5); }
+    .error-msg { font-size: var(--text-xs); color: #ef4444; margin-top: var(--space-1); display: block; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div id="recaptcha-container"></div>
+
+<div class="reg-layout">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="reg-sidebar">
+    <div class="reg-sidebar__logo">
+      <span class="logo-text">Massage</span><span>Map</span>
+    </div>
+    <div class="reg-sidebar__heading">Therapist Gallery</div>
+  </aside>
+
+  <!-- ══ CONTENT ══ -->
+  <div class="reg-content">
+
+    <a href="index.html" class="reg-back-home">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </a>
+
+    <!-- ══════════════════════════════════════════
+         OTP PHASE — phone verification
+         No session skip on this flow — always a fresh OTP.
+    ══════════════════════════════════════════ -->
+
+    <!-- ── SCREEN 1: Phone entry ── -->
+    <div id="phoneScreen">
+      <div class="form-card">
+        <div class="form-card__title">Therapist Gallery</div>
+        <div class="form-card__subtitle">Enter your cell number to continue.</div>
+        <div class="field-stack">
+          <div class="field" id="cellField">
+            <label class="field__label" for="cell">Cell Number</label>
+            <input class="input" id="cell" name="cell" type="tel" placeholder="e.g. 082 123 4567" autocomplete="tel" />
+          </div>
+        </div>
+      </div>
+      <div class="form-nav">
+        <button type="button" class="btn btn--primary btn--full" id="sendCodeBtn" onclick="goToOtp()">Send Code</button>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 2: OTP entry ── -->
+    <div id="otpScreen" class="hidden">
+      <div class="form-card">
+        <div class="form-card__title">Verify Your Number</div>
+        <div class="otp-section" style="margin-top:0; border:none; background:none; padding:0;">
+          <div class="otp-status" id="otpStatusMsg">OTP sent — enter the 6-digit code below.</div>
+          <div class="cell-input-row" style="margin-top:var(--space-3);">
+            <input class="input otp-input" id="otpInput" type="tel" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="_ _ _ _ _ _" />
+            <button type="button" class="btn--otp" id="verifyBtn" onclick="verifyGalleryOtp()">Verify</button>
+          </div>
+          <span id="otpError" style="font-size:var(--text-xs); color:#ef4444; display:block; margin-top:var(--space-2);"></span>
+        </div>
+      </div>
+      <div class="form-nav">
+        <button type="button" class="btn btn--secondary btn--full" id="resendBtn" onclick="resendOtp()">Resend OTP</button>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 3: Not a registered therapist ── -->
+    <div id="notRegisteredScreen" class="hidden">
+      <div class="form-card">
+        <div class="form-card__title">Not registered yet</div>
+        <div class="form-card__subtitle" style="margin-bottom:0;">This number isn't registered as a therapist yet.</div>
+      </div>
+      <div class="form-nav">
+        <a href="register.html?type=individual" class="btn btn--primary btn--full" style="text-align:center; text-decoration:none;">Register as a therapist</a>
+      </div>
+    </div>
+
+  </div><!-- /.reg-content -->
+
+</div><!-- /.reg-layout -->
+
+<script src="config.js"></script>
+<script type="module">
+  import { app, db } from './firebase-config.js';
+  import {
+    getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged
+  } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+  import {
+    collection, query, where, getDocs
+  } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+  const auth = getAuth(app);
+
+  // ── State ──
+  let confirmationResult = null;
+  let appVerifier        = null;
+  let authUid            = null;
+  let supplierData       = null;
+
+  // ════════════════════════════════════════════
+  // PHONE AUTH — OTP (always fresh, no session skip)
+  // ════════════════════════════════════════════
+  function formatPhoneNumber(raw) {
+    const digits = raw.replace(/\D/g, '');
+    if (digits.startsWith('27') && digits.length === 11) return '+' + digits;
+    if (digits.startsWith('0')  && digits.length === 10) return '+27' + digits.slice(1);
+    return '+' + digits;
+  }
+
+  // Created once and reused for every send on this page. The SDK resets the
+  // widget itself after each attempt, so the instance stays usable on retry.
+  function ensureRecaptchaVerifier() {
+    if (!appVerifier) {
+      appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+    }
+    return appVerifier;
+  }
+
+  function clearErrors() {
+    document.querySelectorAll('.field--error').forEach(f => f.classList.remove('field--error'));
+    document.querySelectorAll('.error-msg').forEach(m => m.remove());
+  }
+
+  function markError(fieldEl, msg) {
+    fieldEl.classList.add('field--error');
+    if (!fieldEl.querySelector('.error-msg')) {
+      const span = document.createElement('span');
+      span.className   = 'error-msg';
+      span.textContent = msg;
+      fieldEl.appendChild(span);
+    }
+  }
+
+  async function goToOtp() {
+    clearErrors();
+    const raw = document.getElementById('cell').value.trim();
+    if (!raw) { markError(document.getElementById('cellField'), 'Please enter your cell number.'); return; }
+
+    const phone = formatPhoneNumber(raw);
+    const btn   = document.getElementById('sendCodeBtn');
+    btn.disabled    = true;
+    btn.textContent = 'Sending OTP…';
+
+    try {
+      ensureRecaptchaVerifier();
+      confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
+
+      document.getElementById('phoneScreen').classList.add('hidden');
+      document.getElementById('otpStatusMsg').textContent = `OTP sent to ${phone}. Enter the 6-digit code below.`;
+      document.getElementById('otpScreen').classList.remove('hidden');
+
+    } catch (err) {
+      console.error('goToOtp error:', err);
+      btn.disabled    = false;
+      btn.textContent = 'Send Code';
+      let msg = 'Could not send OTP. Please check the number and try again.';
+      if (err.code === 'auth/invalid-phone-number') msg = 'Invalid phone number format.';
+      if (err.code === 'auth/too-many-requests')    msg = 'Too many attempts. Please wait a few minutes.';
+      markError(document.getElementById('cellField'), msg);
+    }
+  }
+
+  async function resendOtp() {
+    const raw = document.getElementById('cell').value.trim();
+    if (!raw) return;
+    const phone = formatPhoneNumber(raw);
+    const btn   = document.getElementById('resendBtn');
+    btn.disabled    = true;
+    btn.textContent = 'Sending…';
+    document.getElementById('otpError').textContent = '';
+    try {
+      ensureRecaptchaVerifier();
+      confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
+      document.getElementById('otpStatusMsg').textContent = `OTP resent to ${phone}. Enter the 6-digit code below.`;
+      btn.textContent = 'Resend OTP';
+      btn.disabled    = false;
+    } catch (err) {
+      btn.disabled    = false;
+      btn.textContent = 'Resend OTP';
+      let msg = 'Could not resend OTP.';
+      if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please wait a few minutes.';
+      document.getElementById('otpError').textContent = msg;
+    }
+  }
+
+  async function verifyGalleryOtp() {
+    const code  = document.getElementById('otpInput').value.trim();
+    const errEl = document.getElementById('otpError');
+    errEl.textContent = '';
+    if (code.length !== 6)   { errEl.textContent = 'Please enter all 6 digits.'; return; }
+    if (!confirmationResult) { errEl.textContent = 'Please send OTP first.'; return; }
+
+    const verifyBtn = document.getElementById('verifyBtn');
+    verifyBtn.disabled = true; verifyBtn.textContent = 'Verifying…';
+
+    try {
+      const credential = await confirmationResult.confirm(code);
+      authUid = credential.user.uid;
+
+      // Confirm she is a registered supplier — keyed by uid, never by phone number
+      const snap = await getDocs(query(collection(db, 'suppliers'), where('uid', '==', authUid)));
+
+      document.getElementById('otpScreen').classList.add('hidden');
+
+      if (snap.empty) {
+        document.getElementById('notRegisteredScreen').classList.remove('hidden');
+        return;
+      }
+
+      supplierData = { id: snap.docs[0].id, ...snap.docs[0].data() };
+      showGalleryWarning();
+
+    } catch (err) {
+      console.error('OTP verify error:', err);
+      verifyBtn.disabled = false; verifyBtn.textContent = 'Verify';
+      let msg = 'Incorrect code. Please try again.';
+      if (err.code === 'auth/code-expired') msg = 'OTP has expired. Please request a new one.';
+      errEl.textContent = msg;
+    }
+  }
+
+  // Built in Brief 2
+  function showGalleryWarning() {}
+
+  // ── Expose globals (onclick handlers) ──
+  window.goToOtp          = goToOtp;
+  window.resendOtp        = resendOtp;
+  window.verifyGalleryOtp = verifyGalleryOtp;
+</script>
+</body>
+</html>
