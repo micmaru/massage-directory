@@ -1,10 +1,12 @@
-# MassageMap — Master Context v59
-**Version:** 59 | **Date:** 2026-07-13 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v60
+**Version:** 60 | **Date:** 2026-07-14 | **Author:** Johan Cilliers | **Confidential**
+**File path (repo-relative): docs/MM-Master-Context.md — always read this file at session start.**
 **STANDALONE — no previous version needed. This is the single source of truth.**
 **Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. v51 bumped 24 June. This is the second consecutive on-time version bump.**
 **v57 bumped 11 July.**
 **v58 bumped 12 July.**
 **v59 bumped 13 July.**
+**v60 bumped 14 July.**
 
 ---
 
@@ -13,8 +15,8 @@
 | Item | Status |
 |---|---|
 | Launch target | 31 July 2026 |
-| Current phase | Phase B — Registration cosmetic/UX pass complete. Section 8 rebuild DONE and tested live. Section 7 restructured into sub-accordion (7.1-7.5) with independent save/completion tracking. Address-toggle, distance-selector, and genders-served field-location fixes DONE. Section 8 photo privacy fix complete (13 July) - Storage delete 403 fixed, face photo moved to private path, facePhotoUrl renamed facePhotoPath. Full registration-to-Submit flow tested end-to-end and confirmed working. |
-| Next session starts with | Johan to identify next scope — register.html core flow confirmed complete by Johan ("120% the way I wanted this"). Candidates: spa registration, dashboard, admin, or Storage rules (#44). |
+| Current phase | Phase B — Registration cosmetic/UX pass complete. Section 8 rebuild DONE and tested live. Section 7 restructured into sub-accordion (7.1-7.5) with independent save/completion tracking. Address-toggle, distance-selector, and genders-served field-location fixes DONE. Section 8 photo privacy fix complete (13 July) - Storage delete 403 fixed, face photo moved to private path, facePhotoUrl renamed facePhotoPath. Full registration-to-Submit flow tested end-to-end and confirmed working. M11-Gallery (therapist photo management) built, tested, and shipped 14 July 2026 — upload, toggle, delete, save all confirmed working live and in Firestore/Storage. Spa equivalent (gallery-spa.html) not started. |
+| Next session starts with | 1. File GitHub issue for register.html's likely-shared reCAPTCHA lifecycle bug (parked from tonight, not yet filed). 2. M3-1(a)/(b) diagram rebuild (Section 8 photo model, Section 7 5-way split, plus other drifted decisions) — carried forward from tonight, item 6, still not started. 3. M1's 1-hour lockout dead-end + real tiered OTP lockout logic — needs its own session, shared fix across M1/M3b/M11. 4. Check domains.co.za support ticket status (DNS records for Resend domain verification) — carried forward, unresolved. 5. Johan to decide: spa registration/dashboard/gallery, or continue closing remaining therapist-side gaps. |
 | Primary blocker | Admin email notification - Resend sandbox domain only delivers to account owner's own address. DNS records needed for domain verification; cPanel Zone Editor would not offer TXT type. Support ticket opened with domains.co.za 13 July, awaiting response. |
 | Google Cloud billing | DONE — Blaze plan, credit card attached, confirmed 9 June 2026 |
 | BulkSMS credits | AT ZERO — buy before Stage 2 |
@@ -2201,3 +2203,93 @@ Field Register updated to v2 (docs/MM-Field-Register-v2.md): facePhotoUrl rename
 2. If DNS is live: verify domain in Resend, update functions/index.js from: addresses, re-test admin email delivery
 3. Update GitHub issue list to reflect today's fixes — close/update #44 (Storage rules), log the facePhotoPath rename and createdAt fix if no existing issue covers them
 4. Johan to decide next scope: spa registration, dashboard, admin, or continue closing remaining registration-side gaps
+
+---
+
+## Session Log — 14 July 2026 (M11-Gallery)
+
+### Scope
+
+Built M11-Gallery end to end — the therapist gallery flow (gallery.html), reached via the hamburger menu on index.html. OTP required on every visit, no session-skip. New file, and a new precedent: this is the first flow with no session-skip path at all.
+
+### Brief 1 / 1b / 1c — phone + OTP screen, reCAPTCHA lifecycle fix
+
+Phone/OTP screen built, reusing register.html's markup, CSS, and error handling (invalid phone, too-many-requests, code expired — same wording, same catch blocks). goToOtp() always sends a fresh OTP: getValidSession() and knownSupplierData are never consulted, and identity-service.js was deliberately not imported at this stage so no session-read path could exist.
+
+Bug found and fixed: initRecaptchaVerifier()'s clear-then-recreate pattern was fragile. Firebase's clear() does not reliably remove the rendered DOM node across SDK versions, so a second attempt in the same page load threw "reCAPTCHA has already been rendered." Fixed by switching to a create-once, reuse pattern (ensureRecaptchaVerifier()) — the verifier is created on first send and reused for every retry, never cleared or recreated. The SDK resets the widget itself after each attempt (success or failure), which is what makes reuse safe. clear() is the destroy operation and is now called nowhere in gallery.html.
+
+Also flagged: register.html likely carries this same latent bug, unfixed, out of scope tonight — needs its own GitHub issue.
+
+Drawer link "Gallery" added to index.html. Note the brief referenced an existing "Make Payment" menu item as the pattern to follow — no such item exists anywhere in the codebase; the drawer uses plain drawer__link anchors, and that pattern was followed instead. The same drawer markup is duplicated in map.html and was not touched.
+
+Commit 4ac01fb.
+
+### Brief 2 / 2b — warning / acknowledgment screen
+
+Warning/acknowledgment screen built as a single component, not the two-screen version originally on the M11 diagram. The diagram is now stale and needs redrawing — parked.
+
+galleryTermsAcknowledgedAt written via serverTimestamp() on first acknowledgment, keyed by authUid, not phone. The doc reference is taken as snap.docs[0].ref straight off the where('uid','==',authUid) query result, so nothing on this flow reconstructs a document path from a phone number even though the document ID happens to be one.
+
+One intermittent bug encountered during testing: a where('uid','==',authUid) query once returned the correct document but with uid and galleryTermsAcknowledgedAt both reading undefined, despite both fields being confirmed present via direct Firestore console inspection (fromCache was not captured on that run). Never reproduced again across 5-6 follow-up attempts, all clean with fromCache: false. Root cause unknown — logged as GitHub issue #53, not closed. A diagnostic console.log was added, kept through testing, then removed once Brief 3d's routing change made the original symptom (the checkbox reappearing on repeat visits) no longer directly observable. This does not mean the underlying read issue is fixed — only that it is less visible under the new flow.
+
+### Brief 3 / 3b / 3c / 3d — full photo management screen
+
+galleryPhotos is an array of objects ({ path, visible }), max 4 entries — NOT strings. Thumbnails fetch a live getDownloadURL() at render time and are never persisted, the same pattern locked for facePhotoPath on 13 July. Upload, toggle, and delete all update an in-memory array; only "Save section" writes to Firestore (setDoc, merge:true). Delete is the one exception and fires immediately (Storage deleteObject() + array splice), matching the existing Section 8 delete pattern.
+
+Filename collision bug found and fixed: two uploads with the same original filename (e.g. IMG_0001.jpg, common on phones) would overwrite the same Storage object while creating two array entries pointing at one file — deleting either would then break the other. Fixed by prefixing the Storage filename with Date.now().
+
+Separate crash bug found and fixed: Brief 2's shared clearErrors() function was stripping ALL .error-msg elements from the DOM, including gallery.html's static #galleryError container. (register.html's version of clearErrors() only ever encounters dynamically-created .error-msg nodes, so this collision does not exist there — the function was safe in its original home and lethal when copied into a file that also had a permanent .error-msg element.) Fixed by excluding #galleryError from clearErrors()'s selector. This single bug was blocking the entire gallery screen from rendering correctly — native file inputs showed instead of the thumbnail/toggle/delete card UI, because the crash fired before uploadBytes() ever ran — and was blocking Save's Firestore write entirely, because the crash fired before setDoc() ran. That is why galleryPhotos was absent from the test document: the write had never executed once.
+
+Warning screen collapsed per Johan's correction: first-visit-only interstitial with checkbox; every visit after, no interstitial at all, with the warning text pinned permanently at the top of the gallery screen itself.
+
+Save button shows a checkmark + "Saved" directly on the button on a successful write, reverting to the normal label on any new change (upload, toggle, or delete).
+
+Card layout reverted to match the originally approved mockup exactly — 56px thumbnail, label + status text stacked, toggle, trash icon, all on one row — not the drifted full-width-image version that shipped briefly.
+
+Fully tested live end-to-end on +27800000006: upload (4 slots), thumbnail render, toggle (confirmed no Firestore write fires on the toggle itself), Save (confirmed one write with correct visible flags and Date.now()-prefixed paths, verified via Firestore console), delete (confirmed immediate removal from screen AND from the Firestore array, verified via console).
+
+Commit 9fbfd51.
+
+### Brief 4 — Storage rules
+
+New match block for suppliers/{uid}/gallery/{filename}: public read (unlike the private id/ path), auth + uid-matched write with size (<10MB) and contentType (image/*) limits, and delete with no request.resource reference — the same fix pattern as the earlier Section 8 403 bug, since request.resource is null on delete. The existing id/ and photos/ blocks were not touched. Deployed live via firebase deploy --only storage, confirmed "Deploy complete!" on massage-directory-57e19.
+
+Noted at the time: public read on gallery/ means every uploaded gallery photo is world-readable by URL, including ones toggled visible: false. The visible flag controls whether the frontend renders it, not whether the file is reachable. This is the same posture as the existing photos/ path and is intended — it is the reason the explicit-content warning exists — but it is on the record as a decision, not an oversight.
+
+### Field Register updated
+
+docs/MM-Field-Register-v2.md — two new rows added to the suppliers collection: galleryPhotos (array of objects, therapist-only, public, written via saveGallery() batched except delete) and galleryTermsAcknowledgedAt (timestamp, therapist-only, gates the warning screen). Both use a new "Gallery" value in the Section column, since the gallery is its own flow rather than a registration accordion section.
+
+Note the existing stale `photos` row (line 71) still describes M11-Gallery as "planned, not yet built" — it is now built. The row's core warning (admin.html and dashboard.html still read the legacy photos[] array and need reconciliation) still holds and was left unchanged.
+
+Commit 05551d8.
+
+### LOCKED naming decision (14 July)
+
+Dashboard will split into two files per supplier type, same convention as register.html / register-spa.html — no suffix for therapist, "-spa" suffix for spa. This applies to gallery too: therapist = gallery.html (built tonight), spa = gallery-spa.html (future spa session, mirrors gallery.html once it is fully solid, the same way M2/M4 followed M1/M3). Do not use short-code names like "T-Dashboard" / "S-Dashboard" when that work begins.
+
+### CLOSED — not a defect, a misunderstanding
+
+facePhotoPath and galleryPhotos ARE correctly saved to separate Storage locations by design: facePhotoPath in the private, auth-only suppliers/{uid}/id/ folder (verification only), galleryPhotos entries in the public suppliers/{uid}/gallery/ folder (customer-facing marketing photos). This was already correct as of the 13 July facePhotoPath privacy fix and remains correct through tonight's build. Raised as a question mid-session, resolved by re-reading the 13 July log — not an actual gap.
+
+### GitHub issues
+
+Issue #53 created — intermittent uid / galleryTermsAcknowledgedAt reading undefined on a Firestore read. Unreproduced. Not closed.
+
+### Deferred — explicitly not done tonight (Johan's decision, start of session)
+
+- Item 1 — M1's 1-hour lockout dead-end (diagram fix + real tiered lockout logic). Discovered mid-session to not exist in code at all, despite being a locked decision. Needs its own session; the fix is shared across M1/M3b/M11.
+- Item 3 — deferred until "after this session" per Johan, then further deferred to next session. (The Field Register was in fact updated tonight, see above, but no further field renaming/creation work was done.)
+- Item 6 — M3-1(a)/(b) diagram rebuild (Section 8 photo model, Section 7 5-way split, drifted decisions). Not started tonight, carried forward.
+
+### Parked — cosmetic, not urgent
+
+Gallery card toggle-to-label spacing could be tighter for clarity: the "visible on profile" toggle's position relative to its label may not read clearly to a less sophisticated user. Flagged by Johan, not fixed.
+
+### Parked — register.html reCAPTCHA lifecycle
+
+register.html's reCAPTCHA verifier likely shares the same clear-then-recreate fragility fixed in gallery.html tonight. Untriggered so far because no retry-in-same-session scenario has been tested there. Needs its own GitHub issue — NOT yet filed. Do this first thing next session if it has not been done by then.
+
+### Commits
+
+4ac01fb (Brief 1), 9fbfd51 (Briefs 2-3d), 05551d8 (field register). All merged to main and pushed. Branch feature/2026-07-14-m11-gallery deleted after merge.
