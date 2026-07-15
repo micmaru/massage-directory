@@ -1,5 +1,5 @@
-# MassageMap — Master Context v60
-**Version:** 60 | **Date:** 2026-07-14 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v61
+**Version:** 61 | **Date:** 2026-07-15 | **Author:** Johan Cilliers | **Confidential**
 **File path (repo-relative): docs/MM-Master-Context.md — always read this file at session start.**
 **STANDALONE — no previous version needed. This is the single source of truth.**
 **Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. v51 bumped 24 June. This is the second consecutive on-time version bump.**
@@ -7,6 +7,7 @@
 **v58 bumped 12 July.**
 **v59 bumped 13 July.**
 **v60 bumped 14 July.**
+**v61 bumped 15 July.**
 
 ---
 
@@ -16,7 +17,7 @@
 |---|---|
 | Launch target | 31 July 2026 |
 | Current phase | Phase B — Registration cosmetic/UX pass complete. Section 8 rebuild DONE and tested live. Section 7 restructured into sub-accordion (7.1-7.5) with independent save/completion tracking. Address-toggle, distance-selector, and genders-served field-location fixes DONE. Section 8 photo privacy fix complete (13 July) - Storage delete 403 fixed, face photo moved to private path, facePhotoUrl renamed facePhotoPath. Full registration-to-Submit flow tested end-to-end and confirmed working. M11-Gallery (therapist photo management) built, tested, and shipped 14 July 2026 — upload, toggle, delete, save all confirmed working live and in Firestore/Storage. Spa equivalent (gallery-spa.html) not started. |
-| Next session starts with | 1. File GitHub issue for register.html's likely-shared reCAPTCHA lifecycle bug (parked from tonight, not yet filed). 2. M3-1(a)/(b) diagram rebuild (Section 8 photo model, Section 7 5-way split, plus other drifted decisions) — carried forward from tonight, item 6, still not started. 3. M1's 1-hour lockout dead-end + real tiered OTP lockout logic — needs its own session, shared fix across M1/M3b/M11. 4. Check domains.co.za support ticket status (DNS records for Resend domain verification) — carried forward, unresolved. 5. Johan to decide: spa registration/dashboard/gallery, or continue closing remaining therapist-side gaps. |
+| Next session starts with | 1. Build M1 OTP lockout logic per 15 July locked diagram (see session log). 2. Wrong-number OTP test: +27800000009 (unregistered, no Firebase record) through gallery.html and register.html once built. 3. Verify reCAPTCHA create-once-reuse pattern holds under M1's actual retry flow — likely not triggered at all per 15 July reasoning (no same-session resend), confirm live. 4. Switch functions/index.js from: addresses off onboarding@resend.dev now that massagemap.co.za is Resend-verified, re-test admin email delivery. |
 | Primary blocker | Admin email notification - Resend sandbox domain only delivers to account owner's own address. DNS records needed for domain verification; cPanel Zone Editor would not offer TXT type. Support ticket opened with domains.co.za 13 July, awaiting response. |
 | Google Cloud billing | DONE — Blaze plan, credit card attached, confirmed 9 June 2026 |
 | BulkSMS credits | AT ZERO — buy before Stage 2 |
@@ -2293,3 +2294,79 @@ register.html's reCAPTCHA verifier likely shares the same clear-then-recreate fr
 ### Commits
 
 4ac01fb (Brief 1), 9fbfd51 (Briefs 2-3d), 05551d8 (field register). All merged to main and pushed. Branch feature/2026-07-14-m11-gallery deleted after merge.
+
+---
+
+## Session Log — 15 July 2026 (M1 OTP lockout locked, DNS/Resend verified)
+
+### DECISIONS LOCKED
+
+1. Tiered OTP lockout SIMPLIFIED — supersedes 7/8 July's two-tier
+   escalation (15-min cooldown -> 1-hour lockout). No 1-hour tier.
+   Single cooldown, immediate escape hatch instead of a second wait
+   cycle.
+
+   Locked flow: OTP fire PIN (SMS) -> enter pin -> OTP Valid.
+   Wrong, attempts 1-2: loop back to enter pin, same code, no
+   resend, no new SMS.
+   Wrong, 3rd attempt: "contact admin" message shown immediately +
+   OTP Reset counter (counter=1) + otpLockedUntil =
+   serverTimestamp() + 15min (Firestore Timestamp, not raw
+   duration) -> routed to Main Menu M-0.
+   Re-entry: phone re-entered from Main Menu triggers
+   otpLockedUntil check before firing a fresh PIN. now 
+   otpLockedUntil -> flash screen shown, no SMS fired, back to
+   Main Menu. now >= otpLockedUntil (or field absent/never set)
+   -> fresh PIN fires, cycle restarts clean.
+
+2. New fields: otpFailedAttempts, otpLockedUntil. Live on
+   suppliers/pending_registrations only — a record must already
+   exist for the counter to attach to. First-ever OTP attempt on a
+   brand-new phone number (no record yet) has nowhere to write the
+   counter — falls back to Firebase's built-in rate limiting,
+   consistent with the existing 7 July decision for new numbers.
+   No new otp_attempts collection needed.
+
+3. M1 diagram bug found and fixed: a redundant "OTP Verification"
+   box was wired to check the code before it was sent/entered —
+   real logic bug, not just naming. Removed. "OTP Valid" is now the
+   single verification decision point, directly after "enter pin".
+
+4. Workflow confirmed going forward: Johan maintains M-diagrams
+   directly in draw.io. Claude (claude.ai) reviews and flags issues
+   only, does not redraw. Diagram is authoritative once Johan
+   confirms it locked.
+
+5. Domain verification for Resend COMPLETE. domains.co.za added
+   three DNS records (TXT resend._domainkey, MX send ->
+   feedback-smtp.eu-west-1.amazonses.com priority 10, TXT send SPF)
+   without touching the existing root MX. Resend confirmed all
+   three Verified, domain status "ready to send emails" as of
+   15 July ~16:00. functions/index.js from: addresses NOT yet
+   switched off onboarding@resend.dev — next session task.
+
+### PARKED
+
+- reCAPTCHA clear-then-recreate bug (flagged 14 July, gallery.html
+  fix not ported to register.html) — kept OPEN on GitHub, not fixed
+  this session. M1's locked design likely sidesteps the trigger
+  condition entirely: attempts 1-2 never resend, and the only
+  resend path (post-cooldown) requires a full page reload via Main
+  Menu, giving a fresh JS context and clean verifier — no
+  same-session double-fire under this flow as designed. Verify live
+  once M1 is built.
+
+- Wrong-number OTP check: test +27800000009 (never registered, no
+  Firebase Auth entry, no Firestore record) through gallery.html —
+  suspected to have broken during 14 July testing, not confirmed or
+  reproduced this session, no root cause identified. Verify live
+  during registration retest, same session as M1 build.
+
+### NEXT SESSION STARTS WITH
+
+1. Build M1 OTP lockout logic per locked diagram above
+2. Wrong-number OTP test (+27800000009) through register.html and
+   gallery.html
+3. Verify reCAPTCHA does not break under M1's actual retry flow
+4. Switch functions/index.js from: addresses off onboarding@resend.dev,
+   re-test admin email delivery
