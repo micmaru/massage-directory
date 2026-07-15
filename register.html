@@ -996,7 +996,7 @@
     getFunctions, httpsCallable
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js';
   import {
-    collection, doc, setDoc, getDoc, deleteField, serverTimestamp,
+    collection, doc, setDoc, getDoc, deleteField, serverTimestamp, Timestamp,
     query, where, getDocs, orderBy
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
   import { initLocationCascade, onProvinceChange,
@@ -1162,6 +1162,7 @@
     btn.disabled    = true;
     btn.textContent = 'Checking…';
 
+    let fromPending = false;
     try {
       // 1. Firestore lookup
       const snap = await getDocs(query(collection(db, 'suppliers'), where('cellNumber', '==', phone)));
@@ -1171,6 +1172,7 @@
         try {
           const pendSnap = await getDocs(query(collection(db, 'pending_registrations'), where('cellNumber', '==', phone)));
           knownSupplierData = pendSnap.empty ? null : { id: pendSnap.docs[0].id, ...pendSnap.docs[0].data() };
+          fromPending = !pendSnap.empty;
         } catch (_) {}
       }
 
@@ -1188,6 +1190,15 @@
           console.warn('Session token valid but Firebase Auth session missing/mismatched — re-verifying via OTP.');
         }
         // Session absent or expired — fall through to OTP
+      }
+
+      // M1 OTP lockout — returning pending registration still inside its cooldown
+      if (fromPending && knownSupplierData && knownSupplierData.otpLockedUntil
+          && Date.now() < knownSupplierData.otpLockedUntil.toMillis()) {
+        markError(document.getElementById('cellField'), 'Too many attempts. Please try again in a few minutes.');
+        btn.disabled    = false;
+        btn.textContent = 'Next';
+        return;
       }
 
       // 2. Send OTP (new supplier OR returning supplier with no valid session)
@@ -1279,10 +1290,39 @@
       }
     } catch (err) {
       console.error('OTP verify error:', err);
-      verifyBtn.disabled = false; verifyBtn.textContent = 'Verify';
-      let msg = 'Incorrect code. Please try again.';
-      if (err.code === 'auth/code-expired') msg = 'OTP has expired. Please request a new one.';
-      errEl.textContent = msg;
+      const phone   = formatPhoneNumber(document.getElementById('cell').value.trim());
+      const pendRef = doc(db, 'pending_registrations', phone);
+      let pendSnap = null;
+      try { pendSnap = await getDoc(pendRef); } catch (_) {}
+
+      if (!pendSnap || !pendSnap.exists()) {
+        // No pending record — Firebase built-in rate limiting only, no counter write
+        verifyBtn.disabled = false; verifyBtn.textContent = 'Verify';
+        let msg = 'Incorrect code. Please try again.';
+        if (err.code === 'auth/code-expired') msg = 'OTP has expired. Please request a new one.';
+        errEl.textContent = msg;
+        return;
+      }
+
+      const current = pendSnap.data().otpFailedAttempts || 0;
+      const next    = current + 1;
+      if (next < 3) {
+        await setDoc(pendRef, { otpFailedAttempts: next }, { merge: true });
+        verifyBtn.disabled = false; verifyBtn.textContent = 'Verify';
+        let msg = 'Incorrect code. Please try again.';
+        if (err.code === 'auth/code-expired') msg = 'OTP has expired. Please request a new one.';
+        errEl.textContent = msg;
+      } else {
+        await setDoc(pendRef, {
+          otpFailedAttempts: 0,
+          otpLockedUntil:    Timestamp.fromMillis(Date.now() + 15 * 60 * 1000)
+        }, { merge: true });
+        document.getElementById('otpScreen').classList.add('hidden');
+        document.getElementById('phoneScreen').classList.remove('hidden');
+        clearErrors();
+        markError(document.getElementById('cellField'), 'Too many incorrect attempts. Please contact admin or try again in 15 minutes.');
+        verifyBtn.disabled = false; verifyBtn.textContent = 'Verify';
+      }
     }
   }
 
