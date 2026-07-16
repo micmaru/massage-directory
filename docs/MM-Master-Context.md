@@ -2370,3 +2370,354 @@ register.html's reCAPTCHA verifier likely shares the same clear-then-recreate fr
 3. Verify reCAPTCHA does not break under M1's actual retry flow
 4. Switch functions/index.js from: addresses off onboarding@resend.dev,
    re-test admin email delivery
+
+---
+
+## Session Log — 16 July 2026
+
+### SESSION START
+
+Branch created: feature/2026-07-15-m1-otp-lockout (via mmstart,
+confirmed clean off main). Purpose: build M1 OTP lockout logic per
+the M1 diagram, the last piece before therapist registration is
+functionally complete.
+
+### M1 DIAGRAM — LOCKED (final revision this session)
+
+Diagram iterated three times this session before lock:
+- First pass: "OTP Reset counter (counter = 1)" on the 3rd-wrong-
+  attempt box — ambiguous whether 1 was literal or a labeling slip
+  for "reset."
+- Second pass: Johan confirmed counter=1 is literal (the value
+  written AT the moment lockout triggers), and clarified the full
+  cycle: counter starts at 0 implicitly, wrong pin -> 1, wrong again
+  -> 2, wrong again -> 3 -> triggers cooldown. Re-entry after lockout
+  expires fires a fresh OTP and the new cycle starts clean at 0 (the
+  counter=1 written at trigger time is overwritten, not carried
+  forward).
+- Final locked version: "After 3rd attempt Still Wrong Pin counter=3
+  (already)" -> screen shows "contact admin" -> 15 min cooldown ->
+  OTP Reset counter (counter = 0), otpLockedUntil =
+  serverTimestamp() + 15 min -> Main Menu M-0.
+
+Locked flow (final):
+- Phone entered -> check pending doc's otpLockedUntil BEFORE firing
+  OTP. If locked and now < otpLockedUntil: flash "try again" message,
+  no SMS fires. Otherwise fire OTP normally.
+- Wrong pin, attempts 1-2: loop back to same OTP screen, same code,
+  no resend, counter increments (1, then 2).
+- Wrong pin, attempt 3: counter written as 0 (reset) +
+  otpLockedUntil = serverTimestamp() + 15 min. "Contact admin" shown.
+  Routes to Main Menu M-0 / phone screen (single-page flow
+  equivalent).
+- Correct pin at any point: existing flow unchanged.
+
+### DECISION — BRAND NEW NUMBER, ZERO HISTORY (confirmed against
+industry practice, not a gap)
+
+A phone with NO prior pending_registrations/suppliers doc has nowhere
+compliant to write a wrong-attempt counter to, because writing any
+phone-linked document pre-consent would violate POPIA (data capture
+before consent given). Options considered:
+- Option A (accepted): first-ever OTP cycle on a brand-new number
+  falls back to Firebase's own built-in rate limiting only. Our
+  3-strike/15-min lockout engages from the SECOND verified cycle
+  onward (once a doc exists).
+- Option B (rejected): create a lightweight doc pre-consent just to
+  hold the counter. Rejected outright - this is unauthorized personal
+  data capture pre-consent, a POPIA violation, full stop.
+Verified against general industry OTP lockout practice (web search,
+16 July): confirmed 3-5 wrong attempts and 15-minute cooldowns are
+standard; confirmed all major providers (Okta, WSO2, Entra) assume a
+pre-existing user record before OTP starts, which MassageMap's
+brand-new-registration case does not have - this is a POPIA-specific
+gap, not an engineering oversight unique to this platform. Matches
+the existing 7 July decision already on record - not new today, just
+re-confirmed.
+
+### BUG DISCOVERED — ROOT CAUSE 1: Firestore rules silently blocked
+the entire feature
+
+Initial implementation (client-side, writing otpFailedAttempts/
+otpLockedUntil directly to pending_registrations from verifyOtp()'s
+catch block and handleNext()'s pre-fire check) was tested live and
+found completely non-functional: wrong pins looped forever, no
+lockout ever triggered, on ANY test number, including ones with
+existing pending_registrations docs.
+
+Root cause confirmed via Claude Code reading the actual deployed
+firestore.rules: pending_registrations requires
+request.auth != null && request.auth.token.phone_number == cellNumber
+for BOTH read and write. A wrong OTP means Firebase Auth sign-in
+never succeeded - no live session exists at that moment. Every read/
+write attempt from verifyOtp()'s catch block hit permission-denied,
+silently swallowed by an empty try/catch (a defensive pattern already
+used elsewhere in this file for the same class of pre-auth read).
+Confirmed both the write side (verifyOtp()) and read side
+(handleNext()'s pre-fire lockout check) had this identical structural
+problem - meaning the ENTIRE M1 lockout design as first built could
+never function for anyone, by construction, not as an edge case.
+
+### FIX — Cloud Function recordOtpEvent (us-central1, 1st gen)
+
+Design decision: server-side Cloud Function using Admin SDK, which
+bypasses the client Firestore-rules/auth dependency entirely. Rejected
+alternative (loosening Firestore rules to allow unauthenticated writes
+to otpFailedAttempts/otpLockedUntil) outright - that would let anyone
+reset their own lockout via browser devtools, defeating the feature's
+entire purpose. Same reasoning already applied previously to PayFast
+signature generation (also moved server-side for the same class of
+reason).
+
+Function signature: recordOtpEvent({ phone, collection, action }),
+action: 'check' (read-only, called from handleNext() before firing
+OTP) or 'fail' (increment/reset, called from verifyOtp()'s catch
+block).
+
+### SECURITY REVIEW (automatic background check, unprompted) — 3
+issues found in first version, all addressed before deploy
+
+1. auth-bypass-lockout-DoS: function had no App Check/auth guard -
+   anyone reachable on the internet could call action:'fail' against
+   ANY phone number, griefing a stranger's registration lockout with
+   no rate limit. Valid, confirmed.
+2. information-disclosure: action:'check' with no auth guard would
+   tell any caller whether any given phone number is currently locked
+   and exactly when it unlocks - a minor privacy leak. Valid,
+   confirmed.
+3. race-condition-cap-defeat: the 'fail' branch did a plain read-then-
+   write (get() then set()), not atomic. Concurrent wrong-pin calls
+   could all read the same stale counter value and all write current+1,
+   meaning the counter could never reach 3 under rapid/concurrent
+   attempts, silently defeating the entire lockout cap. This one was
+   NOT initially flagged by Claude in chat - caught only by Claude
+   Code's automatic review. Noted: generateSupplierNumber() elsewhere
+   in this same file already uses db.runTransaction() specifically to
+   avoid this exact class of bug - established pattern in the
+   codebase that the first version of recordOtpEvent should have
+   followed and didn't.
+
+Fixes applied, in order:
+- Race condition: rewrote the 'fail' branch to use
+  admin.firestore().runTransaction(), matching the existing
+  generateSupplierNumber pattern exactly.
+- Auth-bypass + info-disclosure: both closed via Firebase App Check
+  (reCAPTCHA v3 provider). Registered in Firebase Console (site key
+  6Leh31YtAAAAAL3uPM1JXyWj4CchliBe-gpg1xla). Client-side:
+  initializeAppCheck() added to register.html, placed BEFORE any
+  Firebase Functions calls (ordering matters - ES module imports
+  hoist regardless of position, but the debug-token bypass line does
+  not and must execute before initializeAppCheck() runs).
+  Server-side: initially implemented as a manual
+  "if (!context.app) throw ..." guard: this WORKS but is not the
+  documented Firebase pattern. Corrected after checking the official
+  docs AND verifying directly against the installed firebase-functions
+  package (not assumed): confirmed firebase-functions@5.1.1's
+  top-level require() resolves to the v1 builder (main:
+  "lib/v1/index.js"), and .runWith({ enforceAppCheck: true }) chains
+  correctly with the existing .region("us-central1").https.onCall()
+  pattern with no import changes or version bump needed. Switched to
+  the declarative .runWith({ enforceAppCheck: true }) pattern, manual
+  guard removed as redundant.
+- Local dev debug token: FIREBASE_APPCHECK_DEBUG_TOKEN bypass added
+  to register.html for 127.0.0.1/localhost only. Token generated
+  (877de9b6-d96e-448e-ae4f-8e633dcc922f), registered in Firebase
+  Console under "Johan local dev".
+
+Decision NOT to build: Firebase App Check was scoped narrowly (closes
+the specific auth-bypass/info-disclosure gap on recordOtpEvent only).
+Broader App Check rollout across other callable functions was
+explicitly not evaluated this session - out of scope, not a gap.
+
+### BUG DISCOVERED — ROOT CAUSE 2: wrong collection checked (found
+only during live end-to-end testing, after everything above was
+already deployed)
+
+After the full fix above was deployed, live wrong-pin testing on
++27800000002 STILL failed to trigger lockout - no counter written
+anywhere, in either pending_registrations or suppliers.
+
+Root cause: recordOtpEvent only ever received
+collection: 'pending_registrations' from the client, hardcoded.
+But handleNext() checks the suppliers collection FIRST (existing,
+locked behavior per Decision #23, confirmed unchanged all session) -
+and per locked registration architecture (Decision #27-29), a
+lightweight suppliers document (registrationComplete: false) is
+created as soon as Section 1 is saved, in parallel with
+pending_registrations. For ANY therapist past Section 1 - which is
+the real-world scenario this entire feature exists to protect - the
+suppliers doc is found first by handleNext(), and pending_registrations
+(which our lockout was exclusively checking) is never consulted at
+all. The lockout was structurally unreachable for the majority of
+real users from the moment it was designed this morning, not just
+today's testing session - this was missed in the original design
+discussion, not introduced by later fixes.
+
+CORRECTION to an earlier same-session misdiagnosis: mid-session, the
+presence of a suppliers doc with fields {registrationComplete: false,
+status: 'pending', subscriptionStatus: 'not_paid', supplierNumber,
+uid} on +27800000002 was initially misread as evidence that number
+had gone through actual Submit Registration. This was WRONG - these
+exact fields are written at Section 1 save (Decision #29), not submit
+- confirmed properly later by direct code trace and by Johan's
+correction. +27800000002, 03, and 04 all reached Section 1 only, none
+were submitted. Noting this so the misdiagnosis isn't repeated.
+
+Fix: handleNext() now reuses its existing suppliers lookup (no
+additional read added) to decide which collection to pass to
+recordOtpEvent's 'check' call - suppliers if found, pending_registrations
+otherwise. verifyOtp()'s catch block adds one new read
+(getDoc(suppliers/{phone})) before calling recordOtpEvent's 'fail'
+action, same logic. recordOtpEvent's collection guard updated to
+accept both 'pending_registrations' and 'suppliers' (previously
+rejected anything but pending_registrations).
+
+### CONFIRMED LIVE, END TO END (final verification, +27800000003)
+
+- Wrong pin attempts 1-2: loop back silently, no lockout message, no
+  resend, same OTP code accepted for retry.
+- Wrong pin attempt 3: "Too many incorrect attempts. Please contact
+  admin or try again in 15 minutes." shown, routes back to phone
+  entry screen.
+- Firestore confirmed: suppliers/+27800000003 written with
+  otpFailedAttempts: 0, otpLockedUntil: ~15 min from trigger
+  (22:28:41 UTC+2 tonight). pending_registrations/+27800000003
+  confirmed UNTOUCHED - correct, since suppliers was the doc
+  handleNext() actually uses to route this phone.
+- Immediate re-entry while locked: "Too many attempts. Please try
+  again in a few minutes." shown, NO new OTP/SMS fired, confirmed via
+  console (no signInWithPhoneNumber call visible).
+- Separately confirmed on +27800000004 (brand-new, zero history,
+  before any successful verify): wrong pins do NOT create any
+  Firestore doc anywhere and do NOT trigger lockout - Firebase's own
+  throttling is the only backstop, exactly matching the accepted
+  Option A design above.
+
+Cosmetic, parked (not urgent): the "too many incorrect attempts"
+error screen state on attempt 3 is functional but not visually
+polished - revisit when convenient, not before launch-critical.
+
+### ARCHITECTURE QUESTION SURFACED THIS SESSION — NOT ACTIONED, FLAGGED
+FOR SPA BUILD
+
+While diagnosing the above, confirmed via project knowledge search and
+direct code trace that two documented decisions contradict each other:
+- 9 June decision (#27-32): progressive sections (2-8) save to
+  pending_registrations via setDoc merge; full suppliers document
+  only written at final Submit.
+- 8 July diagram session (M1-Firebase): explicitly states sections
+  2-8 should be direct merge writes to suppliers/{phone}, with
+  pending_registrations "confirmed left permanently inert after
+  Section 1 succeeds - no cleanup/delete step, kept as dev-phase
+  debug trail."
+Live code today follows the 9 June pattern (confirmed by grep - every
+section 2+ save writes to pending_registrations, not suppliers).
+The 8 July decision was apparently never actually implemented, or was
+implemented and reverted - not established which.
+
+Johan's account, confirmed correct: pending_registrations is a
+leftover from a post-25-May-crash workaround (there was an issue
+creating suppliers docs directly at the time), kept afterward because
+reworking it was judged not worth the effort at that stage. Not a
+current structural requirement - Johan confirmed there is now, in
+theory, no remaining reason pending_registrations needs to exist for
+new registrations.
+
+Explicit decision: NOT touching or removing pending_registrations
+from the therapist flow at this late stage - too risky this close to
+launch, registration is otherwise complete and working. For SPA
+registration (to be built from scratch, separate session): Johan's
+direction is to write only to suppliers, no pending_registrations
+collection at all - EXCEPT one narrow window needs a deliberate
+design decision before spa build starts: OTP verified + consent given
+but Section 1 (or spa equivalent) not yet saved means no suppliers
+doc exists yet to hold dataConsentGiven/dataConsentTimestamp. Where
+consent lands in that gap must be decided on purpose, not left to
+default to recreating a parallel pending collection unintentionally.
+
+### TEST NUMBER STATE AS OF SESSION END (for next session reference)
+
+- +27800000001: suppliers doc exists, further progressed (has
+  facePhotoPath set) - pre-dates this session.
+- +27800000002: suppliers + pending_registrations both exist,
+  Section 1 saved (firstName: willie, lastName: botha), NOT
+  submitted. No otpFailedAttempts/otpLockedUntil (used for early
+  no-lockout-reachable testing before the collection-routing fix).
+- +27800000003: suppliers + pending_registrations both exist,
+  Section 1 saved (firstName: gerdus, lastName: bouwer), NOT
+  submitted. CURRENTLY LOCKED as of session end -
+  otpLockedUntil ~22:28 UTC+2 tonight (16 July). Will self-clear.
+- +27800000004: suppliers + pending_registrations both exist, Section
+  1 saved (firstName: sara, lastName: dlamini), NOT submitted. No
+  lockout fields written yet.
+- +27800000006: pre-dates this session (14 July gallery testing) -
+  not touched today.
+- +27800000005, 007, 008: untouched, clean, no docs in either
+  collection.
+
+### COMMITS THIS SESSION (branch feature/2026-07-15-m1-otp-lockout,
+merged to main via mmdone, fast-forward, pushed)
+
+51beaf0 - initial client-side OTP lockout attempt (direct Firestore
+  writes) - later found non-functional, superseded by Cloud Function
+  approach, not reverted (superseded in place by later commits to the
+  same code paths).
+c615b31 - recordOtpEvent Cloud Function created (pending_registrations
+  only, no App Check yet).
+3ba896f - race condition fix: 'fail' branch rewritten to use
+  db.runTransaction(), matching generateSupplierNumber's existing
+  pattern.
+31dae70 - App Check client-side init added to register.html; manual
+  "if (!context.app)" guard added server-side (later superseded by
+  7ec785... see below).
+e7ec785 - switched recordOtpEvent from the manual context.app guard
+  to the documented .runWith({ enforceAppCheck: true }) declarative
+  pattern, verified against installed firebase-functions@5.1.1.
+5a1fbfbf - App Check debug token bypass added for local 127.0.0.1/
+  localhost development; corrected placement (before
+  initializeAppCheck() executes, not merely "after the import").
+74ef567 - register.html wired to call recordOtpEvent instead of
+  direct Firestore writes in both handleNext() and verifyOtp();
+  removed now-dead direct pendRef/setDoc counter code and the
+  now-unused Timestamp import.
+7628b69 - THE fix that made this work for real users: routed the
+  lockout counter to the suppliers doc when it exists
+  (registrationComplete: false), pending_registrations only as
+  fallback before Section 1 is ever saved. functions/index.js
+  collection guard updated to accept both.
+
+Two firebase deploy --only functions runs this session (after c615b31
+chain completed with App Check, and again after 7628b69) - both
+confirmed successful, all other existing functions
+(generateSupplierNumber, createPayfastPayment, payfastNotify,
+onSupplierRegistered, checkIncompleteRegistrations, helloMassageMap)
+redeployed cleanly alongside recordOtpEvent with no errors.
+
+### PARKED / DEFERRED (not resolved this session)
+
+- Cosmetic polish on the attempt-3 "contact admin" error screen.
+- Broader Firebase App Check rollout beyond recordOtpEvent - not
+  evaluated, scope was deliberately narrow this session.
+- suppliers-vs-pending_registrations architecture conflict (9 June vs
+  8 July decisions) - flagged for the spa build session, not decided
+  today, therapist flow untouched.
+- firebase-functions outdated version warning (5.1.1, upgrade
+  available) and firebase-tools update (15.14.0 -> 15.24.0) - both
+  surfaced again this session during deploy, already on the
+  pre-launch checklist, not actioned.
+
+### NEXT SESSION PRIORITIES
+
+1. Dashboard rebuild (therapist) - diagram-first per standard process.
+2. Spa registration rebuild - resolve the suppliers-vs-pending_registrations
+   design question deliberately BEFORE any code is written, including
+   the pre-Section-1 consent-field placement question flagged above.
+3. Apply the same suppliers-vs-pending_registrations-aware OTP lockout
+   pattern (recordOtpEvent, already generic/reusable by design) to
+   register-spa.html once its architecture is settled.
+4. Wrong-number OTP test (+27800000009 unregistered) through
+   register.html and gallery.html - still outstanding from before this
+   session, not touched today.
+5. Verify reCAPTCHA holds under M1's actual retry flow - not
+   explicitly re-tested this session under the new App Check layer,
+   worth a dedicated pass.
