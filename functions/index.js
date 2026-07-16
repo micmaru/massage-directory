@@ -390,11 +390,9 @@ exports.generateSupplierNumber = functions
   });
 
 exports.recordOtpEvent = functions
+  .runWith({ enforceAppCheck: true })
   .region("us-central1")
   .https.onCall(async (data, context) => {
-    if (!context.app) {
-      throw new functions.https.HttpsError('failed-precondition', 'App Check token missing or invalid.');
-    }
     const { phone, collection, action } = data;
     if (!phone || !collection || !action) {
       throw new functions.https.HttpsError('invalid-argument', 'Missing phone, collection, or action.');
