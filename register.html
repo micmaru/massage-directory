@@ -1204,7 +1204,8 @@
       // Fail open: a function outage must not block registration entirely.
       try {
         const checkLockout = httpsCallable(functionsInstance, 'recordOtpEvent');
-        const result = await checkLockout({ phone, collection: 'pending_registrations', action: 'check' });
+        const lockoutCollection = snap.empty ? 'pending_registrations' : 'suppliers';
+        const result = await checkLockout({ phone, collection: lockoutCollection, action: 'check' });
         if (result.data && result.data.locked) {
           markError(document.getElementById('cellField'), 'Too many attempts. Please try again in a few minutes.');
           btn.disabled    = false;
@@ -1305,9 +1306,14 @@
     } catch (err) {
       console.error('OTP verify error:', err);
       const phone = formatPhoneNumber(document.getElementById('cell').value.trim());
+      let failCollection = 'pending_registrations';
+      try {
+        const supSnap = await getDoc(doc(db, 'suppliers', phone));
+        if (supSnap.exists()) failCollection = 'suppliers';
+      } catch (_) {}
       try {
         const recordFailure = httpsCallable(functionsInstance, 'recordOtpEvent');
-        const result = await recordFailure({ phone, collection: 'pending_registrations', action: 'fail' });
+        const result = await recordFailure({ phone, collection: failCollection, action: 'fail' });
         if (result.data && result.data.locked) {
           document.getElementById('otpScreen').classList.add('hidden');
           document.getElementById('phoneScreen').classList.remove('hidden');

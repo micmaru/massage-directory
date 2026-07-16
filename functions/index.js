@@ -397,7 +397,7 @@ exports.recordOtpEvent = functions
     if (!phone || !collection || !action) {
       throw new functions.https.HttpsError('invalid-argument', 'Missing phone, collection, or action.');
     }
-    if (collection !== 'pending_registrations') {
+    if (collection !== 'pending_registrations' && collection !== 'suppliers') {
       throw new functions.https.HttpsError('invalid-argument', 'Unsupported collection.');
     }
     const ref = admin.firestore().collection(collection).doc(phone);
