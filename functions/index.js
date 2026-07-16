@@ -400,9 +400,8 @@ exports.recordOtpEvent = functions
       throw new functions.https.HttpsError('invalid-argument', 'Unsupported collection.');
     }
     const ref = admin.firestore().collection(collection).doc(phone);
-    const snap = await ref.get();
-
     if (action === 'check') {
+      const snap = await ref.get();
       if (!snap.exists) return { locked: false };
       const d = snap.data();
       if (d.otpLockedUntil && d.otpLockedUntil.toMillis() > Date.now()) {
@@ -412,16 +411,19 @@ exports.recordOtpEvent = functions
     }
 
     if (action === 'fail') {
-      if (!snap.exists) return { locked: false, counted: false };
-      const current = snap.data().otpFailedAttempts || 0;
-      const next = current + 1;
-      if (next < 3) {
-        await ref.set({ otpFailedAttempts: next }, { merge: true });
-        return { locked: false, counted: true, attempts: next };
-      }
-      const lockedUntil = admin.firestore.Timestamp.fromMillis(Date.now() + 15 * 60 * 1000);
-      await ref.set({ otpFailedAttempts: 0, otpLockedUntil: lockedUntil }, { merge: true });
-      return { locked: true, counted: true };
+      return await admin.firestore().runTransaction(async tx => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) return { locked: false, counted: false };
+        const current = snap.data().otpFailedAttempts || 0;
+        const next = current + 1;
+        if (next < 3) {
+          tx.set(ref, { otpFailedAttempts: next }, { merge: true });
+          return { locked: false, counted: true, attempts: next };
+        }
+        const lockedUntil = admin.firestore.Timestamp.fromMillis(Date.now() + 15 * 60 * 1000);
+        tx.set(ref, { otpFailedAttempts: 0, otpLockedUntil: lockedUntil }, { merge: true });
+        return { locked: true, counted: true };
+      });
     }
 
     throw new functions.https.HttpsError('invalid-argument', 'Unknown action.');
