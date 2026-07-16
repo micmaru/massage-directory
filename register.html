@@ -985,6 +985,12 @@
 <script src="config.js"></script>
 <script type="module">
   import { app, db } from './firebase-config.js';
+  import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-check.js';
+
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6Leh31YtAAAAAL3uPM1JXyWj4CchliBe-gpg1xla'),
+    isTokenAutoRefreshEnabled: true
+  });
   import { storeSession, getValidSession } from './identity-service.js';
   import {
     getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged
