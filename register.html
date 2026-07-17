@@ -871,7 +871,7 @@
             <div class="sub-acc" id="sub7Sec2">
               <div class="sub-acc__header" onclick="toggleSub7Section(2)">
                 <div class="sub-acc__num" id="sub7Num2">2</div>
-                <div class="sub-acc__name">7.2 Massage Styles *</div>
+                <div class="sub-acc__name">7.2 Massage Styles (Select at least one) *</div>
                 <svg class="sub-acc__chevron" id="sub7Chevron2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
               </div>
               <div class="sub-acc__body hidden" id="sub7Body2">
@@ -895,7 +895,7 @@
             <div class="sub-acc" id="sub7Sec4">
               <div class="sub-acc__header" onclick="toggleSub7Section(4)">
                 <div class="sub-acc__num" id="sub7Num4">4</div>
-                <div class="sub-acc__name">7.4 Treatments *</div>
+                <div class="sub-acc__name">7.4 Treatments (Select at least one) *</div>
                 <svg class="sub-acc__chevron" id="sub7Chevron4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
               </div>
               <div class="sub-acc__body hidden" id="sub7Body4">
@@ -1646,6 +1646,26 @@
 
   async function saveSub7Section(subN) {
     const cfg = SUB7_CONFIG[subN];
+
+    // Required sub-sections: 7.2 Massage Styles, 7.4 Treatments — must have a value
+    if (subN === 2 || subN === 4) {
+      const group = document.getElementById(cfg.field + 'Group');
+      group.parentElement.querySelector('.sub7-error-msg')?.remove();
+      if (!sub7HasValue(subN)) {
+        const span = document.createElement('span');
+        span.className   = 'error-msg sub7-error-msg';
+        span.textContent = 'Select at least one option';
+        group.insertAdjacentElement('afterend', span);
+        return;
+      }
+    }
+
+    // 7.1 Genders Served — default to "both" if nothing selected
+    if (subN === 1 && !getSub7Value(1)) {
+      const bothRadio = document.querySelector('input[name="genderServed"][value="both"]');
+      if (bothRadio) bothRadio.checked = true;
+    }
+
     const value = getSub7Value(subN);
     sub7SectionStates[subN] = 'done';
     document.getElementById('sub7Num' + subN).textContent = '✓';
