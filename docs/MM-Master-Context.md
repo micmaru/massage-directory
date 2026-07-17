@@ -17,9 +17,9 @@
 | Item | Status |
 |---|---|
 | Launch target | 31 July 2026 |
-| Current phase | Phase B — Registration cosmetic/UX pass complete. Section 8 rebuild DONE and tested live. Section 7 restructured into sub-accordion (7.1-7.5) with independent save/completion tracking. Address-toggle, distance-selector, and genders-served field-location fixes DONE. Section 8 photo privacy fix complete (13 July) - Storage delete 403 fixed, face photo moved to private path, facePhotoUrl renamed facePhotoPath. Full registration-to-Submit flow tested end-to-end and confirmed working. M11-Gallery (therapist photo management) built, tested, and shipped 14 July 2026 — upload, toggle, delete, save all confirmed working live and in Firestore/Storage. Spa equivalent (gallery-spa.html) not started. |
-| Next session starts with | 1. Build M1 OTP lockout logic per 15 July locked diagram (see session log). 2. Wrong-number OTP test: +27800000009 (unregistered, no Firebase record) through gallery.html and register.html once built. 3. Verify reCAPTCHA create-once-reuse pattern holds under M1's actual retry flow — likely not triggered at all per 15 July reasoning (no same-session resend), confirm live. 4. Switch functions/index.js from: addresses off onboarding@resend.dev now that massagemap.co.za is Resend-verified, re-test admin email delivery. |
-| Primary blocker | Admin email notification - Resend sandbox domain only delivers to account owner's own address. DNS records needed for domain verification; cPanel Zone Editor would not offer TXT type. Support ticket opened with domains.co.za 13 July, awaiting response. |
+| Current phase | Registration (therapist) fully audited, fixed, and closed - required-sections logic (S4/S5/S7/S8) now correct and live-tested end-to-end (+27800000005, T-26-1060). S5 displayName gated, S7 7.2/7.4 Save blocked when empty + "General" options added, 7.1 defaults to "both", S8 photo gate added, S4 mobile-massage/travel reordered after Amenities. M11-Gallery shipped 14 July. M3 (therapist dashboard) NOT yet started - it must inherit the corrected S4/S5/S7/S8 rules. Spa equivalent (gallery-spa.html, register-spa audit) not started. |
+| Next session starts with | M3 dashboard diagram review (draw.io), locking screen flow before any brief is written. Dashboard must inherit the corrected S4/S5/S7/S8 rules from the 17 July audit. |
+| Primary blocker | None - registration is code-complete and live-tested end-to-end. Dashboard (M3) has not been scoped/diagrammed yet. (Prior admin-email/Resend DNS item still open but no longer the critical path - see 13-16 July logs.) |
 | Google Cloud billing | DONE — Blaze plan, credit card attached, confirmed 9 June 2026 |
 | BulkSMS credits | AT ZERO — buy before Stage 2 |
 | Free trial expiry | 6 July 2026 — credit card attached, should auto-continue |
@@ -2722,3 +2722,200 @@ redeployed cleanly alongside recordOtpEvent with no errors.
 5. Verify reCAPTCHA holds under M1's actual retry flow - not
    explicitly re-tested this session under the new App Check layer,
    worth a dedicated pass.
+
+## Session Log — 17 July 2026 (Registration required-fields audit + fixes)
+
+### Scope
+
+Started as OTP-lockout loose-end verification (wrong-number path,
+reCAPTCHA under App Check) carried over from 16 July. Both confirmed
+working cleanly - no regressions, no reCAPTCHA re-render issues on
+the wrong-then-right retry loop.
+
+Turned into a full audit of register.html's required-sections logic
+ahead of the M3 (therapist dashboard) build, since dashboard is
+designed to mirror registration's rules exactly - any gap in
+registration would otherwise ship straight into dashboard as an
+inherited bug. Branch: feature/2026-07-17-registration-required-fields,
+merged to main via mmdone at session close.
+
+### OTP lockout loose ends - closed
+
+- Wrong-number path (+27800000008, clean, unregistered): tested via
+  both register.html and gallery.html. Correct behaviour confirmed -
+  gallery shows "Not registered yet" -> "Register as a therapist" ->
+  clean handoff to register.html. No console errors. UX gap noted
+  (second OTP cycle required between gallery and register) - parked
+  as nice-to-have, not urgent.
+- reCAPTCHA under App Check (+27800000007 clean pass, +27800000005
+  wrong-wrong-right retry): both passed. No re-render errors, App
+  Check debug token line appears once per load as expected. Console
+  errors seen during wrong attempts are expected Firebase SDK
+  behaviour (auth/invalid-verification-code), not bugs.
+- Cosmetic polish on lockout screens: deliberately deferred to a
+  full post-platform polish pass. Function over form this close to
+  launch.
+
+### Required-sections audit - decisions locked
+
+Reviewed live UI against locked decision (15 June, re-confirmed 13
+July): therapist required = S1+S3+S5+S7+S8. Live code only enforced
+S1+S3+S7+S8 at the section level - S5 was required in intent
+(REQUIRED_SECTIONS comment already said "About (display name)") but
+never actually gated.
+
+Also surfaced: Section 7 sub-items 7.2 (Massage Styles) and 7.4
+(Treatments) were "required" only in the sense that requiredSubs =
+[1,2,4] existed in updateSection7Progress() - but saveSub7Section()
+marked any sub-section done on Save regardless of whether anything
+was ticked. sub7HasValue() (the empty-check) existed in the file but
+was only wired into the resume/prefill path, never into Save. A
+therapist could Save 7.2/7.4 with zero selections and it would count
+as complete.
+
+New design locked, working through the false-claim risk of silent
+defaults (a default value would put an unchosen, specific claim -
+e.g. "Aromatherapy" - on a real listing, contradicting the platform's
+trust-brand positioning):
+
+- 7.1 Genders Served: no block. Defaults to "both" if nothing
+  selected at Save. Accepted risk (Johan's call) - the only sub-item
+  where a default was judged acceptable, since "both" is a
+  genuinely neutral fallback, unlike a specific style/treatment.
+  Side effect: 7.1 no longer needs a required/label marker since it
+  can never be truly incomplete.
+- 7.2 Massage Styles: heading updated to "Massage Styles (Select at
+  least one)". Save blocked (no write, no done-state) if zero ticked.
+- 7.3 Traditions: heading unchanged ("optional"). New selectable
+  "General" option added (real choice, not a silent default) for a
+  therapist unsure what to pick. No block.
+- 7.4 Treatments: heading updated to "Treatments (Select at least
+  one)". Save blocked if zero ticked, same pattern as 7.2. New
+  selectable "General" option added here too, since 7.4 now blocks
+  Save and needs an honest escape valve.
+- 7.5 Service Offerings: unchanged.
+- S5 displayName: same Save-block pattern as 7.2/7.4 - Save declines
+  silently (later given an inline message) if displayName is blank.
+  Rest of Section 5 stays optional. First field-level (not
+  section-level) required gate on the platform - new pattern, noted
+  as such.
+- Later in session, decision extended: 7.2 also gets a "General"
+  option (originally only planned for 7.3/7.4), added as a third
+  Firestore document, same pattern.
+- S4 (Premises & Facilities): "Mobile massage available" toggle +
+  km travel-distance field reordered to appear AFTER Amenities, not
+  before - was causing a real UX misread (read as being about her
+  own premises, not about her travelling to the customer).
+
+### Firestore data changes (offerings collection, category-matched)
+
+Three new documents added manually via Firebase Console (not code -
+offerings render dynamically from Firestore, confirmed via
+loadOfferings()/renderOfferingsGroup(), nothing hardcoded in HTML):
+
+- category: massageStyles, name: General, sortOrder: 0,
+  visibleTo: [therapist, spa], launchActive: true
+- category: traditions, name: General, sortOrder: 0,
+  visibleTo: [therapist, spa], launchActive: true
+- category: treatments, name: General, sortOrder: 0,
+  visibleTo: [therapist, spa], launchActive: true
+
+sortOrder 0 deliberately set below existing items (seen: Tibetan=11,
+Full Day Spa=9) to sort "General" first in each list, so it's easy
+to find as the "pick this if unsure" option.
+
+### Bug found and fixed - Section 8 Photos ungated (real gap, not a regression)
+
+Live test surfaced Section 8 (required verification photo) showing
+"Complete" and unlocking Submit Registration with no photo uploaded
+at all - directly contradicting a 9 July session note that this was
+"CONFIRMED ALREADY WORKING."
+
+Investigated via git history before fixing (three passes):
+
+1. saveAccSection(n) for n===8 was checked against commit 93a8e5c
+   (9 July close) - byte-identical to current, no photo gate then
+   either.
+2. Cross-checked submitForm() specifically (not just saveAccSection)
+   at c7f3113 (12 July Section 8 rebuild) and e4c9f06 (13 July
+   facePhotoUrl->facePhotoPath rename), since two session notes (12
+   July: "submit gate re-locks correctly if photo is removed"; 13
+   July: full live Submit test with facePhotoPath present)
+   contradicted "never existed." Full diff of submitForm() across
+   the entire window confirmed no photo-presence check was ever
+   added or removed there.
+3. Resolution: not a regression, not conflicting test results - a
+   genuine test-coverage gap. Both 12 and 13 July tests started by
+   uploading a photo first, so the "click Save with nothing
+   selected" path was never exercised. deletePhoto() correctly
+   re-locks the gate on removal (tested and true), but
+   saveAccSection(8) was never given the matching guard to prevent
+   reaching done without a photo in the first place - an asymmetry,
+   not a break.
+
+Fix applied: saveAccSection(8) now checks facePhotoPath (existing
+value from Firestore, or freshly selected file this session) before
+marking done. No photo -> inline "Verification photo required",
+section stays not-done, Submit stays locked. Photo present -> proceeds
+as before.
+
+Verified live, all three paths, on +27800000005, full registration
+through to Submit:
+- Path C (no photo, click Save): blocked correctly, inline message
+  shown, Submit stayed locked. Confirmed.
+- Path A (photo selected, click Save): completed correctly, green
+  tick, thumbnail shown. Confirmed.
+- Full submit: completed successfully - T-26-1060 issued, info.html
+  success screen shown correctly, all fields including facePhotoPath
+  present.
+
+Correction for the record: the 9 July "confirmed working" note most
+likely reflected the old multi-slot photo UI (pre-12-July rebuild)
+where testers happened to always upload something, not an actual
+code-level gate - the underlying save logic was ungated from that
+point through tonight.
+
+### Final fix - S5 label clarity
+
+"Display Name / Alias *" changed to "Display Name / Alias (Required)"
+- bare asterisk was unexplained anywhere on screen, matches the
+plain-language style already used on 7.2/7.4 headings. Pure label
+change, no logic touched.
+
+### Testing - full live end-to-end pass, +27800000005
+
+All 8 sections completed, Submit Registration succeeded. Confirmed:
+S4 field order correct, S5 displayName gate working (blocks empty,
+saves when filled), S7 sub-item defaults/blocks/General options all
+working as designed (7.1 default, 7.2/7.4 block+heading+General,
+7.3 General added), S8 photo gate working (all three paths), full
+submission flow completed - membership number T-26-1060 issued,
+info.html success screen correct.
+
+### Commits (branch feature/2026-07-17-registration-required-fields, merged to main via mmdone)
+
+| Commit | Content |
+|---|---|
+| ba199f3 | register.html: S4 reorder (Amenities before mobile massage) + S5 displayName Save gate |
+| 0893243 | register.html: S7 required validation (7.2/7.4) + default "both" for 7.1 |
+| d6dfe41 | register.html: S8 facePhotoPath gate added to saveAccSection, mirroring S5/deletePhoto pattern |
+| 14bc466 | register.html: S5 label text "(Required)" replacing bare asterisk |
+
+Plus this session-close commit (Master Context + Obsidian note).
+
+### Parked / carried forward
+
+1. Gallery-to-register UX: requires a second OTP cycle (phone
+   re-entered, re-verified) rather than carrying the session across -
+   nice-to-have smoothing, not urgent.
+2. Cosmetic polish on OTP lockout screens (attempt-3 message,
+   re-entry screen) - deferred to full post-platform polish pass.
+3. Test data note: +27800000005/T-26-1060 is now a REAL completed
+   registration in Firestore (not a mid-flow test) - flag for
+   pre-launch test-data cleanup.
+4. Dashboard (M3) build: NOT STARTED this session - diagram review
+   is the explicit next step, now that registration's required-
+   sections logic is fully audited and fixed underneath it.
+5. Workflow note (locked earlier same day): QUICK STATUS table must
+   be actively rewritten every session close to match actual
+   outcome, not left as carryover - applied to this update.
