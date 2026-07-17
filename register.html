@@ -1743,6 +1743,23 @@
         return;
       }
     }
+    if (n === 8) {
+      const slot      = document.getElementById('photoSlot1');
+      const fileInput = document.getElementById('photo1');
+      slot.querySelector('.error-msg')?.remove();
+      let hasPhoto = !!(fileInput && fileInput.files[0]);
+      if (!hasPhoto && verifiedPhone) {
+        const pendSnap = await getDoc(doc(db, 'pending_registrations', verifiedPhone));
+        hasPhoto = !!(pendSnap.exists() && pendSnap.data().facePhotoPath);
+      }
+      if (!hasPhoto) {
+        const span = document.createElement('span');
+        span.className   = 'error-msg';
+        span.textContent = 'Verification photo required';
+        slot.appendChild(span);
+        return;
+      }
+    }
     accSectionStates[n] = 'done';
     const numEl    = document.getElementById('accNum'    + n);
     const statusEl = document.getElementById('accStatus' + n);
