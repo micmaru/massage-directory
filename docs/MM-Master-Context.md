@@ -211,6 +211,8 @@ Compiled 9 June 2026 from Master Context v20–v47 + session v48. 214 decisions 
 69. `displayName` move: from Personal section to About section — editable
 70. "Sign Out" button label: must read "Back to Main Menu" — LOCKED
 71. Photo storage path: `suppliers/{phone}/photos/{filename}` — LOCKED
+134. GOLDEN RULE 01 (Therapist) — Section 1 (Personal) becomes permanently locked the moment it is first SAVED (not submitted) — locked by design, both in the UI and the backend. The therapist can still see the section but cannot open or access it to edit — visible but not clickable/reachable, not merely a save-blocked field. Never editable by the therapist again after that save. Only admin can change it. This governs the registration record.
+135. GOLDEN RULE 02 (Therapist) — Section 8 (Photos) verification face photo can be freely uploaded, deleted, and replaced any number of times DURING active registration (pre-submit) — no restriction. The moment registration is SUBMITTED, the face photo becomes permanently locked — can never be changed again by the therapist, ever, only admin. Both golden rules deliberately decided and locked together, 17 July 2026, for the M3 therapist dashboard build - do not re-litigate. Spa equivalents (M4) to be decided separately, not assumed to be identical.
 
 ### OFFERINGS — LOCKED
 
