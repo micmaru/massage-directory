@@ -714,6 +714,12 @@
                 <label class="radio-item radio-item--flex"><input type="radio" name="premisesType" value="business" /><span class="radio-item__label">Business</span></label>
               </div>
             </div>
+            <div>
+              <div class="form-section-label">Amenities</div>
+              <div id="amenitiesGroup" class="check-group">
+                <div class="loading-options">Loading…</div>
+              </div>
+            </div>
             <div class="toggle-wrap">
               <div class="toggle-wrap__label">Mobile massage available</div>
               <label class="toggle">
@@ -728,12 +734,6 @@
                 <label class="radio-item radio-item--flex"><input type="radio" name="willingToTravelKm" value="10" /><span class="radio-item__label">10 km</span></label>
                 <label class="radio-item radio-item--flex"><input type="radio" name="willingToTravelKm" value="15" /><span class="radio-item__label">15 km</span></label>
                 <label class="radio-item radio-item--flex"><input type="radio" name="willingToTravelKm" value="20" /><span class="radio-item__label">20 km</span></label>
-              </div>
-            </div>
-            <div>
-              <div class="form-section-label">Amenities</div>
-              <div id="amenitiesGroup" class="check-group">
-                <div class="loading-options">Loading…</div>
               </div>
             </div>
           </div>
@@ -1714,6 +1714,15 @@
   }
 
   async function saveAccSection(n) {
+    if (n === 5) {
+      const dnField = document.getElementById('displayName').closest('.field');
+      dnField.classList.remove('field--error');
+      dnField.querySelector('.error-msg')?.remove();
+      if (!v('displayName')) {
+        markError(dnField, 'Display name is required');
+        return;
+      }
+    }
     accSectionStates[n] = 'done';
     const numEl    = document.getElementById('accNum'    + n);
     const statusEl = document.getElementById('accStatus' + n);
