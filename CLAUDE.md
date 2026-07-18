@@ -29,7 +29,8 @@ MassageMap is a three-sided massage therapy directory for the South African mark
 - map.html — map view, all active suppliers
 - register.html — therapist registration (8-section accordion). Therapist only.
 - register-spa.html — spa registration (8-section accordion). Spa only.
-- dashboard.html — supplier dashboard. Single file. Detects supplierType, renders therapist (8 sections) or spa (9 sections) accordion.
+- dashboard.html — therapist supplier dashboard (8 sections). Therapist only.
+- dashboard-spa.html — spa supplier dashboard (9 sections). Spa only. Not yet built. (Split confirmed 18 July 2026 — same no-suffix/-spa convention as register.html/register-spa.html.)
 - subscribe.html — subscription selection
 - payment.html — PayFast payment screen
 - admin.html — admin dashboard (hidden URL, desktop only, never link publicly)
@@ -78,7 +79,7 @@ MassageMap is a three-sided massage therapy directory for the South African mark
 - auditLog collection: append-only. No update, no delete — ever. Legal record.
 - facePhotoPath: required face/vetting photo (NOT an ID or passport copy). Its own field on the supplier document — not part of the photos array. Stores a Firebase Storage PATH, never a URL. Path: suppliers/{uid}/id/ — the private folder (read requires auth), never suppliers/{uid}/photos/ (public read). Rendered by fetching a fresh authenticated getDownloadURL() at render time; never persist a download URL — those carry a permanent bypass token and leak the file regardless of Storage rules. (Locked 13 July 2026 — renamed from facePhotoUrl, which stored a public download URL under the public photos path.)
 - photos array: card + additional photos. Indices under review — M11-Gallery not yet built; admin pages still read the legacy array. (Locked 9 June 2026 — retired idPhotoUrl.)
-- Dashboard: one file (dashboard.html). No separate dashboard-spa.html.
+- Dashboard: split into dashboard.html (therapist) and dashboard-spa.html (spa). (Reversed 18 July 2026 — previously one file; the two dashboards differ enough that a single branching file means constant runtime "which fields for which type" checks. Gallery stays a single shared gallery.html.)
 - admin.html: hidden URL — never link from any public page
 
 ## Identity handling — CRITICAL, read before touching auth/storage/notifications

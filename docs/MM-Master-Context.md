@@ -1,5 +1,5 @@
-# MassageMap — Master Context v63
-**Version:** 63 | **Date:** 2026-07-17 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v64
+**Version:** 64 | **Date:** 2026-07-18 | **Author:** Johan Cilliers | **Confidential**
 **File path (repo-relative): docs/MM-Master-Context.md — always read this file at session start.**
 **STANDALONE — no previous version needed. This is the single source of truth.**
 **Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. v51 bumped 24 June. This is the second consecutive on-time version bump.**
@@ -10,6 +10,7 @@
 **v61 bumped 15 July.**
 **v62 bumped 16 July.**
 **v63 bumped 17 July.**
+**v64 bumped 18 July 2026**
 
 ---
 
@@ -18,9 +19,9 @@
 | Item | Status |
 |---|---|
 | Launch target | 31 July 2026 |
-| Current phase | Registration (therapist) fully audited, fixed, and closed - required-sections logic (S4/S5/S7/S8) now correct and live-tested end-to-end (+27800000005, T-26-1060). S5 displayName gated, S7 7.2/7.4 Save blocked when empty + "General" options added, 7.1 defaults to "both", S8 photo gate added, S4 mobile-massage/travel reordered after Amenities. M11-Gallery shipped 14 July. M3 (therapist dashboard) NOT yet started - it must inherit the corrected S4/S5/S7/S8 rules. Spa equivalent (gallery-spa.html, register-spa audit) not started. |
-| Next session starts with | M3 dashboard diagram review (draw.io), locking screen flow before any brief is written. Dashboard must inherit the corrected S4/S5/S7/S8 rules from the 17 July audit. |
-| Primary blocker | None - registration is code-complete and live-tested end-to-end. Dashboard (M3) has not been scoped/diagrammed yet. (Prior admin-email/Resend DNS item still open but no longer the critical path - see 13-16 July logs.) |
+| Current phase | M3 Therapist Dashboard — planning/design locked, build not yet started |
+| Next session starts with | M3 build (Sections 2–7 content), once Field Register v3 corrections are confirmed applied. M1 diagram also needs the `resolveIdentity()`-after-fresh-OTP-verify addition, mirroring what M3 locked today. |
+| Primary blocker | None on M3 itself. POPIA private-data separation (new item, raised today) is undesigned and now a known prerequisite before Section 1/8/`addressLine1` can be built against — do not build those without it. Resend DNS ticket still open, not critical path. |
 | Google Cloud billing | DONE — Blaze plan, credit card attached, confirmed 9 June 2026 |
 | BulkSMS credits | AT ZERO — buy before Stage 2 |
 | Free trial expiry | 6 July 2026 — credit card attached, should auto-continue |
@@ -119,7 +120,7 @@ Compiled 9 June 2026 from Master Context v20–v47 + session v48. 214 decisions 
 1. Three-sided platform: Public/Customer (no login) / Supplier / Admin (Johan only)
 2. `supplierType` = `individual` (therapist) or `spa` — from URL parameter only, no toggle. **Never use `'therapist'` as a value anywhere in code.**
 3. Single `suppliers` Firestore collection — do not split. `supplierType` is the differentiator.
-4. Single `dashboard.html` — detects supplierType on load, renders correct sections (therapist: 8 sections, spa: 9 sections)
+4. ~~Single `dashboard.html` — detects supplierType on load, renders correct sections (therapist: 8 sections, spa: 9 sections)~~ **SUPERSEDED 18 July 2026:** dashboard split into separate `dashboard.html` (therapist) and `dashboard-spa.html` (spa) — same convention as register.html/register-spa.html. See 18 July session log for reasoning.
 5. Supplier document ID: phone number (e.g. `+27842500422`) — LOCKED as of S2.
 6. `uid` field: stored as a field on supplier document but NOT used as document ID
 7. Supplier number format: `T-YY-COUNTER` (therapist) / `S-YY-COUNTER` (spa), counter starts at 1001. Two counters in `settings/config`: `counterIndividual` and `counterSpa`.
@@ -203,7 +204,7 @@ Compiled 9 June 2026 from Master Context v20–v47 + session v48. 214 decisions 
 
 ### DASHBOARD — LOCKED ARCHITECTURE
 
-64. Single `dashboard.html` detects `supplierType` on load — no separate dashboard-spa.html
+64. ~~Single `dashboard.html` detects `supplierType` on load — no separate dashboard-spa.html~~ **SUPERSEDED 18 July 2026:** separate `dashboard.html` (therapist) and `dashboard-spa.html` (spa, not yet built). The two dashboards differ enough that a single branching file means constant runtime "which fields for which type" checks. Gallery stays a single shared `gallery.html`. See 18 July session log.
 65. Therapist dashboard: 8 sections. Spa dashboard: 9 sections.
 66. `associationMembership` is multi-select for BOTH therapist and spa — reads dynamically from offerings collection
 67. No progress bar on dashboard
@@ -2922,3 +2923,70 @@ Plus this session-close commit (Master Context + Obsidian note).
 5. Workflow note (locked earlier same day): QUICK STATUS table must
    be actively rewritten every session close to match actual
    outcome, not left as carryover - applied to this update.
+
+## Session Log — 18 July 2026 (GitHub Issues Reconciliation + M3 Dashboard Planning)
+
+### GitHub Issues reconciled
+Stale 9 June issues table replaced with live `gh issue list` state (35 open at session start). Closed: **#12** (offerings associations verified seeded and rendering, 17 July), **#15** (Tantric visual treatment resolved), **#36** (premisesType/mobileAvailable save-target bug resolved), **#39** (travel/distance options confirmed present, resolved via S4 reorder), **#43** (therapist registration OTP/session-skip logic fixed). Created: **#54** (pre-launch: clean up +27800000005/T-26-1060 test registration data), **#55** (gallery-to-register handoff requires second OTP cycle, parked), **#56** (cosmetic polish on OTP lockout screens, parked). Net: 35 → 33 open. Full reconciled list captured; 3 issues (#1, #2, #5) were previously invisible due to `gh`'s default 30-item page cap — no warning given on truncation, resolved with `--limit 100`.
+
+### M3 Therapist Dashboard — architecture decision, supersedes Master Context line 206
+**Dashboard split confirmed: separate `dashboard.html` (therapist) and `dashboard-spa.html` (spa, not yet built)** — same no-suffix/-spa convention as register.html/register-spa.html and gallery.html. This **reverses** the previously-LOCKED "single dashboard.html detects supplierType, no separate dashboard-spa.html" decision (Master Context line 206). Reason: the two dashboards look and behave differently enough that a single branching file means constant runtime "which fields for which type" checks — real complexity and frontend-lag risk, not just a maintenance preference. Gallery stays a single shared `gallery.html` (phone-driven, works for both types) — unaffected by this reversal.
+
+dashboard.html confirmed structurally stale — not touched at the architecture level since its original 3 June build (commit `0338952`). Missing: the old 4-slot `photos[]` system never migrated to `facePhotoPath` + M11-Gallery split; no Golden Rule lock logic; none of the 17 July S4/S5/S7/S8 required-field gating. Rebuild will use current register.html as the template (same approach as the original 3 June build), consistent with the "restore from git, then clean" principle — the git history here is register.html's current state, not a clean dashboard.html to restore.
+
+### M3 identity/session flow — locked, diagram-confirmed against live code
+Full M3 diagram walked and locked across several iterations. Final locked sequence:
+- Hamburger Menu → **token-in-device-memory check first** (`getValidSession`-equivalent) → `resolveIdentity()` wrapper **only fires if a token is found** — confirmed this order (not the reverse) by cross-checking `index.html`'s actual `routeToSupplierArea()`/`getValidSessionPhone()` implementation, which already does exactly this: cheap local check first, `resolveIdentity()`'s live Firestore uid-match + audit-logged check second, conditionally.
+- **Fresh-OTP path also gets `resolveIdentity()`** — inserted between `storeSession()` and "View & Edit Sections" on the "Pin correct & phone number on platform" branch. This closes a real gap: register.html's `handleNext()` currently never calls `resolveIdentity()` at all (only a cheap `user.phoneNumber === phone` check, no audit logging) — same gap flagged for M1 to close later, not fixed today.
+- "Pin correct & phone NOT on platform" branch → Therapist Registration M1, no `resolveIdentity()` call — correct, nothing to audit-check against a non-existent record.
+- Three dashboard exit routes distinguished and confirmed: (1) view-only → "Back to Main Menu", token persists; (2) edits made → "Back to Main Menu" (not Sign Out), token persists; (3) explicit "Sign Out" → `clearSession()` wipes `mm_session_<phone>`, full OTP required next entry. Both (1) and (2) trigger OTP on return only if `getValidSession()`'s existing 30-day expiry has actually elapsed — no new 30-day logic needed, `identity-service.js` already implements it.
+- Button label confirmed: **"Back to Main Menu"**, not "Sign Out" or "Log-out" — closes #31 once built.
+- Section 1 and Section 8 confirmed excluded from "Edit Sections (2-8)" entirely — visible read-only elsewhere on the dashboard screen (grey dashed box on diagram), not absent. Same for phone/token display.
+
+**M1 diagram still needs the equivalent `resolveIdentity()`-after-fresh-OTP addition applied — not done today, carried to next M1 session.**
+
+### GOLDEN RULE — unified, supersedes the two previously-separate Section 1/Section 8 rules
+Confirmed via direct code check: register.html's Section 1 (`firstName`/`lastName`) has **zero** lock logic today — no `readonly`, no `disabled`, no `input--locked` class, freely re-editable after every save. This contradicts the old "GOLDEN RULE 01: locks on save" note, which was never actually built and is now formally retired.
+
+**New unified rule:** Section 1 (Personal) and Section 8 (Photos) both lock together, triggered by **Submit**, not save. Freely editable throughout registration, right up to submit. The instant `registrationComplete: true`, both lock permanently — visible in dashboard using the same `input--locked` treatment as the phone/token field, but applied fresh (not currently present on these fields). Only admin can change either after that point. Reason: these are the two fields admin actually vets (identity + verification photo) before approval — letting them change quietly post-approval would mean the live listing no longer matches what was checked.
+
+Confirmed via code check (register.html lines 1085–1101) that a submitted therapist can never reach register.html again through any path — index.html's `resolveIdentity()` returns `verified` and routes straight to dashboard.html, and register.html has its own independent defensive redirect checking `pending_registrations` status as a second guard. So no lock logic needs retrofitting into register.html itself — the Golden Rule is a dashboard-only concern.
+
+### Required/Locked/Public — new explicit field attributes, replacing inconsistent free-text notes
+Raised as a structural gap: "LOCKED post-registration" in the Field Register had gone stale on at least three fields (`province`, `suburb`, `displayName`) without being caught, directly because Required and Locked were never tracked as separate, explicit attributes. Full field-by-field walk completed for all therapist-facing Sections 1–8; results captured in **Field Register v3** (new file, `docs/MM-Field-Register-v3.md` — supersedes v2). Key corrections: `province`/`suburb` confirmed fully editable, never locked (a therapist relocates between provinces — this is expected to be the most-edited section on the platform). `displayName` confirmed required, never locked, public — correcting a stale note that contradicted the entire reason it was moved out of Section 1 on 11 July in the first place (issue #30).
+
+Section-by-section Required/Locked table locked in full — see Field Register v3 for the complete table.
+
+### `gpsLat`/`gpsLng` — live geocode bug found, not yet fixed
+Raised via a security/POPIA concern, not just a UX one: register.html's Section 3 save currently geocodes the **full street address** (`addressLine1` + suburb) via the Google Maps API whenever `addressLine1` is present, only falling back to suburb centroid if that API call fails. This produces a precise pinpoint most of the time and directly contradicts the already-locked "Therapist: suburb centroid" rule (Field Register, Master Context line 270). Confirmed as a real exposure, not just a UI-hiding concern: if `gpsLat`/`gpsLng` are used to place the public map pin (they are — needed for "near me" search and map view), a precise geocode leaks the therapist's exact address regardless of whether `addressLine1` itself is ever displayed — the coordinate *is* the address in a different format. **Not fixed today** — needs correcting in register.html directly (shared code path with dashboard), removing the live geocode call entirely in favour of a suburb-centroid lookup against Locations Reference data. Logged in Field Register v3 Known Gaps.
+
+### POPIA private-data separation — raised again, still undesigned, now a confirmed blocker for specific fields
+Johan confirmed this is a recurring, real requirement — not scope creep — and connected it explicitly to competitive risk ("as soon as the platform is launched, my competitor will immediately hunt to see what we have done"). Decision: **build it now**, starting from register.html as the platform's foundation, rather than continuing to patch around it field-by-field (as today's `addressLine1`/`gpsLat` discussion was starting to do). Explicitly acknowledged and accepted: this pushes past the 24 July internal-completion and 31 July launch target dates. Johan is deliberately not setting new dates yet — the existing dates remain the working targets to stay as close to as possible, not hard commitments already abandoned.
+
+Confirmed via direct Master Context check: no structural separation exists today. Everything — including fields already marked "admin only" in the Field Register (`addressLine1`, `facePhotoPath`, `firstName`, `lastName`, `gender`, `vetNotes`) — lives in one flat, single `suppliers/{phone}` Firestore document. "Admin only" is enforced purely by frontend display convention, not by any actual data-layer restriction — meaning it says nothing about what's readable by a direct Firestore query or a scrape, if security rules allow any such read at all (unverified, needs checking as part of this design).
+
+**Design not started today** — deliberately deferred until the Section 2–7 review finished, since it surfaced naturally from that review rather than being decided in isolation. Confirmed scope so far: at minimum `firstName`, `lastName`, `gender`, `addressLine1`, `facePhotoPath`, `vetNotes` are candidates for the separated/private store. Structure (separate collection vs. subcollection), security rules impact, and every read/write path touching supplier data across register.html/dashboard.html/gallery.html/admin.html all still need designing. **This is the explicit next major topic**, ahead of resuming Section 8's build-out.
+
+### Communication channels — three-channel model documented for the first time
+Confirmed against `MassageMap_Notification_Reference_v1.docx` (T1–T12) and today's discussion: three structurally independent channels — **Admin↔MassageMap** (Telegram + `admin@massagemap.co.za`, not driven by any therapist field), **MassageMap→Therapist** (`cellNumber` always via BulkSMS, `email` conditionally via Resend, WhatsApp not used until Phase 2), and **Therapist↔Customer** (new for today — `cellNumber` always revealed, `cellNumberTwo` and `whatsappNumber` toggle-gated). `email` confirmed **excluded** from the Therapist↔Customer channel entirely — customers can only reach a therapist by phone or WhatsApp, never email.
+
+**New field: `cellNumberTwo`** — secondary public phone number, toggle-gated (proposed toggle name `showCellNumberTwo`, not yet confirmed), optional, never locked, never used for OTP/token. Every phone number shown on the public front end (both `cellNumber` and `cellNumberTwo` when revealed) must route through the same shared call mechanism — no plain static-text rendering.
+
+`contactPreferences` (`[sms, email, whatsapp]`) confirmed to have **no actual effect** in current T1–T12 trigger logic for therapists — every trigger hardcodes unconditional SMS + conditional email, never reads this array. Narrowed to `[sms, email]` for therapist at launch (`whatsapp` parked for Phase 2, despite being therapists' actual preferred channel per Johan). Field is **not retired** — confirmed it will become functional for spa, which has a genuine routing need (owner/manager/main-office number) that therapist doesn't have.
+
+Full detail: new file `docs/MM-Communication-Channels-Reference-v1.md`.
+
+### Documents produced this session
+- `docs/MM-Field-Register-v3.md` — supersedes v2. Explicit Public/Required/Locked columns added to every therapist field. Three stale "LOCKED" corrections. `addressLine1`, `firstName`, `lastName`, `gender`, `facePhotoPath` flagged PENDING REDESIGN pending the private-data separation work. New `cellNumberTwo` field documented. Known Gaps section expanded (gpsLat/gpsLng geocode bug, `getValidSessionPhone()` duplication, M1 diagram gap).
+- `docs/MM-Communication-Channels-Reference-v1.md` — new. Three-channel model, full field-by-channel breakdown.
+
+### Parked / carried forward
+1. `getValidSessionPhone()` in index.html duplicates `identity-service.js`'s localStorage-parsing logic instead of reusing it (can't reuse directly — it doesn't know the phone number yet, it's searching for one). Two independent pieces of code now parse the same `mm_session_*` token shape. Risk of drift if token structure ever changes. **Still undecided:** log as a GitHub issue, or accept as low-risk duplication.
+2. `showCellNumberTwo` toggle field name — proposed, not confirmed.
+3. M1 diagram — needs the `resolveIdentity()`-after-fresh-OTP-verify addition, mirroring M3. Not applied today; Johan deliberately deferred M1 changes until M3 was fully locked.
+4. POPIA private-data separation — full design session required. Explicit next major topic.
+5. `gpsLat`/`gpsLng` live-geocode-instead-of-centroid bug — needs fixing in register.html, not yet done.
+6. All items previously carried forward from 17 July remain open and untouched today (gallery→register second-OTP-cycle UX, OTP lockout cosmetic polish, +27800000005/T-26-1060 test-data cleanup — now tracked as issues #55, #56, #54 respectively).
+
+---
+*Session closed 18 July 2026. No brief written or code changed this session — planning and documentation only, by explicit instruction.*
