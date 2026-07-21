@@ -389,6 +389,38 @@ exports.generateSupplierNumber = functions
     return { supplierNumber };
   });
 
+exports.geocodeAddress = functions
+  .region("us-central1")
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Must be signed in.");
+    }
+    const query = data && data.query;
+    if (!query || typeof query !== "string") {
+      throw new functions.https.HttpsError("invalid-argument", "Missing query string.");
+    }
+    const key = process.env.GEOCODING_API_KEY;
+    if (!key) {
+      console.error("geocodeAddress: GEOCODING_API_KEY not set");
+      return null;
+    }
+    try {
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${key}`
+      );
+      const json = await res.json();
+      if (json.status === "OK" && json.results.length) {
+        const { lat, lng } = json.results[0].geometry.location;
+        return { lat, lng };
+      }
+      console.error("geocodeAddress non-OK status:", json.status, json.error_message || "");
+      return null;
+    } catch (err) {
+      console.error("geocodeAddress error:", err);
+      return null;
+    }
+  });
+
 exports.recordOtpEvent = functions
   .runWith({ enforceAppCheck: true })
   .region("us-central1")

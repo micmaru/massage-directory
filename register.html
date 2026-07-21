@@ -2097,19 +2097,14 @@
   }
 
   async function geocodeAddress(address) {
-    const key = window.GOOGLE_MAPS_GEOCODING_KEY;
-    if (!key) return null;
     try {
-      const res  = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${key}`);
-      const json = await res.json();
-      if (json.status === 'OK' && json.results.length) {
-        const { lat, lng } = json.results[0].geometry.location;
-        return { lat, lng };
-      } else {
-        console.error('geocodeAddress non-OK status:', json.status, json.error_message || '');
-      }
-    } catch (err) { console.error('geocodeAddress error:', err); }
-    return null;
+      const callFn = httpsCallable(functionsInstance, 'geocodeAddress');
+      const result = await callFn({ query: address });
+      return result.data || null;
+    } catch (err) {
+      console.error('geocodeAddress error:', err);
+      return null;
+    }
   }
 
   // ════════════════════════════════════════════
