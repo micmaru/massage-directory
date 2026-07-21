@@ -1824,9 +1824,10 @@
     } else if (n === 3) {
       const addressLine1 = v('addressLine1') || null;
       const loc          = getLocationValues();
-      const geoQuery     = addressLine1
-        ? `${addressLine1}, ${loc.suburb}, South Africa`
-        : `${loc.suburb}, South Africa`;
+      const geoTarget = loc.suburb || loc.locationArea;
+      const geoQuery  = addressLine1
+        ? `${addressLine1}, ${geoTarget}, South Africa`
+        : `${geoTarget}, South Africa`;
       const geo = await geocodeAddress(geoQuery);
       let point = null;
       if (geo) {
