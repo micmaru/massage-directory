@@ -687,7 +687,7 @@
               <input class="input" id="addressLine1" type="text" placeholder="Your street address" autocomplete="street-address" />
               <div class="field__note">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                Helps admin verify your listing faster. Never shown publicly — admin only.
+                Optional — filling this in improves your visibility on the map. Precise address will never be shown to customers.
               </div>
             </div>
           </div>
@@ -1828,11 +1828,16 @@
         ? `${addressLine1}, ${loc.suburb}, South Africa`
         : `${loc.suburb}, South Africa`;
       const geo = await geocodeAddress(geoQuery);
+      let point = null;
+      if (geo) {
+        const radius = addressLine1 ? 200 : 500;
+        point = await jitterWithSeparation(geo.lat, geo.lng, radius, loc.suburb, verifiedPhone);
+      }
       data = {
         ...loc,
         addressLine1,
-        gpsLat:         geo ? geo.lat : null,
-        gpsLng:         geo ? geo.lng : null
+        gpsLat:         point ? point.lat : null,
+        gpsLng:         point ? point.lng : null
       };
     } else if (n === 4) {
       const amenities = Array.from(
@@ -2047,6 +2052,50 @@
   // ════════════════════════════════════════════
   // GEOCODING
   // ════════════════════════════════════════════
+  function jitterCoordinate(lat, lng, radiusMeters) {
+    // Random point uniformly distributed within radiusMeters of (lat, lng).
+    // sqrt(random) scales the radius so points aren't clustered at the centre.
+    const r     = radiusMeters * Math.sqrt(Math.random());
+    const theta = Math.random() * 2 * Math.PI;
+    const dLat  = (r * Math.cos(theta)) / 111320;
+    const dLng  = (r * Math.sin(theta)) / (111320 * Math.cos(lat * Math.PI / 180));
+    return { lat: lat + dLat, lng: lng + dLng };
+  }
+
+  function haversineMeters(lat1, lng1, lat2, lng2) {
+    const R    = 6371000;
+    const toRad = d => d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2
+            + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  async function jitterWithSeparation(lat, lng, radiusMeters, suburb, excludePhone) {
+    // Collect existing pins in the same suburb (excluding the current user's doc).
+    const existing = [];
+    try {
+      const snap = await getDocs(query(collection(db, 'suppliers'), where('suburb', '==', suburb)));
+      snap.forEach(docSnap => {
+        if (docSnap.id === excludePhone) return;
+        const d = docSnap.data();
+        if (typeof d.gpsLat === 'number' && typeof d.gpsLng === 'number') {
+          existing.push({ lat: d.gpsLat, lng: d.gpsLng });
+        }
+      });
+    } catch (_) {}
+
+    let last = jitterCoordinate(lat, lng, radiusMeters);
+    for (let attempt = 0; attempt < 10; attempt++) {
+      last = jitterCoordinate(lat, lng, radiusMeters);
+      const clear = existing.every(p => haversineMeters(last.lat, last.lng, p.lat, p.lng) >= 100);
+      if (clear) return last;
+    }
+    // Attempt cap reached — accept the last attempt rather than block Submit.
+    return last;
+  }
+
   async function geocodeAddress(address) {
     const key = window.GOOGLE_MAPS_API_KEY;
     if (!key) return null;
