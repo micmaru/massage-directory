@@ -2105,6 +2105,8 @@
       if (json.status === 'OK' && json.results.length) {
         const { lat, lng } = json.results[0].geometry.location;
         return { lat, lng };
+      } else {
+        console.error('geocodeAddress non-OK status:', json.status, json.error_message || '');
       }
     } catch (err) { console.error('geocodeAddress error:', err); }
     return null;
