@@ -1496,6 +1496,8 @@
     if (!data) return;
     if (data.whatsappNumber) document.getElementById('whatsappNumber').value = data.whatsappNumber;
     if (data.showWhatsapp) document.getElementById('showWhatsapp').checked = true;
+    if (data.cellNumberTwo) document.getElementById('cellNumberTwo').value = data.cellNumberTwo;
+    if (data.showCellNumberTwo) document.getElementById('showCellNumberTwo').checked = true;
     if (data.email) document.getElementById('email').value = data.email;
     if (Array.isArray(data.contactPreferences)) {
       if (data.contactPreferences.includes('email')) {
@@ -2182,6 +2184,8 @@
         gender:                saved.gender                || null,
         whatsappNumber:        saved.whatsappNumber        || null,
         showWhatsapp:          saved.showWhatsapp          || false,
+        cellNumberTwo:         saved.cellNumberTwo         || null,
+        showCellNumberTwo:     saved.showCellNumberTwo     || false,
         email:                 saved.email                 || null,
         contactPreferences:    saved.contactPreferences    || ['sms'],
         province:              saved.province              || null,
