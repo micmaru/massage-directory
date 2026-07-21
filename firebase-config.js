@@ -21,3 +21,4 @@ export const app = initializeApp(firebaseConfig);
 export const db  = getFirestore(app);
 
 window.GOOGLE_MAPS_API_KEY = 'AIzaSyDPsYnja58ySG-z0_0ejM_EEgKExGNvrHw';
+window.GOOGLE_MAPS_GEOCODING_KEY = 'PASTE_KEY_HERE';

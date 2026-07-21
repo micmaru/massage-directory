@@ -2097,7 +2097,7 @@
   }
 
   async function geocodeAddress(address) {
-    const key = window.GOOGLE_MAPS_API_KEY;
+    const key = window.GOOGLE_MAPS_GEOCODING_KEY;
     if (!key) return null;
     try {
       const res  = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${key}`);
