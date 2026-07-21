@@ -1832,7 +1832,8 @@
       let point = null;
       if (geo) {
         const radius = addressLine1 ? 200 : 500;
-        point = await jitterWithSeparation(geo.lat, geo.lng, radius, loc.suburb, verifiedPhone);
+        const geoField = loc.suburb ? 'suburb' : 'locationArea';
+        point = await jitterWithSeparation(geo.lat, geo.lng, radius, geoField, geoTarget, verifiedPhone);
       }
       data = {
         ...loc,
@@ -2073,11 +2074,11 @@
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
-  async function jitterWithSeparation(lat, lng, radiusMeters, suburb, excludePhone) {
-    // Collect existing pins in the same suburb (excluding the current user's doc).
+  async function jitterWithSeparation(lat, lng, radiusMeters, field, value, excludePhone) {
+    // Collect existing pins sharing the same geocode target (excluding the current user's doc).
     const existing = [];
     try {
-      const snap = await getDocs(query(collection(db, 'suppliers'), where('suburb', '==', suburb)));
+      const snap = await getDocs(query(collection(db, 'suppliers'), where(field, '==', value)));
       snap.forEach(docSnap => {
         if (docSnap.id === excludePhone) return;
         const d = docSnap.data();
