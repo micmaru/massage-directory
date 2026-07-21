@@ -2106,7 +2106,7 @@
         const { lat, lng } = json.results[0].geometry.location;
         return { lat, lng };
       }
-    } catch (_) {}
+    } catch (err) { console.error('geocodeAddress error:', err); }
     return null;
   }
 
