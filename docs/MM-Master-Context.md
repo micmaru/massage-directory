@@ -1,5 +1,5 @@
-# MassageMap — Master Context v64
-**Version:** 64 | **Date:** 2026-07-18 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v65
+**Version:** 65 | **Date:** 2026-07-21 | **Author:** Johan Cilliers | **Confidential**
 **File path (repo-relative): docs/MM-Master-Context.md — always read this file at session start.**
 **STANDALONE — no previous version needed. This is the single source of truth.**
 **Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. v51 bumped 24 June. This is the second consecutive on-time version bump.**
@@ -11,6 +11,7 @@
 **v62 bumped 16 July.**
 **v63 bumped 17 July.**
 **v64 bumped 18 July 2026**
+**v65 bumped 21 July 2026**
 
 ---
 
@@ -19,9 +20,10 @@
 | Item | Status |
 |---|---|
 | Launch target | 31 July 2026 |
-| Current phase | M3 Therapist Dashboard — planning/design locked, build not yet started |
-| Next session starts with | M3 build (Sections 2–7 content), once Field Register v3 corrections are confirmed applied. M1 diagram also needs the `resolveIdentity()`-after-fresh-OTP-verify addition, mirroring what M3 locked today. |
-| Primary blocker | None on M3 itself. POPIA private-data separation (new item, raised today) is undesigned and now a known prerequisite before Section 1/8/`addressLine1` can be built against — do not build those without it. Resend DNS ticket still open, not critical path. |
+| Current phase | register.html known-issue list — CLOSED this session (address/gpsLat/jitter chain, cellNumberTwo, Section 3 validation, lock-status verification all done and tested) |
+| Next session starts with | POPIA public/private supplier split — DEDICATED SESSION, standalone focus, not bundled with further register.html work unless something new surfaces. Design not yet started (candidates already identified: firstName, lastName, gender, addressLine1, facePhotoPath, vetNotes — see prior session's notes). |
+| Primary blocker | None blocking register.html (closed). POPIA split design is the open item ahead of that dedicated session. |
+| Also carried forward (not next session's focus unless raised) | Silent device GPS capture UI (decided, not yet built); admin.html login/permission fix (found this session, not fixed); M1 diagram `resolveIdentity()` gap; `showCellNumberTwo` public-display build; BulkSMS credits at zero. |
 | Google Cloud billing | DONE — Blaze plan, credit card attached, confirmed 9 June 2026 |
 | BulkSMS credits | AT ZERO — buy before Stage 2 |
 | Free trial expiry | 6 July 2026 — credit card attached, should auto-continue |
@@ -2990,3 +2992,65 @@ Full detail: new file `docs/MM-Communication-Channels-Reference-v1.md`.
 
 ---
 *Session closed 18 July 2026. No brief written or code changed this session — planning and documentation only, by explicit instruction.*
+
+## Session Log — 21 July 2026 (register.html Known-Issue List Closed — Address/Geocode/Jitter Chain, cellNumberTwo, Section 3 Validation)
+**Branch: feature/2026-07-20-registration-fixes — not yet merged to main, not yet pushed.**
+
+### SESSION SEQUENCING DECISION
+Read full Master Context v64 at session start. Explicit decision made: register.html's known-issue list gets fixed and closed BEFORE the POPIA public/private supplier split resumes. This reverses the urgency POPIA was given on 18 July — POPIA split is deliberately deferred, not abandoned. Old branch feature/2026-07-15-m1-otp-lockout confirmed gone (never merged, no trace on main or origin). New branch feature/2026-07-20-registration-fixes created for this session's work, not yet merged to main, not yet pushed.
+
+### LOCATION/ADDRESS DESIGN — LOCKED
+Three-piece model decided and built this session:
+
+1. **Silent device GPS capture** (registrationGpsLat/registrationGpsLng) — captured on registration-screen entry; if permission is off, prompt again at Submit so it isn't missed; visible to ADMIN only (vetting, area management, confirming therapist is genuinely where she says — corrected from an earlier assumption that this was legal-record-only); never shown to therapist or customer. NOT YET BUILT — this was decided but the actual capture code was not written this session (only the addressLine1/gpsLat path was built — see below). Flag this as the next concrete build item within register.html, separate from the POPIA split.
+
+2. **Province/town/suburb/area dropdowns** — unchanged, public, remains the fallback source for the public map pin.
+
+3. **addressLine1** — stays in Section 3 (not moved to Section 1), optional, not required. New note text: "Optional — filling this in improves your visibility on the map. Precise address will never be shown to customers." If filled: geocoded, then jittered 200m before writing to public gpsLat/gpsLng. If blank: falls back to suburb (or locationArea if suburb unset — informal-settlement path) geocode, jittered 500m. Minimum 100m separation enforced between any two suppliers' jittered pins in the same suburb/area (retry loop, max 10 attempts, accepts closest result if cap reached rather than blocking Submit).
+
+Public precise pin-drop map (WhatsApp-style manual placement) explicitly PARKED as post-launch. Researched during this session: the competitor's site and RoomKing (SA's largest backyard-room platform, active in Johan's actual target informal-settlement market) both use suburb/area text only, no map pins, and both operate successfully at scale on that model. Decision: suburb/area-level display is sufficient for launch; a real interactive map remains a genuine differentiator worth building properly post-launch, not squeezed into the pre-launch window.
+
+### REGISTER.HTML — FIXED AND COMMITTED THIS SESSION
+- geocodeAddress() silent catch block fixed — now logs thrown errors AND Google's non-OK API statuses (was previously swallowing both)
+- Root cause of gpsLat/gpsLng returning null found: Google Geocoding API was not activated on the Google Cloud project — enabled
+- Second root cause found: Geocoding API rejects HTTP-referrer-restricted keys entirely (REQUEST_DENIED) — this is a hard Google constraint, not a config error. A client-side, browser-callable geocoding key can never be properly restricted, since the calling IP is the end user's device, not a fixed server. This forced an architecture change, not just a config fix.
+- Geocoding moved server-side: new callable Cloud Function geocodeAddress (us-central1, auth-gated matching the generateSupplierNumber pattern), deployed. Calls Google Geocoding API server-side using a new IP-restricted key (works now because the call originates from Google's Cloud Functions infrastructure, not the browser).
+- New API key created: "MassageMap Geocoding Key", restricted to Geocoding API only, IP-restricted. Stored in macOS Passwords app (not in the repo). Referenced by the Cloud Function via functions/.env as GEOCODING_API_KEY.
+- Client-side window.GOOGLE_MAPS_GEOCODING_KEY removed from firebase-config.js entirely — no geocoding key ships to the browser anymore. window.GOOGLE_MAPS_API_KEY (map display, referrer-restricted) is untouched and still works as before.
+- jitterCoordinate() and haversineMeters() helpers added.
+- jitterWithSeparation() added — queries the suppliers collection for peers sharing the same suburb/locationArea, retries the jitter (max 10 attempts) until the result is ≥100m from every existing peer pin.
+- Fallback to locationArea as the geocode/separation target when suburb is unset (informal-settlement registration path) — found and fixed same session, in two passes (geocode target first, then the separation-query field, which was still hardcoded to suburb after the first fix).
+- Section 3 required-field validation added. BUG FOUND during testing: saveAccSection(3) previously had NO validation at all — a record could be saved with province/town/suburb genuinely empty, silently producing gpsLat/gpsLng: null. Now blocks Save with an inline error if province, town, or (suburb OR locationArea) are empty — matches the existing Section 5/8 validation pattern.
+- Section 2: new optional cellNumberTwo field + showCellNumberTwo toggle added (same UX pattern as showWhatsapp). Validated through the existing formatPhoneNumber(). Two gaps found and fixed same session after the initial build: the value wasn't restored on resume-prefill, and it wasn't included in submitForm()'s finalData whitelist (would have silently vanished at Submit, never reaching the live suppliers doc). Both fixed, full round trip confirmed working: save → resume → submit → lands on suppliers doc.
+- Public display of cellNumberTwo (profile.html/listings.html, behind showCellNumberTwo) deliberately NOT built this session — depends on the not-yet-designed customer call-up/reveal mechanism. Flagged by CC, declined as out of scope for today.
+- Verified (read-only, no changes needed): province, area, suburb, locationArea, and displayName have NO lock logic anywhere in register.html. Confirmed consistent with the Golden Rule (registration never locks fields — only the dashboard does, on Submit, for Section 1 + 8 only) and with Field Register v3's corrected lock-status notes.
+
+### NEW ISSUE FOUND, NOT FIXED — admin.html permission failures
+Approve/Reject/Investigate all fail with "Missing or insufficient permissions" (loadSubscriptions, loadChangeLogs, changeLog write, confirmVetAction). Root cause confirmed: firestore.rules' isAdmin() checks a single hardcoded Auth UID (BGI0KYCKnYVM85GdlH1CG2KHP0p2). The browser session testing admin.html was authenticated as a different UID (vg5bwe3c5uT7zS4mT1BL41Q950A3) — because admin.html has no real sign-in/sign-out screen yet, so whatever authenticates in the background will essentially never match the hardcoded UID. This is a known, pre-existing gap (admin login was already on the roadmap) surfacing because admin.html happened to be opened this session. Not fixed. Not blocking register.html work.
+
+### COMMITS THIS SESSION
+Branch feature/2026-07-20-registration-fixes, in order: 4e4e1b7, 2386408, 22a3556, dda5b9d, da75915, 24f0a18 (Cloud Function), 303a74d, 6cac490, 79f08cf. Branch not yet merged to main, not yet pushed.
+
+| Commit | Content |
+|---|---|
+| 4e4e1b7 | jitter gpsLat/gpsLng on Section 3 save, min 100m separation |
+| 2386408 | log geocodeAddress errors instead of silent catch |
+| 22a3556 | log geocodeAddress non-OK Google status |
+| dda5b9d | fall back to locationArea for geocode query when suburb is unset |
+| da75915 | key jitter separation query off geoTarget field, not always suburb |
+| 24f0a18 | move geocoding server-side via Cloud Function, remove client-side key |
+| 303a74d | add cellNumberTwo optional field to Section 2 |
+| 6cac490 | carry cellNumberTwo through prefill and submit whitelist |
+| 79f08cf | enforce province/town/suburb-or-area validation before Section 3 save |
+
+### Parked / carried forward
+1. Silent device GPS capture UI (registrationGpsLat/registrationGpsLng) — decided and locked this session, not yet built. Next concrete build item within register.html, separate from the POPIA split.
+2. admin.html login/permission fix — found this session (isAdmin() hardcoded-UID mismatch, no real admin sign-in screen), not fixed. Pre-existing roadmap gap.
+3. M1 diagram — still needs the `resolveIdentity()`-after-fresh-OTP-verify addition, mirroring M3. Carried forward from 18 July, not touched this session.
+4. showCellNumberTwo public-display build (profile.html/listings.html) — depends on not-yet-designed customer call-up/reveal mechanism.
+5. BulkSMS credits at zero — buy before Stage 2.
+6. Public precise pin-drop map (WhatsApp-style manual placement) — PARKED post-launch (suburb/area text sufficient for launch, per competitor/RoomKing research).
+7. POPIA public/private supplier split — deliberately deferred this session (urgency reversed from 18 July), remains the explicit next major topic as a dedicated standalone session.
+
+---
+*Session closed 21 July 2026. register.html known-issue list closed and tested on branch feature/2026-07-20-registration-fixes — not yet merged to main, not yet pushed. Master Context updated for review before the combined close-out commit; no commit made yet.*
