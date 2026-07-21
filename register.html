@@ -1773,6 +1773,30 @@
         return;
       }
     }
+    if (n === 3) {
+      const provinceField = document.getElementById('provinceField');
+      const areaField      = document.getElementById('areaField');
+      const suburbField    = document.getElementById('suburbField');
+      const locAreaField   = document.getElementById('locationAreaField');
+      [provinceField, areaField, suburbField, locAreaField].forEach(f => {
+        f.classList.remove('field--error');
+        f.querySelector('.error-msg')?.remove();
+      });
+      const suburbOrAreaFilled = v('suburb') || v('locationArea');
+      if (!v('province')) {
+        markError(provinceField, 'Province is required');
+        return;
+      }
+      if (!v('area')) {
+        markError(areaField, 'City / Town is required');
+        return;
+      }
+      if (!suburbOrAreaFilled) {
+        const target = locAreaField.classList.contains('hidden') ? suburbField : locAreaField;
+        markError(target, 'Suburb or Area is required');
+        return;
+      }
+    }
     accSectionStates[n] = 'done';
     const numEl    = document.getElementById('accNum'    + n);
     const statusEl = document.getElementById('accStatus' + n);
