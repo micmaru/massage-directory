@@ -610,6 +610,17 @@
               <input class="input input--locked" id="cellDisplay" type="tel" readonly />
             </div>
             <div class="field">
+              <label class="field__label" for="cellNumberTwo">Second Cell Number <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
+              <input class="input" id="cellNumberTwo" type="tel" placeholder="Leave blank if not applicable" />
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle-wrap__label">Show second number on listing</div>
+              <label class="toggle">
+                <input type="checkbox" id="showCellNumberTwo" name="showCellNumberTwo" />
+                <span class="toggle__track"></span>
+              </label>
+            </div>
+            <div class="field">
               <label class="field__label" for="whatsappNumber">WhatsApp Number <span style="font-weight:400; color:var(--text-muted);">(optional)</span></label>
               <input class="input" id="whatsappNumber" type="tel" placeholder="Leave blank to use your cell number" />
             </div>
@@ -1818,6 +1829,8 @@
       data = {
         whatsappNumber:     v('whatsappNumber') || null,
         showWhatsapp:       document.getElementById('showWhatsapp').checked,
+        cellNumberTwo:      v('cellNumberTwo') ? formatPhoneNumber(v('cellNumberTwo')) : null,
+        showCellNumberTwo:  document.getElementById('showCellNumberTwo').checked,
         email:              v('email') || null,
         contactPreferences
       };
