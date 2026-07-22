@@ -1,5 +1,5 @@
-# MassageMap — Master Context v65
-**Version:** 65 | **Date:** 2026-07-21 | **Author:** Johan Cilliers | **Confidential**
+# MassageMap — Master Context v66
+**Version:** 66 | **Date:** 2026-07-22 | **Author:** Johan Cilliers | **Confidential**
 **File path (repo-relative): docs/MM-Master-Context.md — always read this file at session start.**
 **STANDALONE — no previous version needed. This is the single source of truth.**
 **Note: v50 header was never updated despite 13-16 June sessions being appended — those sessions are present in the body of this file under their own dated headings. v51 bumped 24 June. This is the second consecutive on-time version bump.**
@@ -12,6 +12,7 @@
 **v63 bumped 17 July.**
 **v64 bumped 18 July 2026**
 **v65 bumped 21 July 2026**
+**v66 bumped 22 July 2026**
 
 ---
 
@@ -20,10 +21,10 @@
 | Item | Status |
 |---|---|
 | Launch target | 31 July 2026 |
-| Current phase | register.html known-issue list — CLOSED this session (address/gpsLat/jitter chain, cellNumberTwo, Section 3 validation, lock-status verification all done and tested) |
+| Current phase | register.html fragility review (22 July) — Finding 1 (resume-redirect keyed off the `pending_registrations` mirror instead of canonical `suppliers.registrationComplete`) FIXED + committed (b019cd8) — fast-forward merged 929ebec..b019cd8 to origin/main and pushed; branch feature/2026-07-22-register-fragile-fixes deleted; Finding 2 (missing `resolveIdentity()` in `verifyOtp()`) assessed and dismissed as a mischaracterisation; M1 diagram phone-entry box label corrected. Prior register.html known-issue list remains CLOSED (21 July — address/gpsLat/jitter chain, cellNumberTwo, Section 3 validation, lock-status verification all done and tested). |
 | Next session starts with | POPIA public/private supplier split — DEDICATED SESSION, standalone focus, not bundled with further register.html work unless something new surfaces. Design not yet started (candidates already identified: firstName, lastName, gender, addressLine1, facePhotoPath, vetNotes — see prior session's notes). |
 | Primary blocker | None blocking register.html (closed). POPIA split design is the open item ahead of that dedicated session. |
-| Also carried forward (not next session's focus unless raised) | Silent device GPS capture UI (decided, not yet built); admin.html login/permission fix (found this session, not fixed); M1 diagram `resolveIdentity()` gap; `showCellNumberTwo` public-display build; BulkSMS credits at zero. |
+| Also carried forward (not next session's focus unless raised) | Silent device GPS capture UI (decided, not yet built); admin.html login/permission fix (found this session, not fixed); `showCellNumberTwo` public-display build; BulkSMS credits at zero. (M1 diagram `resolveIdentity()`-after-OTP addition CLOSED-BY-DECISION 22 July — see follow-up note.) |
 | Google Cloud billing | DONE — Blaze plan, credit card attached, confirmed 9 June 2026 |
 | BulkSMS credits | AT ZERO — buy before Stage 2 |
 | Free trial expiry | 6 July 2026 — credit card attached, should auto-continue |
@@ -3054,3 +3055,63 @@ Branch feature/2026-07-20-registration-fixes, in order: 4e4e1b7, 2386408, 22a355
 
 ---
 *Session closed 21 July 2026. register.html known-issue list closed and tested on branch feature/2026-07-20-registration-fixes — not yet merged to main, not yet pushed. Master Context updated for review before the combined close-out commit; no commit made yet.*
+
+## Session Log — 22 July 2026 (register.html Resume-Redirect Fragility Fix + resolveIdentity/getValidSession Clarification)
+**Branch: feature/2026-07-22-register-fragile-fixes — not yet merged to main, not yet pushed.**
+
+### FINDING 1 — resume-redirect keyed off the pending mirror — FIXED (committed b019cd8)
+register.html's resume path — the `onAuthStateChanged` callback that fires only when the URL carries `?phone=` (the dashboard→register redirect) — decided "already registered → send to dashboard" off `pending_registrations/{phone}.status === 'completed'`. That `status` is the **second of two non-atomic writes** at Submit (register.html: `setDoc(supplierRef, …registrationComplete:true)` then `setDoc(pendRef, {status:'completed'})`). If the second write fails after the first succeeds — network drop between them — the account is genuinely complete (`suppliers/{phone}.registrationComplete === true`) but the pending mirror still reads `'incomplete'`, so a fully-registered user was dumped back into the prefilled registration form on next resume.
+
+Root issue: the redirect keyed off the **secondary mirror** rather than the **canonical completion signal** the rest of the platform uses (`suppliers.registrationComplete` — locked in the architecture rules; dashboard.html's own gate already reads it via `resolveIdentity`/`loadDashboard`). The two sides of the same redirect could therefore disagree.
+
+**Fix (chosen by Johan): reuse `resolveIdentity()`'s supplier-doc read rather than adding a parallel read.** The callback now calls `resolveIdentity(verifiedPhone)` and redirects to the dashboard **only** on `status === 'verified'` (doc exists, session UID owns it, `registrationComplete === true`). The old `pendData.status === 'completed'` branch is removed. The `pending_registrations` read stays, but only for its real job — prefill (`dataConsentGiven` + `prefillSectionN`).
+
+Behaviour mapping (verified by reasoning, not yet by a live end-to-end run):
+- Fully registered → `verified` → redirects to dashboard. Now correct even if the pending mirror lagged.
+- Mid-registration (supplier doc absent) → `not-found` → falls through to existing pending prefill / consent gate. Unchanged.
+- Supplier doc exists but incomplete → `incomplete` → same fall-through. Unchanged.
+- `blocked` / `error` / `no-auth` → fall through to existing logic; no redirect — same net outcome as before (a non-completed pending doc never triggered the old redirect either).
+
+Deliberately **not a wholesale drop-in**: only the `'verified'` branch is acted on; every other `resolveIdentity` status is left to the pre-existing logic. This preserves the `not-found`-during-registration case, which is exactly why `resolveIdentity` cannot replace the whole callback. Cost: one extra Firestore read (supplier doc) on a mid-registration resume, then the pending read as before — negligible.
+
+The `pending_registrations.status:'completed'` write at Submit is now unused by this guard but was **left in place** (untouched) — admin/other reads may depend on it; removing it was out of scope and not instructed.
+
+`resolveIdentity` is defined in identity-service.js; both register.html (`getAuth(app)`) and identity-service.js (`getAuth(app)`) resolve against the same `firebase-config.js` app singleton, so `resolveIdentity`'s `auth.currentUser` is the live session. Import at register.html line 1009 extended to include `resolveIdentity`. NOT tested end-to-end yet — code change only; needs a real register→submit→return-with-`?phone=` run before being called verified.
+
+### FINDING 2 — missing resolveIdentity() in verifyOtp() — ASSESSED, DISMISSED
+Flagged concern: `verifyOtp()` never calls `resolveIdentity()`, unlike dashboard.html's "OTP-verify path" which supposedly does, for audit logging. Grep confirmed `resolveIdentity` is genuinely absent from `verifyOtp` (and, before this session's fix, from the whole file). But the rationale does not hold:
+1. dashboard.html's OTP-verify path (`verifyLoginOtp`, ~lines 416–457) does **not** call `resolveIdentity` either — it does `confirm()` → `getDoc(suppliers/{phone})` → check `registrationComplete`, structurally identical to register's `verifyOtp`. `resolveIdentity` is called in dashboard's **page-load** `onAuthStateChanged` (~line 330), not the OTP path. So the two OTP paths already match; nothing missing there.
+2. `resolveIdentity` is **not "audit logging only"** — it is a UID-ownership + `registrationComplete` security gate returning `verified/incomplete/not-found/blocked/no-auth/error`; the audit write fires only on the `blocked` branch. Adding it therefore *would* change behaviour, so "invisible, audit-only" is false.
+
+Net: Finding 2 as stated was a mischaracterisation and needs no change to `verifyOtp()`. It did, however, point at the same resume callback as Finding 1, which is where the real (now-fixed) issue lived.
+
+### CLARIFICATION — phone-entry session check uses getValidSession(), not resolveIdentity()
+register.html's `handleNext()` function (fires from the manual phone-number entry screen) calls `getValidSession(phone)` — defined in identity-service.js — to check for a valid existing session token in device memory. It does NOT call `resolveIdentity()`.
+
+`resolveIdentity()` is used in exactly one place in register.html: inside the `onAuthStateChanged` callback that fires only when the URL carries a `?phone=` parameter (the dashboard-redirect resume path, fixed this session — see Finding 1 entry). That is the ONLY call to `resolveIdentity()` anywhere in register.html.
+
+M1 diagram (draw.io, maintained by Johan directly) has been corrected to reflect this: the box immediately after "Phone number (token) input screen" now reads "getValidSession(phone) check", not "resolveIdentity() Wrapper". Confirmed via direct code check (register.html, `handleNext()`, line ~1204) before the diagram was changed. M1 is otherwise unchanged and considered locked.
+
+This entry exists specifically so this distinction is never re-litigated or assumed differently in a future session.
+
+### COMMITS THIS SESSION
+Branch feature/2026-07-22-register-fragile-fixes, not yet merged to main, not yet pushed.
+
+| Commit | Content |
+|---|---|
+| b019cd8 | decide resume redirect off suppliers.registrationComplete (via resolveIdentity 'verified'), not the pending_registrations mirror |
+
+### Parked / carried forward
+1. Finding 1 fix is code-only — needs a live end-to-end run (register → submit → return with `?phone=`) before being called verified.
+2. `pending_registrations.status:'completed'` write at Submit is now unused by the resume guard but left in place — decide whether any admin/other read still depends on it before removing.
+3. All items carried forward from 21 July remain open and untouched: silent device GPS capture UI; admin.html login/permission fix (isAdmin() hardcoded-UID mismatch); M1 diagram `resolveIdentity()`-after-fresh-OTP-verify addition mirroring M3 (separate from the phone-entry box relabel done this session); showCellNumberTwo public-display build; BulkSMS credits at zero; public precise pin-drop map (post-launch); POPIA public/private supplier split (explicit next major topic, dedicated standalone session).
+
+---
+*Session closed 22 July 2026. register.html resume-redirect fragility fix committed (b019cd8) on branch feature/2026-07-22-register-fragile-fixes — not merged to main, not pushed. Finding 1 fix is code-only, not yet tested end-to-end. Master Context updated for review.*
+
+### Follow-up Note to 22 July 2026 Session — two corrections
+The dated entries above are left intact (append-only Build History rule); these corrections supersede them where they conflict.
+
+1. **CORRECTION — branch WAS pushed.** The 22 July entries and the original close line state commit b019cd8 was "not merged to main, not pushed." That was wrong. Confirmed live via `mmdone` output earlier this session: fast-forward merge `929ebec..b019cd8`, pushed to `origin/main`, branch `feature/2026-07-22-register-fragile-fixes` deleted. Current true state: **b019cd8 is on `main`, pushed to origin, and the feature branch no longer exists.** QUICK STATUS has been updated to match.
+
+2. **CLOSE — parked item #3 (M1 diagram `resolveIdentity()`-after-fresh-OTP-verify addition, mirroring M3) → CLOSED-BY-DECISION.** This is the same item Finding 2 investigated today. Assessed and deliberately **not built**: dashboard.html's OTP-verify path does not call `resolveIdentity()` either, and adding it would change behaviour beyond audit logging (it is a UID-ownership/`registrationComplete` security gate, not an audit-only call) — so it is not a clean drop-in and there is no gap to mirror. Marked CLOSED-BY-DECISION, not still-open. Removed from the "still to build" framing in QUICK STATUS. (Distinct from, and does not affect, the phone-entry box relabel — "getValidSession(phone) check" — recorded in the 22 July CLARIFICATION entry above.)
