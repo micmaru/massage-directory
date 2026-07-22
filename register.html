@@ -1006,7 +1006,7 @@
     provider: new ReCaptchaV3Provider('6Leh31YtAAAAAL3uPM1JXyWj4CchliBe-gpg1xla'),
     isTokenAutoRefreshEnabled: true
   });
-  import { storeSession, getValidSession } from './identity-service.js';
+  import { storeSession, getValidSession, resolveIdentity } from './identity-service.js';
   import {
     getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged
   } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
@@ -1099,16 +1099,20 @@
       verifiedPhone = user.phoneNumber;
       phoneVerified = true;
       storeSession(verifiedPhone, '', 'individual');
+      // Completion is decided by the canonical signal — suppliers/{phone}.registrationComplete
+      // (via resolveIdentity), never the pending_registrations mirror, which can lag if the
+      // second submit write fails. 'verified' = doc exists, session UID owns it, and is complete.
+      const identity = await resolveIdentity(verifiedPhone);
+      if (identity.status === 'verified') {
+        window.location.href = `dashboard.html?type=individual&phone=${encodeURIComponent(verifiedPhone)}`;
+        return;
+      }
       let pendData = null;
       try {
         const pendSnap = await getDoc(doc(db, 'pending_registrations', verifiedPhone));
         pendData = pendSnap.exists() ? pendSnap.data() : null;
       } catch (err) {
         console.error('resume prefill fetch error:', err);
-      }
-      if (pendData && pendData.status === 'completed') {
-        window.location.href = `dashboard.html?type=individual&phone=${encodeURIComponent(verifiedPhone)}`;
-        return;
       }
       if (pendData && pendData.dataConsentGiven) {
         document.getElementById('otpPhase').classList.add('hidden');
