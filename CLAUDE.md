@@ -1,7 +1,7 @@
 # MassageMap — Claude Code Project Brief
 
 ## Master Context
-docs/MM-Master-Context.md is Johan's accountability record for this project — priority above all else. Always read it before any dev work. Every new version ADDS to the previous — nothing dropped, summarised, or reformatted. All parked items carry forward until explicitly closed by Johan. (General rule for how master context files work lives in global ~/.claude/CLAUDE.md.)
+docs/MM-Master-Context.md is Johan's accountability record for this project — priority above all else. Always read it in full at session start (now ~130 lines, restructured 23 Jul 2026). It is an INDEX, not a container: QUICK STATUS + a Decisions Index pointing into docs/01-Decisions/ (one file per locked/superseded/open decision). Never rely on memory of a decision — open the actual file in docs/01-Decisions/ before stating it as fact. Full pre-23-Jul history is preserved unchanged in docs/MM-Master-Context-ARCHIVE-thru-22Jul2026.md — searched on demand, never read in full. New decisions get their own new file in docs/01-Decisions/, status "locked". If a decision changes, the old file's status flips to "superseded" — never delete it. Open, undecided discussions also get their own file, status "open". Bugs and parked/pre-launch/phase-2 items live in GitHub Issues only — never tracked in Master Context.
 
 ## Project overview
 MassageMap is a three-sided massage therapy directory for the South African market:
@@ -13,7 +13,7 @@ MassageMap is a three-sided massage therapy directory for the South African mark
 - Frontend: HTML / CSS / JavaScript — vanilla only, no frameworks, mobile-first
 - Database: Firebase Firestore — project ID: massage-directory-57e19, region: africa-south1
 - Auth: Firebase Phone Auth (OTP via SMS)
-- Storage: Firebase Storage — path: suppliers/{phone}/photos/{filename}
+- Storage: Firebase Storage — paths use uid (Firebase Auth), NEVER phone number. Verification photo: suppliers/{uid}/id/ (private, auth-gated). Gallery: suppliers/{uid}/gallery/. See Identity Handling section below and docs/01-Decisions/dashboard.md #71.
 - Payments: PayFast via Cloud Functions only — never client-side
 - Email: Resend — currently onboarding@resend.dev. Switch to notifications@massagemap.co.za after domain verification
 - SMS: BulkSMS — token auth, credentials in functions/.env
